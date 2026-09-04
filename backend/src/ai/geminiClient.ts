@@ -28,11 +28,19 @@ function getClient(): GoogleGenAI {
   return client;
 }
 
-// Gemini's free tier caps gemini-2.5-flash at 5 requests/minute — hit in
-// practice while running the F-05 safety test (Technical Spec 11, decision
-// 2026-09-04). Retry with backoff rather than failing the whole request.
+// gemini-2.5-flash hit BOTH a 5 req/min cap and, on this newly-created API
+// key/project, a 20 req/DAY cap (far below Google's documented 500-1500 RPD
+// steady-state free-tier limit — almost certainly a new-key ramp-up quota).
+// Switched to flash-lite, which carries its own separate (typically higher)
+// free-tier quota. Retry-with-backoff stays for the per-minute case; a
+// same-day RPD exhaustion will still fail after MAX_RETRIES since backoff
+// can't outlast a daily reset. Technical Spec bagian 11, decision 2026-09-04.
+const MODEL = 'gemini-3.5-flash-lite';
 const MAX_RETRIES = 3;
 const RETRY_BASE_DELAY_MS = 8000;
+// The @google/genai SDK call has no built-in timeout — a stalled connection
+// hangs the request forever with no error. Race it against this instead.
+const REQUEST_TIMEOUT_MS = 20000;
 
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -40,6 +48,13 @@ function sleep(ms: number): Promise<void> {
 
 function isRateLimitError(err: unknown): boolean {
   return err instanceof Error && (err.message.includes('RESOURCE_EXHAUSTED') || err.message.includes('429'));
+}
+
+function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
+  return Promise.race([
+    promise,
+    new Promise<T>((_, reject) => setTimeout(() => reject(new Error(`Gemini request timed out after ${ms}ms`)), ms)),
+  ]);
 }
 
 /**
@@ -52,16 +67,19 @@ export async function explainContext(question: string, context: unknown): Promis
 
   for (let attempt = 0; ; attempt++) {
     try {
-      const response = await ai.models.generateContent({
-        model: 'gemini-2.5-flash',
-        config: { systemInstruction: SYSTEM_INSTRUCTION },
-        contents: [
-          {
-            role: 'user',
-            parts: [{ text: `Konteks (hasil perhitungan sistem):\n${JSON.stringify(context)}\n\nPertanyaan: ${question}` }],
-          },
-        ],
-      });
+      const response = await withTimeout(
+        ai.models.generateContent({
+          model: MODEL,
+          config: { systemInstruction: SYSTEM_INSTRUCTION },
+          contents: [
+            {
+              role: 'user',
+              parts: [{ text: `Konteks (hasil perhitungan sistem):\n${JSON.stringify(context)}\n\nPertanyaan: ${question}` }],
+            },
+          ],
+        }),
+        REQUEST_TIMEOUT_MS,
+      );
       return response.text ?? '';
     } catch (err) {
       if (!isRateLimitError(err) || attempt >= MAX_RETRIES) throw err;

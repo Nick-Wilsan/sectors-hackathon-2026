@@ -1,4 +1,4 @@
-import type { CompositeScoreResult, FrameworkResult, PeerComparisonResult, ScreenerResult, SubsectorOption } from './types';
+import type { AnomalyResult, CompositeScoreResult, FrameworkResult, PeerComparisonResult, ScreenerResult, SubsectorOption } from './types';
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:4000/api';
 
@@ -25,6 +25,10 @@ export function getPeerComparison(symbol: string): Promise<PeerComparisonResult>
 
 export function getFramework(symbol: string): Promise<FrameworkResult> {
   return getJson(`/emiten/${encodeURIComponent(symbol)}/framework`);
+}
+
+export function getAnomaly(symbol: string): Promise<AnomalyResult> {
+  return getJson(`/emiten/${encodeURIComponent(symbol)}/anomali`);
 }
 
 export async function askAboutEmiten(symbol: string, question: string): Promise<string> {

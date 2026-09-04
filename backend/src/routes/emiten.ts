@@ -4,6 +4,7 @@ import { getPeerComparison } from '../analysis/peerComparison.js';
 import { evaluatePiotroskiAdapted } from '../analysis/framework.js';
 import { getCompanyReport } from '../data/companyReport.js';
 import { askAboutEmiten } from '../ai/askService.js';
+import { getAnomalyWithContext } from '../analysis/anomalyService.js';
 
 export const emitenRouter = Router();
 
@@ -25,6 +26,17 @@ emitenRouter.get('/:symbol/framework', async (req, res) => {
   try {
     const report = await getCompanyReport(symbol, ['financials']);
     const result = evaluatePiotroskiAdapted(report.symbol, report.financials);
+    res.json(result);
+  } catch (err) {
+    res.status(502).json({ error: err instanceof Error ? err.message : 'Unknown error' });
+  }
+});
+
+emitenRouter.get('/:symbol/anomali', async (req, res) => {
+  const { symbol } = req.params;
+
+  try {
+    const result = await getAnomalyWithContext(symbol);
     res.json(result);
   } catch (err) {
     res.status(502).json({ error: err instanceof Error ? err.message : 'Unknown error' });

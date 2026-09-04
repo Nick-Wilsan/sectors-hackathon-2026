@@ -60,6 +60,35 @@ export interface SubsectorOption {
   label: string;
 }
 
+export interface AnomalyMetric {
+  key: 'volume' | 'priceChange';
+  label: string;
+  latestValue: number;
+  baselineMean: number;
+  baselineStdDev: number;
+  baselineDays: number;
+  zScore: number;
+  isAnomaly: boolean;
+}
+
+export interface NewsArticle {
+  title: string;
+  source: string;
+  timestamp: string;
+  thumbnail?: string | null;
+}
+
+export interface AnomalyResult {
+  symbol: string;
+  date: string | null;
+  status: 'ok' | 'inadequate';
+  threshold: number;
+  metrics: AnomalyMetric[];
+  hasAnomaly: boolean;
+  relatedNews: NewsArticle[];
+  newsDisclaimer: string | null;
+}
+
 export interface FrameworkCriterion {
   key: string;
   label: string;

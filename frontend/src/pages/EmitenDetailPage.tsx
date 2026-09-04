@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { getCompositeScore, getFramework, getPeerComparison } from '../api/client';
-import type { CompositeScoreResult, FrameworkResult, PeerComparisonResult } from '../api/types';
+import { getAnomaly, getCompositeScore, getFramework, getPeerComparison } from '../api/client';
+import type { AnomalyResult, CompositeScoreResult, FrameworkResult, PeerComparisonResult } from '../api/types';
 import { ScoreBar } from '../components/ScoreBar';
 import { AskPanel } from '../components/AskPanel';
 
@@ -16,17 +16,19 @@ export function EmitenDetailPage() {
   const [score, setScore] = useState<CompositeScoreResult | null>(null);
   const [peer, setPeer] = useState<PeerComparisonResult | null>(null);
   const [framework, setFramework] = useState<FrameworkResult | null>(null);
+  const [anomaly, setAnomaly] = useState<AnomalyResult | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     setLoading(true);
     setError(null);
-    Promise.all([getCompositeScore(symbol), getPeerComparison(symbol), getFramework(symbol)])
-      .then(([scoreResult, peerResult, frameworkResult]) => {
+    Promise.all([getCompositeScore(symbol), getPeerComparison(symbol), getFramework(symbol), getAnomaly(symbol)])
+      .then(([scoreResult, peerResult, frameworkResult, anomalyResult]) => {
         setScore(scoreResult);
         setPeer(peerResult);
         setFramework(frameworkResult);
+        setAnomaly(anomalyResult);
       })
       .catch((err) => setError(err instanceof Error ? err.message : 'Gagal memuat data emiten'))
       .finally(() => setLoading(false));
@@ -106,6 +108,56 @@ export function EmitenDetailPage() {
                 ))}
               </div>
             </>
+          )}
+        </section>
+      )}
+
+      {anomaly && anomaly.status === 'ok' && (
+        <section className="mt-10">
+          <h2 className="text-sm font-medium text-neutral-300">Deteksi Anomali</h2>
+          <p className="mt-1 text-xs text-neutral-500">
+            Membandingkan volume dan perubahan harga tanggal {anomaly.date} terhadap sebaran historis emiten ini sendiri.
+            Ambang batas: penyimpangan lebih dari {anomaly.threshold} standar deviasi. Ini pernyataan statistik semata,
+            bukan penyebab maupun perkiraan kelanjutan pergerakan harga.
+          </p>
+
+          {!anomaly.hasAnomaly ? (
+            <p className="mt-3 text-sm text-neutral-400">Tidak ada penyimpangan signifikan terdeteksi.</p>
+          ) : (
+            <div className="mt-3 space-y-2">
+              {anomaly.metrics.map((m) => (
+                <div
+                  key={m.key}
+                  className={`rounded-md border px-3 py-2 text-sm ${
+                    m.isAnomaly ? 'border-amber-900 bg-amber-950/40 text-amber-200' : 'border-neutral-800 text-neutral-400'
+                  }`}
+                >
+                  {m.label}: nilai terkini {m.latestValue.toLocaleString('id-ID')}, rata-rata baseline{' '}
+                  {m.baselineMean.toLocaleString('id-ID', { maximumFractionDigits: 2 })} ({m.zScore.toFixed(2)} standar deviasi)
+                  {m.isAnomaly && ' — anomali'}
+                </div>
+              ))}
+            </div>
+          )}
+
+          {anomaly.relatedNews.length > 0 && (
+            <div className="mt-4">
+              <p className="text-xs text-neutral-500">{anomaly.newsDisclaimer}</p>
+              <div className="mt-2 space-y-2">
+                {anomaly.relatedNews.map((n, i) => (
+                  <a
+                    key={i}
+                    href={n.source}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="block rounded-md border border-neutral-800 bg-neutral-900 px-3 py-2 text-sm text-neutral-300 hover:bg-neutral-800"
+                  >
+                    {n.title}
+                    <span className="ml-2 text-xs text-neutral-500">{new Date(n.timestamp).toLocaleDateString('id-ID')}</span>
+                  </a>
+                ))}
+              </div>
+            </div>
           )}
         </section>
       )}

@@ -2,6 +2,7 @@ import { getCompanyReport } from '../data/companyReport.js';
 import { getCompositeScoreForSymbol } from '../analysis/scoreService.js';
 import { getPeerComparison } from '../analysis/peerComparison.js';
 import { evaluatePiotroskiAdapted } from '../analysis/framework.js';
+import { getAnomalyWithContext } from '../analysis/anomalyService.js';
 import { glossaryAsContext } from './glossary.js';
 
 // Assembles the ONLY thing the AI layer is allowed to see: structured output
@@ -28,14 +29,22 @@ export interface EmitenAiContext {
     jumlahAnggotaKelompok: number;
     posisiSkorTerhadapPeer: { symbol: string; companyName: string; score: number | null }[];
   };
+  deteksiAnomali: {
+    status: string;
+    tanggal: string | null;
+    ambangBatas: string;
+    metrik: { label: string; nilaiTerkini: number; rataRataBaseline: number; zScore: number; anomali: boolean }[];
+    catatan: string;
+  };
   kamusIstilah: Record<string, string>;
 }
 
 export async function buildEmitenAiContext(symbol: string): Promise<EmitenAiContext> {
-  const [score, peer, report] = await Promise.all([
+  const [score, peer, report, anomaly] = await Promise.all([
     getCompositeScoreForSymbol(symbol),
     getPeerComparison(symbol),
     getCompanyReport(symbol, ['financials']),
+    getAnomalyWithContext(symbol),
   ]);
   const framework = evaluatePiotroskiAdapted(symbol, report.financials);
 
@@ -62,6 +71,20 @@ export async function buildEmitenAiContext(symbol: string): Promise<EmitenAiCont
         .sort((a, b) => (b.score ?? -1) - (a.score ?? -1))
         .slice(0, 15)
         .map((p) => ({ symbol: p.symbol, companyName: p.companyName, score: p.score })),
+    },
+    deteksiAnomali: {
+      status: anomaly.status,
+      tanggal: anomaly.date,
+      ambangBatas: `${anomaly.threshold} standar deviasi dari rata-rata baseline`,
+      metrik: anomaly.metrics.map((m) => ({
+        label: m.label,
+        nilaiTerkini: m.latestValue,
+        rataRataBaseline: m.baselineMean,
+        zScore: m.zScore,
+        anomali: m.isAnomaly,
+      })),
+      catatan:
+        'Anomali adalah pernyataan statistik semata (penyimpangan terhadap sebaran historis), bukan penyebab maupun perkiraan kelanjutan pergerakan harga.',
     },
     kamusIstilah: glossaryAsContext(),
   };
