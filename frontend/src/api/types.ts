@@ -60,6 +60,40 @@ export interface SubsectorOption {
   label: string;
 }
 
+export interface DailyBar {
+  symbol: string;
+  date: string;
+  close: number;
+  open: number | null;
+  high: number | null;
+  low: number | null;
+  volume: number;
+  marketCap: number;
+}
+
+export interface DailySeries {
+  symbol: string;
+  bars: DailyBar[];
+}
+
+export type PatternCategory = 'reversal-bullish' | 'reversal-bearish' | 'indecision';
+
+export interface PatternMatch {
+  key: string;
+  label: string;
+  category: PatternCategory;
+  definition: string;
+  date: string;
+  index: number;
+}
+
+export interface CandlestickResult {
+  symbol: string;
+  status: 'ok' | 'inadequate';
+  reliabilityWarning: string;
+  matches: PatternMatch[];
+}
+
 export interface AnomalyMetric {
   key: 'volume' | 'priceChange';
   label: string;

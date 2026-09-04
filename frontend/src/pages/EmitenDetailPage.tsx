@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { getAnomaly, getCompositeScore, getFramework, getPeerComparison } from '../api/client';
-import type { AnomalyResult, CompositeScoreResult, FrameworkResult, PeerComparisonResult } from '../api/types';
+import { getAnomaly, getCandlestickPatterns, getCompositeScore, getDailyPrices, getFramework, getPeerComparison } from '../api/client';
+import type { AnomalyResult, CandlestickResult, CompositeScoreResult, DailyBar, FrameworkResult, PeerComparisonResult } from '../api/types';
 import { ScoreBar } from '../components/ScoreBar';
 import { AskPanel } from '../components/AskPanel';
+import { PriceChart } from '../components/PriceChart';
 
 const STATUS_LABEL: Record<CompositeScoreResult['status'], string> = {
   ok: 'Lengkap',
@@ -17,18 +18,29 @@ export function EmitenDetailPage() {
   const [peer, setPeer] = useState<PeerComparisonResult | null>(null);
   const [framework, setFramework] = useState<FrameworkResult | null>(null);
   const [anomaly, setAnomaly] = useState<AnomalyResult | null>(null);
+  const [bars, setBars] = useState<DailyBar[]>([]);
+  const [patterns, setPatterns] = useState<CandlestickResult | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     setLoading(true);
     setError(null);
-    Promise.all([getCompositeScore(symbol), getPeerComparison(symbol), getFramework(symbol), getAnomaly(symbol)])
-      .then(([scoreResult, peerResult, frameworkResult, anomalyResult]) => {
+    Promise.all([
+      getCompositeScore(symbol),
+      getPeerComparison(symbol),
+      getFramework(symbol),
+      getAnomaly(symbol),
+      getDailyPrices(symbol),
+      getCandlestickPatterns(symbol),
+    ])
+      .then(([scoreResult, peerResult, frameworkResult, anomalyResult, priceResult, patternResult]) => {
         setScore(scoreResult);
         setPeer(peerResult);
         setFramework(frameworkResult);
         setAnomaly(anomalyResult);
+        setBars(priceResult.bars);
+        setPatterns(patternResult);
       })
       .catch((err) => setError(err instanceof Error ? err.message : 'Gagal memuat data emiten'))
       .finally(() => setLoading(false));
@@ -61,6 +73,35 @@ export function EmitenDetailPage() {
           Emiten ini kehilangan lebih dari satu komponen data yang dibutuhkan untuk Skor Komposit, sehingga tidak
           diberi skor agar tidak menyesatkan.
         </p>
+      )}
+
+      {bars.length > 0 && (
+        <section className="mt-8">
+          <h2 className="text-sm font-medium text-neutral-300">Grafik Harga</h2>
+          <p className="mt-1 text-xs text-neutral-500">
+            90 hari terakhir. {patterns && patterns.matches.length > 0 && `${patterns.matches.length} penanda pola candlestick ditemukan.`}
+          </p>
+          <div className="mt-3 rounded-lg border border-neutral-800 bg-neutral-900 p-2">
+            <PriceChart bars={bars} patterns={patterns?.matches} />
+          </div>
+          {patterns && patterns.matches.length > 0 && (
+            <>
+              <p className="mt-3 text-xs text-neutral-500">{patterns.reliabilityWarning}</p>
+              <div className="mt-2 space-y-1.5">
+                {[...patterns.matches]
+                  .sort((a, b) => b.date.localeCompare(a.date))
+                  .slice(0, 8)
+                  .map((m, i) => (
+                    <div key={i} className="text-sm">
+                      <span className="text-neutral-400">{m.date}</span>{' '}
+                      <span className="font-medium text-neutral-200">{m.label}</span>
+                      <span className="text-neutral-500"> — {m.definition}</span>
+                    </div>
+                  ))}
+              </div>
+            </>
+          )}
+        </section>
       )}
 
       {score.components.length > 0 && (

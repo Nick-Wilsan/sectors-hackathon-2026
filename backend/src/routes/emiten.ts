@@ -5,6 +5,9 @@ import { evaluatePiotroskiAdapted } from '../analysis/framework.js';
 import { getCompanyReport } from '../data/companyReport.js';
 import { askAboutEmiten } from '../ai/askService.js';
 import { getAnomalyWithContext } from '../analysis/anomalyService.js';
+import { getCandlestickPatterns } from '../analysis/candlestickService.js';
+import { getDailySeries } from '../data/transactions.js';
+import { daysAgoIso, todayIso } from '../data/dateRange.js';
 
 export const emitenRouter = Router();
 
@@ -37,6 +40,29 @@ emitenRouter.get('/:symbol/anomali', async (req, res) => {
 
   try {
     const result = await getAnomalyWithContext(symbol);
+    res.json(result);
+  } catch (err) {
+    res.status(502).json({ error: err instanceof Error ? err.message : 'Unknown error' });
+  }
+});
+
+emitenRouter.get('/:symbol/harga', async (req, res) => {
+  const { symbol } = req.params;
+
+  try {
+    // Same 90-day window used by F-06/F-07 so this call hits the same cache entry.
+    const series = await getDailySeries(symbol, { start: daysAgoIso(90), end: todayIso() });
+    res.json(series);
+  } catch (err) {
+    res.status(502).json({ error: err instanceof Error ? err.message : 'Unknown error' });
+  }
+});
+
+emitenRouter.get('/:symbol/pola', async (req, res) => {
+  const { symbol } = req.params;
+
+  try {
+    const result = await getCandlestickPatterns(symbol);
     res.json(result);
   } catch (err) {
     res.status(502).json({ error: err instanceof Error ? err.message : 'Unknown error' });
