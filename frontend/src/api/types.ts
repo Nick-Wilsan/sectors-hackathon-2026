@@ -94,6 +94,30 @@ export interface CandlestickResult {
   matches: PatternMatch[];
 }
 
+export interface IndexPoint {
+  date: string;
+  price: number;
+}
+
+export interface IdxTotalPoint {
+  date: string;
+  marketCap: number;
+}
+
+export interface MoverRow {
+  symbol: string;
+  companyName: string;
+  priceChange: number;
+  lastClosePrice: number;
+  latestCloseDate: string;
+}
+
+export interface MarketOverview {
+  ihsg: IndexPoint[];
+  idxTotal: IdxTotalPoint[];
+  movers: { gainers: MoverRow[]; losers: MoverRow[] };
+}
+
 export interface SimilarityMatch {
   symbol: string;
   companyName: string;

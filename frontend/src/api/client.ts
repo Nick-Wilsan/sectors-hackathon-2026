@@ -1,4 +1,4 @@
-import type { AnomalyResult, CandlestickResult, CompositeScoreResult, DailySeries, FrameworkResult, IndicatorResult, PatternSimilarityResult, PeerComparisonResult, ScreenerResult, SubsectorOption } from './types';
+import type { AnomalyResult, CandlestickResult, CompositeScoreResult, DailySeries, FrameworkResult, IndicatorResult, MarketOverview, PatternSimilarityResult, PeerComparisonResult, ScreenerResult, SubsectorOption } from './types';
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:4000/api';
 
@@ -13,6 +13,10 @@ async function getJson<T>(path: string): Promise<T> {
 
 export function getSubsectors(): Promise<SubsectorOption[]> {
   return getJson('/subsectors');
+}
+
+export function getMarketOverview(): Promise<MarketOverview> {
+  return getJson('/market/overview');
 }
 
 export function getCompositeScore(symbol: string): Promise<CompositeScoreResult> {

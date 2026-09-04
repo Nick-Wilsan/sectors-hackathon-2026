@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { getSubsectors, screenCompanies } from '../api/client';
 import type { ScreenerResult, SubsectorOption } from '../api/types';
 import { ScoreBar } from '../components/ScoreBar';
+import { MarketOverview } from '../components/MarketOverview';
 
 export function ScreenerPage() {
   const [subsectors, setSubsectors] = useState<SubsectorOption[]>([]);
@@ -32,75 +33,85 @@ export function ScreenerPage() {
   }, [subSector, minScore]);
 
   return (
-    <div className="mx-auto max-w-4xl px-4 py-8">
-      <h1 className="text-2xl font-semibold text-neutral-100">Screener Emiten</h1>
-      <p className="mt-1 text-sm text-neutral-400">
-        Saring dan urutkan emiten berdasarkan Skor Komposit Fundamental dalam satu sub-sektor.
-      </p>
+    <div>
+      <MarketOverview />
 
-      <div className="mt-6 flex flex-wrap items-end gap-4">
-        <label className="flex flex-col gap-1">
-          <span className="text-xs text-neutral-400">Sub-sektor</span>
-          <select
-            value={subSector}
-            onChange={(e) => setSubSector(e.target.value)}
-            className="rounded-md border border-neutral-700 bg-neutral-900 px-3 py-2 text-sm text-neutral-100"
-          >
-            {subsectors.map((s) => (
-              <option key={s.subsector} value={s.subsector}>
-                {s.label}
-              </option>
-            ))}
-          </select>
-        </label>
+      <div className="mx-auto max-w-6xl px-4 py-6 sm:px-6">
+        <h1 className="text-xl font-semibold text-neutral-100">Screener Emiten</h1>
+        <p className="mt-1 text-sm text-neutral-400">
+          Saring dan urutkan emiten berdasarkan Skor Komposit Fundamental dalam satu sub-sektor.
+        </p>
 
-        <label className="flex flex-col gap-1">
-          <span className="text-xs text-neutral-400">Skor minimum</span>
-          <input
-            type="number"
-            min={0}
-            max={100}
-            value={minScore}
-            onChange={(e) => setMinScore(e.target.value)}
-            placeholder="0"
-            className="w-28 rounded-md border border-neutral-700 bg-neutral-900 px-3 py-2 text-sm text-neutral-100"
-          />
-        </label>
+        <div className="mt-4 flex flex-wrap items-end gap-4">
+          <label className="flex flex-col gap-1">
+            <span className="text-xs text-neutral-400">Sub-sektor</span>
+            <select
+              value={subSector}
+              onChange={(e) => setSubSector(e.target.value)}
+              className="rounded-md border border-neutral-700 bg-neutral-900 px-3 py-1.5 text-sm text-neutral-100"
+            >
+              {subsectors.map((s) => (
+                <option key={s.subsector} value={s.subsector}>
+                  {s.label}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <label className="flex flex-col gap-1">
+            <span className="text-xs text-neutral-400">Skor minimum</span>
+            <input
+              type="number"
+              min={0}
+              max={100}
+              value={minScore}
+              onChange={(e) => setMinScore(e.target.value)}
+              placeholder="0"
+              className="w-24 rounded-md border border-neutral-700 bg-neutral-900 px-3 py-1.5 text-sm text-neutral-100"
+            />
+          </label>
+        </div>
+
+        {loading && <p className="mt-6 text-sm text-neutral-400">Memuat data dari Sectors...</p>}
+        {error && <p className="mt-6 text-sm text-rose-400">{error}</p>}
+
+        {result && !loading && (
+          <>
+            <p className="mt-5 text-xs text-neutral-500">
+              Kelompok pembanding: {result.groupSize} emiten sub-sektor "{subSector}". Menampilkan {result.ranked.length}{' '}
+              emiten dengan skor{result.dataTidakMemadai.length > 0 && `, ${result.dataTidakMemadai.length} data tidak memadai disembunyikan`}.
+            </p>
+
+            <div className="mt-2 overflow-hidden rounded-lg border border-neutral-800">
+              <div className="flex items-center gap-3 border-b border-neutral-800 bg-neutral-900 px-3 py-1.5 text-[11px] font-medium uppercase tracking-wide text-neutral-500">
+                <span className="w-6 text-right">#</span>
+                <span className="w-20">Simbol</span>
+                <span className="flex-1">Nama</span>
+                <span className="w-48 text-right sm:w-64">Skor Komposit</span>
+              </div>
+              <div className="divide-y divide-neutral-800/70">
+                {result.ranked.map((c, i) => (
+                  <Link
+                    key={c.symbol}
+                    to={`/emiten/${c.symbol.replace('.JK', '')}`}
+                    className="flex items-center gap-3 bg-neutral-900 px-3 py-1.5 text-sm hover:bg-neutral-800"
+                  >
+                    <span className="w-6 text-right font-mono text-xs tabular-nums text-neutral-600">{i + 1}</span>
+                    <span className="w-20 shrink-0 font-mono text-xs font-medium text-neutral-200">{c.symbol.replace('.JK', '')}</span>
+                    <span className="flex-1 truncate text-xs text-neutral-400">{c.companyName}</span>
+                    <span className="w-48 shrink-0 sm:w-64">
+                      <ScoreBar value={c.score ?? 0} />
+                    </span>
+                  </Link>
+                ))}
+                {result.ranked.length === 0 && (
+                  <p className="px-4 py-6 text-center text-sm text-neutral-500">Tidak ada emiten yang cocok dengan filter.</p>
+                )}
+              </div>
+            </div>
+          </>
+        )}
       </div>
-
-      {loading && <p className="mt-6 text-sm text-neutral-400">Memuat data dari Sectors...</p>}
-      {error && <p className="mt-6 text-sm text-rose-400">{error}</p>}
-
-      {result && !loading && (
-        <>
-          <p className="mt-6 text-xs text-neutral-500">
-            Kelompok pembanding: {result.groupSize} emiten sub-sektor "{subSector}". Menampilkan {result.ranked.length}{' '}
-            emiten dengan skor{result.dataTidakMemadai.length > 0 && `, ${result.dataTidakMemadai.length} data tidak memadai disembunyikan`}.
-          </p>
-
-          <div className="mt-3 divide-y divide-neutral-800 overflow-hidden rounded-lg border border-neutral-800">
-            {result.ranked.map((c, i) => (
-              <Link
-                key={c.symbol}
-                to={`/emiten/${c.symbol.replace('.JK', '')}`}
-                className="flex items-center gap-4 bg-neutral-900 px-4 py-3 hover:bg-neutral-800"
-              >
-                <span className="w-6 text-sm text-neutral-500">{i + 1}</span>
-                <div className="w-56 shrink-0">
-                  <div className="text-sm font-medium text-neutral-100">{c.symbol.replace('.JK', '')}</div>
-                  <div className="truncate text-xs text-neutral-500">{c.companyName}</div>
-                </div>
-                <div className="flex-1">
-                  <ScoreBar value={c.score ?? 0} />
-                </div>
-              </Link>
-            ))}
-            {result.ranked.length === 0 && (
-              <p className="px-4 py-6 text-center text-sm text-neutral-500">Tidak ada emiten yang cocok dengan filter.</p>
-            )}
-          </div>
-        </>
-      )}
     </div>
   );
 }
