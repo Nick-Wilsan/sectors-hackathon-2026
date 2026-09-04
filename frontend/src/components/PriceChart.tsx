@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { createChart, CandlestickSeries, LineSeries, createSeriesMarkers, type IChartApi, type ISeriesApi, type SeriesMarker, type Time } from 'lightweight-charts';
+import { createChart, CandlestickSeries, HistogramSeries, LineSeries, createSeriesMarkers, type IChartApi, type ISeriesApi, type SeriesMarker, type Time } from 'lightweight-charts';
 import type { DailyBar, MovingAverageSeries, PatternMatch, RsiSeries } from '../api/types';
 
 interface PriceChartProps {
@@ -48,6 +48,7 @@ export function PriceChart({ bars, patterns = [], movingAverages = [], rsi = nul
   const containerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<IChartApi | null>(null);
   const seriesRef = useRef<ISeriesApi<'Candlestick'> | null>(null);
+  const volumeSeriesRef = useRef<ISeriesApi<'Histogram'> | null>(null);
   const maSeriesRef = useRef<ISeriesApi<'Line'>[]>([]);
   const rsiSeriesRef = useRef<ISeriesApi<'Line'> | null>(null);
 
@@ -73,6 +74,15 @@ export function PriceChart({ bars, patterns = [], movingAverages = [], rsi = nul
     });
     seriesRef.current = series;
 
+    // Volume overlays the bottom ~20% of the main price pane on its own price
+    // scale (never sharing the price axis), same convention TradingView uses.
+    const volumeSeries = chart.addSeries(HistogramSeries, {
+      priceFormat: { type: 'volume' },
+      priceScaleId: 'volume',
+    });
+    volumeSeries.priceScale().applyOptions({ scaleMargins: { top: 0.82, bottom: 0 } });
+    volumeSeriesRef.current = volumeSeries;
+
     // RSI lives in its own pane (index 1) below the price chart, per its 0-100 scale.
     const rsiSeries = chart.addSeries(LineSeries, { color: '#38bdf8', lineWidth: 1 }, 1);
     rsiSeriesRef.current = rsiSeries;
@@ -89,6 +99,7 @@ export function PriceChart({ bars, patterns = [], movingAverages = [], rsi = nul
       chart.remove();
       chartRef.current = null;
       seriesRef.current = null;
+      volumeSeriesRef.current = null;
       maSeriesRef.current = [];
       rsiSeriesRef.current = null;
     };
@@ -112,6 +123,14 @@ export function PriceChart({ bars, patterns = [], movingAverages = [], rsi = nul
     );
 
     createSeriesMarkers(series, toMarkers(patterns));
+
+    volumeSeriesRef.current?.setData(
+      sorted.map((b, i) => {
+        const prevClose = i > 0 ? sorted[i - 1].close : b.close;
+        return { time: b.date as Time, value: b.volume, color: b.close >= prevClose ? '#10b98166' : '#f43f5e66' };
+      }),
+    );
+
     chartRef.current?.timeScale().fitContent();
   }, [bars, patterns]);
 

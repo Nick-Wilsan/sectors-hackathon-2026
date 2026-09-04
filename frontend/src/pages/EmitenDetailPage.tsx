@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { getAnomaly, getCandlestickPatterns, getCompositeScore, getDailyPrices, getFramework, getIndicators, getPeerComparison } from '../api/client';
 import type { AnomalyResult, CandlestickResult, CompositeScoreResult, DailyBar, FrameworkResult, IndicatorResult, PeerComparisonResult } from '../api/types';
@@ -6,6 +6,8 @@ import { ScoreBar } from '../components/ScoreBar';
 import { AskPanel } from '../components/AskPanel';
 import { PriceChart } from '../components/PriceChart';
 import { PatternSimilarityPanel } from '../components/PatternSimilarityPanel';
+import { TickerHeader } from '../components/TickerHeader';
+import { ChartToolbar } from '../components/ChartToolbar';
 
 const STATUS_LABEL: Record<CompositeScoreResult['status'], string> = {
   ok: 'Lengkap',
@@ -24,6 +26,53 @@ export function EmitenDetailPage() {
   const [indicators, setIndicators] = useState<IndicatorResult | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [rangeDays, setRangeDays] = useState<30 | 90>(90);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const chartWrapperRef = useRef<HTMLDivElement>(null);
+
+  function toggleFullscreen() {
+    if (!chartWrapperRef.current) return;
+    if (document.fullscreenElement) {
+      document.exitFullscreen();
+    } else {
+      chartWrapperRef.current.requestFullscreen();
+    }
+  }
+
+  useEffect(() => {
+    function onChange() {
+      setIsFullscreen(!!document.fullscreenElement);
+    }
+    document.addEventListener('fullscreenchange', onChange);
+    return () => document.removeEventListener('fullscreenchange', onChange);
+  }, []);
+
+  // Everything charted (bars, patterns, MA, RSI) is date-keyed (YYYY-MM-DD,
+  // lexicographically sortable) — slicing all of them to the same cutoff
+  // keeps the visible window consistent without any new API calls.
+  const cutoffDate = useMemo(() => {
+    const sorted = [...bars].sort((a, b) => a.date.localeCompare(b.date));
+    const cutoffIndex = Math.max(0, sorted.length - rangeDays);
+    return sorted[cutoffIndex]?.date;
+  }, [bars, rangeDays]);
+
+  const visibleBars = useMemo(() => (cutoffDate ? bars.filter((b) => b.date >= cutoffDate) : bars), [bars, cutoffDate]);
+  const visiblePatterns = useMemo(
+    () => (cutoffDate ? (patterns?.matches ?? []).filter((m) => m.date >= cutoffDate) : (patterns?.matches ?? [])),
+    [patterns, cutoffDate],
+  );
+  const visibleMovingAverages = useMemo(
+    () =>
+      (indicators?.movingAverages ?? []).map((ma) => ({
+        ...ma,
+        points: cutoffDate ? ma.points.filter((p) => p.date >= cutoffDate) : ma.points,
+      })),
+    [indicators, cutoffDate],
+  );
+  const visibleRsi = useMemo(() => {
+    if (!indicators?.rsi) return null;
+    return { ...indicators.rsi, points: cutoffDate ? indicators.rsi.points.filter((p) => p.date >= cutoffDate) : indicators.rsi.points };
+  }, [indicators, cutoffDate]);
 
   useEffect(() => {
     setLoading(true);
@@ -83,15 +132,24 @@ export function EmitenDetailPage() {
         <section className="mt-8">
           <h2 className="text-sm font-medium text-neutral-300">Grafik Harga</h2>
           <p className="mt-1 text-xs text-neutral-500">
-            90 hari terakhir. {patterns && patterns.matches.length > 0 && `${patterns.matches.length} penanda pola candlestick ditemukan.`}
+            {patterns && patterns.matches.length > 0 && `${visiblePatterns.length} penanda pola candlestick pada rentang ini.`}
           </p>
-          <div className="mt-3 rounded-lg border border-neutral-800 bg-neutral-900 p-2">
-            <PriceChart
-              bars={bars}
-              patterns={patterns?.matches}
-              movingAverages={indicators?.movingAverages}
-              rsi={indicators?.rsi}
+          <div ref={chartWrapperRef} className="mt-3 overflow-hidden rounded-lg border border-neutral-800 bg-neutral-900">
+            <TickerHeader symbol={symbol} companyName={peer?.companyName ?? ''} bars={bars} />
+            <ChartToolbar
+              rangeDays={rangeDays}
+              onRangeChange={setRangeDays}
+              onToggleFullscreen={toggleFullscreen}
+              isFullscreen={isFullscreen}
             />
+            <div className="p-2">
+              <PriceChart
+                bars={visibleBars}
+                patterns={visiblePatterns}
+                movingAverages={visibleMovingAverages}
+                rsi={visibleRsi}
+              />
+            </div>
           </div>
           {indicators && indicators.status === 'ok' && (
             <div className="mt-3 space-y-1 text-xs text-neutral-500">
