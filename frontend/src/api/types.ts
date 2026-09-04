@@ -94,6 +94,27 @@ export interface CandlestickResult {
   matches: PatternMatch[];
 }
 
+export interface CompanyLite {
+  symbol: string;
+  companyName: string;
+}
+
+export interface NewsArticleFull {
+  title: string;
+  body?: string;
+  source: string;
+  timestamp: string;
+  sector?: string;
+  subSector?: string[];
+  tags?: string[];
+  symbols?: string[];
+  thumbnail?: string | null;
+}
+
+export interface NewsResult {
+  articles: NewsArticleFull[];
+}
+
 export interface IndexPoint {
   date: string;
   price: number;

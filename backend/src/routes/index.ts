@@ -3,6 +3,7 @@ import { emitenRouter } from './emiten.js';
 import { screenerRouter } from './screener.js';
 import { subsectorsRouter } from './subsectors.js';
 import { marketRouter } from './market.js';
+import { companiesRouter } from './companies.js';
 
 export const router = Router();
 
@@ -14,3 +15,4 @@ router.use('/emiten', emitenRouter);
 router.use('/screener', screenerRouter);
 router.use('/subsectors', subsectorsRouter);
 router.use('/market', marketRouter);
+router.use('/companies', companiesRouter);

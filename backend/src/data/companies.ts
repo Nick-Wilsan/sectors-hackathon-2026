@@ -57,3 +57,23 @@ export async function searchCompanies(params: SearchCompaniesParams = {}): Promi
     fetchedAt: new Date().toISOString(),
   };
 }
+
+/**
+ * Full IDX company list, paginated to the API's 200-per-page max (~5 calls
+ * for ~960 companies). Powers instant client-side search (TradingView-style
+ * autocomplete) without spending a credit per keystroke — fetch once,
+ * cached 24h per page, filter locally on the frontend.
+ */
+export async function getAllCompanies(): Promise<CompanyScreenerItem[]> {
+  const pageSize = 200;
+  const first = await searchCompanies({ limit: pageSize, offset: 0 });
+  const pages = [first.items];
+  const totalPages = Math.ceil(first.totalCount / pageSize);
+
+  for (let page = 1; page < totalPages; page++) {
+    const next = await searchCompanies({ limit: pageSize, offset: page * pageSize });
+    pages.push(next.items);
+  }
+
+  return pages.flat();
+}

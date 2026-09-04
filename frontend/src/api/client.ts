@@ -1,4 +1,4 @@
-import type { AnomalyResult, CandlestickResult, CompositeScoreResult, DailySeries, FrameworkResult, IndicatorResult, MarketOverview, PatternSimilarityResult, PeerComparisonResult, ScreenerResult, SubsectorOption } from './types';
+import type { AnomalyResult, CandlestickResult, CompanyLite, CompositeScoreResult, DailySeries, FrameworkResult, IndicatorResult, MarketOverview, NewsResult, PatternSimilarityResult, PeerComparisonResult, ScreenerResult, SubsectorOption } from './types';
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:4000/api';
 
@@ -17,6 +17,16 @@ export function getSubsectors(): Promise<SubsectorOption[]> {
 
 export function getMarketOverview(): Promise<MarketOverview> {
   return getJson('/market/overview');
+}
+
+export function getAllCompanies(): Promise<CompanyLite[]> {
+  return getJson('/companies');
+}
+
+export function getMarketNews(limit = 15, offset?: number): Promise<NewsResult> {
+  const params = new URLSearchParams({ limit: String(limit) });
+  if (offset !== undefined) params.set('offset', String(offset));
+  return getJson(`/market/news?${params.toString()}`);
 }
 
 export function getCompositeScore(symbol: string): Promise<CompositeScoreResult> {

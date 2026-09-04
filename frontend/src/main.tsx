@@ -4,6 +4,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { App } from './App'
 import { ScreenerPage } from './pages/ScreenerPage'
 import { EmitenDetailPage } from './pages/EmitenDetailPage'
+import { NewsPage } from './pages/NewsPage'
 import './index.css'
 
 createRoot(document.getElementById('root')!).render(
@@ -13,6 +14,7 @@ createRoot(document.getElementById('root')!).render(
         <Route element={<App />}>
           <Route index element={<ScreenerPage />} />
           <Route path="emiten/:symbol" element={<EmitenDetailPage />} />
+          <Route path="berita" element={<NewsPage />} />
         </Route>
       </Routes>
     </BrowserRouter>
