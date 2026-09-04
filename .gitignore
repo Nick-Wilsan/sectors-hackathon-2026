@@ -1,0 +1,24 @@
+# Dependencies
+node_modules/
+
+# Environment variables (never commit real API keys)
+.env
+.env.local
+backend/.env
+
+# Build output
+dist/
+build/
+frontend/dist/
+
+# Cache (local dev only, avoids re-spending Sectors API credits)
+backend/.cache/
+
+# Logs
+*.log
+npm-debug.log*
+
+# Editor / OS
+.vscode/
+.DS_Store
+Thumbs.db
