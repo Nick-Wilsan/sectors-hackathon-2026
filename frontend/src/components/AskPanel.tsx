@@ -83,7 +83,7 @@ export function AskPanel({ symbol }: AskPanelProps) {
         <button
           type="submit"
           disabled={loading || !question.trim()}
-          className="rounded-md bg-neutral-100 px-4 py-2 text-sm font-medium text-neutral-900 disabled:opacity-50"
+          className="rounded-md bg-brand px-4 py-2 text-sm font-medium text-neutral-950 hover:bg-brand-light disabled:opacity-50"
         >
           {loading ? 'Memuat...' : 'Tanya'}
         </button>

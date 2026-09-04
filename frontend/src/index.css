@@ -1,1 +1,14 @@
 @import "tailwindcss";
+
+/* Stocket visual identity — one accent color + neutral scale, defined once
+   so every page/component stays consistent. Tailwind v4's @theme block
+   compiles these to real CSS custom properties on :root AND generates
+   matching utilities (bg-brand, text-brand, font-wordmark, ...). */
+@theme {
+  --color-brand: #0ea5e9; /* sky-500 — distinct from the green/red used for score & price direction */
+  --color-brand-light: #38bdf8;
+  --color-positive: #10b981;
+  --color-negative: #f43f5e;
+
+  --font-wordmark: "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
+}

@@ -20,7 +20,7 @@ export function SymbolSearch() {
         value={value}
         onChange={(e) => setValue(e.target.value)}
         placeholder="Cari simbol (mis. BBCA)"
-        className="w-full rounded-md border border-neutral-700 bg-neutral-900 px-3 py-1.5 text-xs text-neutral-100 placeholder:text-neutral-600 focus:border-neutral-500 focus:outline-none"
+        className="w-full rounded-md border border-neutral-700 bg-neutral-900 px-3 py-1.5 text-xs text-neutral-100 placeholder:text-neutral-600 focus:border-brand focus:outline-none"
       />
     </form>
   );
