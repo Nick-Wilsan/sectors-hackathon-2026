@@ -3,6 +3,7 @@ import { Link, useParams } from 'react-router-dom';
 import { getCompositeScore, getFramework, getPeerComparison } from '../api/client';
 import type { CompositeScoreResult, FrameworkResult, PeerComparisonResult } from '../api/types';
 import { ScoreBar } from '../components/ScoreBar';
+import { AskPanel } from '../components/AskPanel';
 
 const STATUS_LABEL: Record<CompositeScoreResult['status'], string> = {
   ok: 'Lengkap',
@@ -137,6 +138,8 @@ export function EmitenDetailPage() {
           </div>
         </section>
       )}
+
+      <AskPanel symbol={symbol} />
     </div>
   );
 }

@@ -27,6 +27,20 @@ export function getFramework(symbol: string): Promise<FrameworkResult> {
   return getJson(`/emiten/${encodeURIComponent(symbol)}/framework`);
 }
 
+export async function askAboutEmiten(symbol: string, question: string): Promise<string> {
+  const res = await fetch(`${BASE_URL}/emiten/${encodeURIComponent(symbol)}/tanya`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ question }),
+  });
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error(body.error ?? `Request failed: ${res.status}`);
+  }
+  const data = await res.json();
+  return data.answer;
+}
+
 export interface ScreenerQuery {
   subSector: string;
   sortBy?: string;
