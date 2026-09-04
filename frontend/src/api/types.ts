@@ -94,6 +94,25 @@ export interface CandlestickResult {
   matches: PatternMatch[];
 }
 
+export interface SimilarityMatch {
+  symbol: string;
+  companyName: string;
+  matchStartDate: string;
+  matchEndDate: string;
+  similarity: number;
+  outcomeWindowDays: number;
+  outcomeChangePercent: number | null;
+}
+
+export interface PatternSimilarityResult {
+  symbol: string;
+  status: 'ok' | 'inadequate';
+  windowDays: number;
+  outcomeWindowDays: number;
+  warning: string;
+  matches: SimilarityMatch[];
+}
+
 export interface IndicatorPoint {
   date: string;
   value: number;

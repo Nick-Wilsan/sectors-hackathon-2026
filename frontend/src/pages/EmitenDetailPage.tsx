@@ -5,6 +5,7 @@ import type { AnomalyResult, CandlestickResult, CompositeScoreResult, DailyBar, 
 import { ScoreBar } from '../components/ScoreBar';
 import { AskPanel } from '../components/AskPanel';
 import { PriceChart } from '../components/PriceChart';
+import { PatternSimilarityPanel } from '../components/PatternSimilarityPanel';
 
 const STATUS_LABEL: Record<CompositeScoreResult['status'], string> = {
   ok: 'Lengkap',
@@ -245,6 +246,8 @@ export function EmitenDetailPage() {
           </div>
         </section>
       )}
+
+      <PatternSimilarityPanel symbol={symbol} />
 
       <AskPanel symbol={symbol} />
     </div>
