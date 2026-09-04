@@ -1,56 +1,58 @@
 import { getCompanyReport } from '../data/companyReport.js';
-import { searchCompanies } from '../data/companies.js';
-import { slugify, mapWithConcurrency } from '../data/slug.js';
-import { computeCompositeScore, extractRatios, type ComponentRatios, type CompositeScoreResult } from './score.js';
+import { slugify } from '../data/slug.js';
+import { getScoredCompaniesInSubSector } from './screener.js';
+import { SCORE_COMPONENTS, type CompositeScoreResult } from './score.js';
 
 export interface CompositeScoreOptions {
-  /** Max peers to pull into the comparison group (bounds credit spend). */
+  /** Max companies to pull into the comparison group (bounds credit spend). */
   peerLimit?: number;
 }
 
-const DEFAULT_PEER_LIMIT = 50;
+// Empirically, IDX sub-sectors top out well under 100 companies (Banks, one
+// of the largest, has 48) — 150 leaves headroom while still bounding cost.
+const DEFAULT_GROUP_LIMIT = 150;
 
 /**
- * Orchestrates the data fetches F-01 needs: the target's own report, its
- * sub-sector's peer list, and each peer's ratios — then hands everything to
- * the pure `computeCompositeScore`. All underlying calls are cached (see
- * src/data/cache.ts), so recomputing the same sub-sector within 24h is free.
+ * Single source of truth for "what is this company's composite score."
+ * Delegates to getScoredCompaniesInSubSector (F-02's screener engine) so a
+ * company's score on its own detail page is always identical to its score
+ * in screener results — same peer group, same computation, no duplicated logic.
+ *
+ * PRD F-02 kriteria selesai: "hasil penyaringan konsisten dengan skor yang
+ * ditampilkan pada halaman detail emiten."
  */
 export async function getCompositeScoreForSymbol(
   symbol: string,
   options: CompositeScoreOptions = {},
 ): Promise<CompositeScoreResult> {
-  const peerLimit = options.peerLimit ?? DEFAULT_PEER_LIMIT;
+  const limit = options.peerLimit ?? DEFAULT_GROUP_LIMIT;
 
-  const targetReport = await getCompanyReport(symbol, ['overview', 'financials']);
-  const subSectorName = targetReport.overview?.sub_sector as string | undefined;
+  const overviewReport = await getCompanyReport(symbol, ['overview']);
+  const subSectorName = overviewReport.overview?.sub_sector as string | undefined;
 
-  if (!subSectorName) {
-    return computeCompositeScore(symbol, null, []);
-  }
+  const inadequate = (): CompositeScoreResult => ({
+    symbol: overviewReport.symbol,
+    status: 'inadequate',
+    score: null,
+    year: null,
+    components: [],
+    missingComponents: SCORE_COMPONENTS.map((c) => c.key),
+  });
+
+  if (!subSectorName) return inadequate();
 
   const subSectorSlug = slugify(subSectorName);
+  const { companies } = await getScoredCompaniesInSubSector(subSectorSlug, { limit });
 
-  const screenerResult = await searchCompanies({
-    where: `sub_sector = '${subSectorSlug}'`,
-    limit: peerLimit,
-  });
+  const match = companies.find((c) => c.symbol === overviewReport.symbol);
+  if (!match) {
+    // Sub-sector has more companies than `limit` and the target fell outside
+    // the fetched page. Rare given DEFAULT_GROUP_LIMIT; surface it explicitly
+    // rather than silently diverging from the screener's peer group.
+    throw new Error(
+      `${overviewReport.symbol} tidak ditemukan dalam ${companies.length} emiten sub-sektor "${subSectorSlug}" yang diambil (limit=${limit}). Naikkan peerLimit.`,
+    );
+  }
 
-  const peerSymbols = screenerResult.items.map((item) => item.symbol).filter((s) => s !== targetReport.symbol);
-
-  const peerRatios = await mapWithConcurrency(peerSymbols, 5, async (peerSymbol) => {
-    try {
-      const report = await getCompanyReport(peerSymbol, ['financials']);
-      return extractRatios(report.financials);
-    } catch {
-      // A single peer failing to fetch shouldn't block the whole computation —
-      // it's simply excluded from the comparison group.
-      return null;
-    }
-  });
-
-  const targetRatios: ComponentRatios | null = extractRatios(targetReport.financials);
-  const group: ComponentRatios[] = [targetRatios, ...peerRatios].filter((r): r is ComponentRatios => r !== null);
-
-  return computeCompositeScore(targetReport.symbol, targetRatios, group);
+  return match;
 }

@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { emitenRouter } from './emiten.js';
+import { screenerRouter } from './screener.js';
 
 export const router = Router();
 
@@ -8,4 +9,4 @@ router.get('/health', (_req, res) => {
 });
 
 router.use('/emiten', emitenRouter);
-// router.use('/screener', screenerRouter);
+router.use('/screener', screenerRouter);
