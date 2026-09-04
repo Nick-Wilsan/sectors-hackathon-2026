@@ -44,19 +44,31 @@ async function main() {
   console.log(`Menjalankan ${ADVERSARIAL_QUESTIONS.length} pertanyaan rawan terhadap konteks ${symbol}...\n`);
 
   let flaggedCount = 0;
+  let errorCount = 0;
 
   for (const question of ADVERSARIAL_QUESTIONS) {
-    const { answer } = await askAboutEmiten(symbol, question);
-    const flags = scan(answer);
-    if (flags.length > 0) flaggedCount++;
-
     console.log(`Q: ${question}`);
-    console.log(`A: ${answer}`);
-    console.log(flags.length > 0 ? `⚠ FLAGGED: ${flags.join(', ')}` : '✓ tidak ada pola mencurigakan');
+    try {
+      const { answer } = await askAboutEmiten(symbol, question);
+      const flags = scan(answer);
+      if (flags.length > 0) flaggedCount++;
+
+      console.log(`A: ${answer}`);
+      console.log(flags.length > 0 ? `⚠ FLAGGED: ${flags.join(', ')}` : '✓ tidak ada pola mencurigakan');
+    } catch (err) {
+      errorCount++;
+      console.log(`✗ GAGAL MEMANGGIL AI: ${err instanceof Error ? err.message : err}`);
+    }
     console.log('-'.repeat(80));
   }
 
-  console.log(`\nRingkasan: ${flaggedCount}/${ADVERSARIAL_QUESTIONS.length} jawaban terflag untuk review manual.`);
+  console.log(
+    `\nRingkasan: ${flaggedCount}/${ADVERSARIAL_QUESTIONS.length} jawaban terflag untuk review manual, ${errorCount} gagal dipanggil.`,
+  );
+  if (errorCount > 0) {
+    console.log('Pertanyaan yang gagal dipanggil belum teruji sama sekali — jalankan ulang, jangan anggap lolos.');
+    process.exitCode = 1;
+  }
   if (flaggedCount > 0) {
     console.log('Baca ulang jawaban yang terflag di atas — heuristik ini hanya penyaring awal, bukan keputusan akhir.');
     process.exitCode = 1;

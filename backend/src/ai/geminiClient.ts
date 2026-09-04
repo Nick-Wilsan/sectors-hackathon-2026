@@ -36,18 +36,29 @@ function getClient(): GoogleGenAI {
 // same-day RPD exhaustion will still fail after MAX_RETRIES since backoff
 // can't outlast a daily reset. Technical Spec bagian 11, decision 2026-09-04.
 const MODEL = 'gemini-3.5-flash-lite';
-const MAX_RETRIES = 3;
+const MAX_RETRIES = 4;
 const RETRY_BASE_DELAY_MS = 8000;
 // The @google/genai SDK call has no built-in timeout — a stalled connection
 // hangs the request forever with no error. Race it against this instead.
-const REQUEST_TIMEOUT_MS = 20000;
+// 30s (not shorter): observed live that a request can legitimately take
+// several minutes during a Gemini 503 "high demand" episode and still
+// succeed — too tight a timeout just converts slow success into failure.
+const REQUEST_TIMEOUT_MS = 30000;
 
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-function isRateLimitError(err: unknown): boolean {
-  return err instanceof Error && (err.message.includes('RESOURCE_EXHAUSTED') || err.message.includes('429'));
+/** Transient errors worth retrying: rate limits (429), server overload (503), and our own timeout. */
+function isRetryableError(err: unknown): boolean {
+  if (!(err instanceof Error)) return false;
+  return (
+    err.message.includes('RESOURCE_EXHAUSTED') ||
+    err.message.includes('429') ||
+    err.message.includes('UNAVAILABLE') ||
+    err.message.includes('503') ||
+    err.message.includes('timed out')
+  );
 }
 
 function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
@@ -82,7 +93,7 @@ export async function explainContext(question: string, context: unknown): Promis
       );
       return response.text ?? '';
     } catch (err) {
-      if (!isRateLimitError(err) || attempt >= MAX_RETRIES) throw err;
+      if (!isRetryableError(err) || attempt >= MAX_RETRIES) throw err;
       await sleep(RETRY_BASE_DELAY_MS * (attempt + 1));
     }
   }
