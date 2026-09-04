@@ -133,10 +133,19 @@ export interface MoverRow {
   latestCloseDate: string;
 }
 
+export interface MostTradedRow {
+  symbol: string;
+  companyName: string;
+  volume: number;
+  price: number;
+}
+
 export interface MarketOverview {
   ihsg: IndexPoint[];
   idxTotal: IdxTotalPoint[];
   movers: { gainers: MoverRow[]; losers: MoverRow[] };
+  mostTraded: MostTradedRow[];
+  indexChips: Record<string, IndexPoint[]>;
 }
 
 export interface SimilarityMatch {

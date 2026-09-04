@@ -71,7 +71,7 @@ function toMoverRow(r: RawMoverRow): MoverRow {
 }
 
 /** Today's (1d) top gainers/losers — 2 credits (1 per classification), cached 6h. */
-export async function getTopMoversToday(nStock = 5): Promise<TopMovers> {
+export async function getTopMoversToday(nStock = 8): Promise<TopMovers> {
   const raw = await sectorsGet<RawTopChangesResponse>('/v2/companies/top-changes/', {
     params: { classifications: 'top_gainers,top_losers', periods: '1d', n_stock: nStock },
     cacheTtlMs: 6 * 60 * 60 * 1000,
@@ -80,4 +80,44 @@ export async function getTopMoversToday(nStock = 5): Promise<TopMovers> {
     gainers: (raw.top_gainers['1d'] ?? []).map(toMoverRow),
     losers: (raw.top_losers['1d'] ?? []).map(toMoverRow),
   };
+}
+
+export interface MostTradedRow {
+  symbol: string;
+  companyName: string;
+  volume: number;
+  price: number;
+}
+
+interface RawMostTradedRow {
+  symbol: string;
+  company_name: string;
+  volume: number;
+  price: number;
+}
+
+/** Most actively traded stocks by volume, most recent day — 2 credits, cached 6h. */
+export async function getMostTradedToday(nStock = 8): Promise<MostTradedRow[]> {
+  const raw = await sectorsGet<Record<string, RawMostTradedRow[]>>('/v2/most-traded/', {
+    params: { n_stock: nStock },
+    cacheTtlMs: 6 * 60 * 60 * 1000,
+  });
+  const dates = Object.keys(raw).sort();
+  const latestDate = dates[dates.length - 1];
+  const rows = latestDate ? raw[latestDate] : [];
+  return rows.map((r) => ({ symbol: r.symbol, companyName: r.company_name, volume: r.volume, price: r.price }));
+}
+
+/** Multiple indices in one shot — 1 credit each, cached 6h. Powers the Sectors.app-style index chip row. */
+export async function getMultipleIndices(codes: string[]): Promise<Record<string, IndexPoint[]>> {
+  const entries = await Promise.all(
+    codes.map(async (code) => {
+      try {
+        return [code, await getIndexDaily(code)] as const;
+      } catch {
+        return [code, []] as const;
+      }
+    }),
+  );
+  return Object.fromEntries(entries);
 }

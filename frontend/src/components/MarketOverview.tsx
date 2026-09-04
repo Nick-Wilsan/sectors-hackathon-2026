@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { getMarketNews, getMarketOverview } from '../api/client';
-import type { MarketOverview as MarketOverviewData, MoverRow, NewsArticleFull } from '../api/types';
+import type { MarketOverview as MarketOverviewData, NewsArticleFull } from '../api/types';
 import { Sparkline } from './Sparkline';
 import { NewsFeed } from './NewsFeed';
 import { SymbolSearch } from './SymbolSearch';
+import { IndexChipRow } from './IndexChipRow';
+import { MoversWidget } from './MoversWidget';
 
 function formatIdr(value: number): string {
   if (value >= 1e12) return `${(value / 1e12).toFixed(2)}T`;
@@ -22,25 +24,14 @@ function ChangeTag({ value }: { value: number }) {
   );
 }
 
-function MoverList({ title, rows }: { title: string; rows: MoverRow[] }) {
-  return (
-    <div>
-      <div className="text-xs font-medium uppercase tracking-wide text-neutral-500">{title}</div>
-      <div className="mt-1.5 divide-y divide-neutral-800/70">
-        {rows.map((r) => (
-          <Link
-            key={r.symbol}
-            to={`/emiten/${r.symbol.replace('.JK', '')}`}
-            className="flex items-center justify-between py-1.5 text-xs hover:bg-neutral-800/50"
-          >
-            <span className="font-mono text-neutral-300">{r.symbol.replace('.JK', '')}</span>
-            <span className="font-mono tabular-nums text-neutral-500">{r.lastClosePrice.toLocaleString('id-ID')}</span>
-            <ChangeTag value={r.priceChange} />
-          </Link>
-        ))}
-      </div>
-    </div>
-  );
+/** % change between the latest point and the point `tradingDaysBack` earlier — all derived client-side from data already fetched, no new API calls. */
+function changeOverWindow(prices: number[], tradingDaysBack: number): number | null {
+  if (prices.length < 2) return null;
+  const lastIdx = prices.length - 1;
+  const startIdx = Math.max(0, lastIdx - tradingDaysBack);
+  if (startIdx === lastIdx) return null;
+  const start = prices[startIdx];
+  return start ? (prices[lastIdx] - start) / start : null;
 }
 
 export function MarketOverview() {
@@ -51,15 +42,16 @@ export function MarketOverview() {
     getMarketOverview()
       .then(setData)
       .catch(() => {});
-    getMarketNews(6)
+    getMarketNews(8)
       .then((r) => setNews(r.articles))
       .catch(() => {});
   }, []);
 
   const ihsgPrices = data?.ihsg.map((p) => p.price) ?? [];
   const ihsgLast = ihsgPrices[ihsgPrices.length - 1];
-  const ihsgPrev = ihsgPrices[ihsgPrices.length - 2];
-  const ihsgChange = ihsgPrev ? (ihsgLast - ihsgPrev) / ihsgPrev : 0;
+  const change1d = changeOverWindow(ihsgPrices, 1);
+  const change7d = changeOverWindow(ihsgPrices, 7);
+  const change30d = changeOverWindow(ihsgPrices, 30);
   const latestMcap = data?.idxTotal[data.idxTotal.length - 1]?.marketCap;
 
   return (
@@ -73,34 +65,43 @@ export function MarketOverview() {
       </div>
 
       <div className="grid grid-cols-1 gap-4 px-4 py-4 lg:grid-cols-3 sm:px-6">
-        {/* Left: IHSG hero + movers, spans 2 of 3 columns on large screens */}
-        <div className="space-y-4 lg:col-span-2">
+        {/* Left: IHSG hero + index chips + movers, spans 2 of 3 columns on large screens */}
+        <div className="space-y-3 lg:col-span-2">
           <div className="rounded-lg border border-neutral-800 bg-neutral-900 p-4">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-medium uppercase tracking-wide text-neutral-500">IHSG (1D)</span>
-              {data && <ChangeTag value={ihsgChange} />}
+              <span className="text-xs font-medium uppercase tracking-wide text-neutral-500">IHSG</span>
+              {change1d !== null && <ChangeTag value={change1d} />}
             </div>
             <div className="mt-1 flex items-end justify-between gap-4">
               <span className="font-mono text-3xl tabular-nums text-neutral-100">{ihsgLast?.toFixed(2) ?? '—'}</span>
-              {ihsgPrices.length > 1 && <Sparkline values={ihsgPrices} width={200} height={56} color={ihsgChange >= 0 ? '#10b981' : '#f43f5e'} />}
+              {ihsgPrices.length > 1 && <Sparkline values={ihsgPrices} width={200} height={56} color={(change1d ?? 0) >= 0 ? '#10b981' : '#f43f5e'} />}
             </div>
-            {latestMcap !== undefined && (
-              <div className="mt-2 text-xs text-neutral-500">
-                Kapitalisasi pasar total: <span className="font-mono tabular-nums text-neutral-400">Rp{formatIdr(latestMcap)}</span>
+
+            <div className="mt-3 flex gap-6 border-t border-neutral-800 pt-3 text-xs">
+              <div>
+                <div className="text-neutral-500">1 Hari</div>
+                {change1d !== null ? <ChangeTag value={change1d} /> : <span className="text-neutral-600">—</span>}
               </div>
-            )}
+              <div>
+                <div className="text-neutral-500">7 Hari</div>
+                {change7d !== null ? <ChangeTag value={change7d} /> : <span className="text-neutral-600">—</span>}
+              </div>
+              <div>
+                <div className="text-neutral-500">30 Hari</div>
+                {change30d !== null ? <ChangeTag value={change30d} /> : <span className="text-neutral-600">—</span>}
+              </div>
+              {latestMcap !== undefined && (
+                <div className="ml-auto text-right">
+                  <div className="text-neutral-500">Kap. Pasar Total</div>
+                  <div className="font-mono tabular-nums text-neutral-300">Rp{formatIdr(latestMcap)}</div>
+                </div>
+              )}
+            </div>
           </div>
 
-          {data && (
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <div className="rounded-lg border border-neutral-800 bg-neutral-900 p-3">
-                <MoverList title="Top Gainers (1D)" rows={data.movers.gainers} />
-              </div>
-              <div className="rounded-lg border border-neutral-800 bg-neutral-900 p-3">
-                <MoverList title="Top Losers (1D)" rows={data.movers.losers} />
-              </div>
-            </div>
-          )}
+          {data && <IndexChipRow indexChips={data.indexChips} />}
+
+          {data && <MoversWidget gainers={data.movers.gainers} losers={data.movers.losers} mostTraded={data.mostTraded} />}
         </div>
 
         {/* Right: news feed */}
