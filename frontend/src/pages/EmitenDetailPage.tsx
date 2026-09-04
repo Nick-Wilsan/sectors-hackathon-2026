@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { getCompositeScore, getPeerComparison } from '../api/client';
-import type { CompositeScoreResult, PeerComparisonResult } from '../api/types';
+import { getCompositeScore, getFramework, getPeerComparison } from '../api/client';
+import type { CompositeScoreResult, FrameworkResult, PeerComparisonResult } from '../api/types';
 import { ScoreBar } from '../components/ScoreBar';
 
 const STATUS_LABEL: Record<CompositeScoreResult['status'], string> = {
@@ -14,16 +14,18 @@ export function EmitenDetailPage() {
   const { symbol = '' } = useParams();
   const [score, setScore] = useState<CompositeScoreResult | null>(null);
   const [peer, setPeer] = useState<PeerComparisonResult | null>(null);
+  const [framework, setFramework] = useState<FrameworkResult | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     setLoading(true);
     setError(null);
-    Promise.all([getCompositeScore(symbol), getPeerComparison(symbol)])
-      .then(([scoreResult, peerResult]) => {
+    Promise.all([getCompositeScore(symbol), getPeerComparison(symbol), getFramework(symbol)])
+      .then(([scoreResult, peerResult, frameworkResult]) => {
         setScore(scoreResult);
         setPeer(peerResult);
+        setFramework(frameworkResult);
       })
       .catch((err) => setError(err instanceof Error ? err.message : 'Gagal memuat data emiten'))
       .finally(() => setLoading(false));
@@ -70,6 +72,40 @@ export function EmitenDetailPage() {
               <ScoreBar key={c.key} label={c.label} value={c.percentile} />
             ))}
           </div>
+        </section>
+      )}
+
+      {framework && (
+        <section className="mt-10">
+          <h2 className="text-sm font-medium text-neutral-300">{framework.frameworkName}</h2>
+          <p className="mt-1 text-xs text-neutral-500">{framework.frameworkDescription}</p>
+
+          {framework.status === 'inadequate' ? (
+            <p className="mt-3 rounded-md border border-amber-900 bg-amber-950/50 px-4 py-3 text-sm text-amber-300">
+              Data tidak memadai untuk klasifikasi framework ini.
+            </p>
+          ) : (
+            <>
+              <p className="mt-3 text-sm font-medium text-neutral-200">{framework.classification}</p>
+              <div className="mt-3 space-y-2">
+                {framework.criteria.map((c) => (
+                  <div key={c.key} className="flex items-start gap-3 text-sm">
+                    <span
+                      className={`mt-0.5 shrink-0 ${
+                        c.met === null ? 'text-neutral-600' : c.met ? 'text-emerald-500' : 'text-neutral-500'
+                      }`}
+                    >
+                      {c.met === null ? '—' : c.met ? '✓' : '✗'}
+                    </span>
+                    <div>
+                      <div className="text-neutral-300">{c.label}</div>
+                      <div className="text-xs text-neutral-500">{c.detail}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
         </section>
       )}
 

@@ -1,6 +1,8 @@
 import { Router } from 'express';
 import { getCompositeScoreForSymbol } from '../analysis/scoreService.js';
 import { getPeerComparison } from '../analysis/peerComparison.js';
+import { evaluatePiotroskiAdapted } from '../analysis/framework.js';
+import { getCompanyReport } from '../data/companyReport.js';
 
 export const emitenRouter = Router();
 
@@ -10,6 +12,18 @@ emitenRouter.get('/:symbol/skor', async (req, res) => {
 
   try {
     const result = await getCompositeScoreForSymbol(symbol, { peerLimit });
+    res.json(result);
+  } catch (err) {
+    res.status(502).json({ error: err instanceof Error ? err.message : 'Unknown error' });
+  }
+});
+
+emitenRouter.get('/:symbol/framework', async (req, res) => {
+  const { symbol } = req.params;
+
+  try {
+    const report = await getCompanyReport(symbol, ['financials']);
+    const result = evaluatePiotroskiAdapted(report.symbol, report.financials);
     res.json(result);
   } catch (err) {
     res.status(502).json({ error: err instanceof Error ? err.message : 'Unknown error' });

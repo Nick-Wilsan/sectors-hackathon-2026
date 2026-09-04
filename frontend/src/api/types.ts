@@ -59,3 +59,23 @@ export interface SubsectorOption {
   subsector: string;
   label: string;
 }
+
+export interface FrameworkCriterion {
+  key: string;
+  label: string;
+  met: boolean | null;
+  detail: string;
+}
+
+export interface FrameworkResult {
+  symbol: string;
+  frameworkName: string;
+  frameworkDescription: string;
+  year: string | null;
+  priorYear: string | null;
+  criteria: FrameworkCriterion[];
+  pointsMet: number;
+  pointsApplicable: number;
+  classification: string;
+  status: 'ok' | 'inadequate';
+}
