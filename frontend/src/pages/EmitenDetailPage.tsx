@@ -126,6 +126,12 @@ export function EmitenDetailPage() {
             Persentil terhadap {score.components[0].groupSize} emiten sub-sektor yang sama. Angka lebih tinggi = lebih baik
             (untuk DER, persentil sudah dibalik).
           </p>
+          {!score.components[0].groupSizeAdequate && (
+            <p className="mt-2 rounded-md border border-amber-900 bg-amber-950/40 px-3 py-2 text-xs text-amber-200">
+              Kelompok pembanding hanya berisi {score.components[0].groupSize} emiten — terlalu sedikit untuk persentil
+              yang bermakna. Angka di bawah ini sebaiknya tidak dijadikan acuan utama.
+            </p>
+          )}
           <div className="mt-3 space-y-3">
             {score.components.map((c) => (
               <ScoreBar key={c.key} label={c.label} value={c.percentile} />

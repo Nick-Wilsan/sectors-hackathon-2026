@@ -81,6 +81,13 @@ export function ScreenerPage() {
               Kelompok pembanding: {result.groupSize} emiten sub-sektor "{subSector}". Menampilkan {result.ranked.length}{' '}
               emiten dengan skor{result.dataTidakMemadai.length > 0 && `, ${result.dataTidakMemadai.length} data tidak memadai disembunyikan`}.
             </p>
+            {/* Mirrors backend's MIN_MEANINGFUL_GROUP_SIZE (percentile.ts) */}
+            {result.groupSize < 5 && (
+              <p className="mt-2 rounded-md border border-amber-900 bg-amber-950/40 px-3 py-2 text-xs text-amber-200">
+                Sub-sektor ini hanya berisi {result.groupSize} emiten — terlalu sedikit untuk perbandingan persentil yang
+                bermakna. Skor di bawah ini sebaiknya tidak dijadikan acuan utama.
+              </p>
+            )}
 
             <div className="mt-2 overflow-hidden rounded-lg border border-neutral-800">
               <div className="flex items-center gap-3 border-b border-neutral-800 bg-neutral-900 px-3 py-1.5 text-[11px] font-medium uppercase tracking-wide text-neutral-500">
