@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { getAnomaly, getCandlestickPatterns, getCompositeScore, getDailyPrices, getFramework, getPeerComparison } from '../api/client';
-import type { AnomalyResult, CandlestickResult, CompositeScoreResult, DailyBar, FrameworkResult, PeerComparisonResult } from '../api/types';
+import { getAnomaly, getCandlestickPatterns, getCompositeScore, getDailyPrices, getFramework, getIndicators, getPeerComparison } from '../api/client';
+import type { AnomalyResult, CandlestickResult, CompositeScoreResult, DailyBar, FrameworkResult, IndicatorResult, PeerComparisonResult } from '../api/types';
 import { ScoreBar } from '../components/ScoreBar';
 import { AskPanel } from '../components/AskPanel';
 import { PriceChart } from '../components/PriceChart';
@@ -20,6 +20,7 @@ export function EmitenDetailPage() {
   const [anomaly, setAnomaly] = useState<AnomalyResult | null>(null);
   const [bars, setBars] = useState<DailyBar[]>([]);
   const [patterns, setPatterns] = useState<CandlestickResult | null>(null);
+  const [indicators, setIndicators] = useState<IndicatorResult | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -33,14 +34,16 @@ export function EmitenDetailPage() {
       getAnomaly(symbol),
       getDailyPrices(symbol),
       getCandlestickPatterns(symbol),
+      getIndicators(symbol),
     ])
-      .then(([scoreResult, peerResult, frameworkResult, anomalyResult, priceResult, patternResult]) => {
+      .then(([scoreResult, peerResult, frameworkResult, anomalyResult, priceResult, patternResult, indicatorResult]) => {
         setScore(scoreResult);
         setPeer(peerResult);
         setFramework(frameworkResult);
         setAnomaly(anomalyResult);
         setBars(priceResult.bars);
         setPatterns(patternResult);
+        setIndicators(indicatorResult);
       })
       .catch((err) => setError(err instanceof Error ? err.message : 'Gagal memuat data emiten'))
       .finally(() => setLoading(false));
@@ -82,8 +85,19 @@ export function EmitenDetailPage() {
             90 hari terakhir. {patterns && patterns.matches.length > 0 && `${patterns.matches.length} penanda pola candlestick ditemukan.`}
           </p>
           <div className="mt-3 rounded-lg border border-neutral-800 bg-neutral-900 p-2">
-            <PriceChart bars={bars} patterns={patterns?.matches} />
+            <PriceChart
+              bars={bars}
+              patterns={patterns?.matches}
+              movingAverages={indicators?.movingAverages}
+              rsi={indicators?.rsi}
+            />
           </div>
+          {indicators && indicators.status === 'ok' && (
+            <div className="mt-3 space-y-1 text-xs text-neutral-500">
+              <p>{indicators.explanation.movingAverage}</p>
+              <p>{indicators.explanation.rsi}</p>
+            </div>
+          )}
           {patterns && patterns.matches.length > 0 && (
             <>
               <p className="mt-3 text-xs text-neutral-500">{patterns.reliabilityWarning}</p>

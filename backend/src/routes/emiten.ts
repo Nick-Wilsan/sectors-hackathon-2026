@@ -6,6 +6,7 @@ import { getCompanyReport } from '../data/companyReport.js';
 import { askAboutEmiten } from '../ai/askService.js';
 import { getAnomalyWithContext } from '../analysis/anomalyService.js';
 import { getCandlestickPatterns } from '../analysis/candlestickService.js';
+import { getIndicators } from '../analysis/indicatorsService.js';
 import { getDailySeries } from '../data/transactions.js';
 import { daysAgoIso, todayIso } from '../data/dateRange.js';
 
@@ -63,6 +64,17 @@ emitenRouter.get('/:symbol/pola', async (req, res) => {
 
   try {
     const result = await getCandlestickPatterns(symbol);
+    res.json(result);
+  } catch (err) {
+    res.status(502).json({ error: err instanceof Error ? err.message : 'Unknown error' });
+  }
+});
+
+emitenRouter.get('/:symbol/indikator', async (req, res) => {
+  const { symbol } = req.params;
+
+  try {
+    const result = await getIndicators(symbol);
     res.json(result);
   } catch (err) {
     res.status(502).json({ error: err instanceof Error ? err.message : 'Unknown error' });

@@ -94,6 +94,30 @@ export interface CandlestickResult {
   matches: PatternMatch[];
 }
 
+export interface IndicatorPoint {
+  date: string;
+  value: number;
+}
+
+export interface MovingAverageSeries {
+  period: number;
+  label: string;
+  points: IndicatorPoint[];
+}
+
+export interface RsiSeries {
+  period: number;
+  points: IndicatorPoint[];
+}
+
+export interface IndicatorResult {
+  symbol: string;
+  status: 'ok' | 'inadequate';
+  movingAverages: MovingAverageSeries[];
+  rsi: RsiSeries | null;
+  explanation: { movingAverage: string; rsi: string };
+}
+
 export interface AnomalyMetric {
   key: 'volume' | 'priceChange';
   label: string;

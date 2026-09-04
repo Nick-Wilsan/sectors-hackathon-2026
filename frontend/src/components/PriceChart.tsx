@@ -1,11 +1,15 @@
 import { useEffect, useRef } from 'react';
-import { createChart, CandlestickSeries, createSeriesMarkers, type IChartApi, type ISeriesApi, type SeriesMarker, type Time } from 'lightweight-charts';
-import type { DailyBar, PatternMatch } from '../api/types';
+import { createChart, CandlestickSeries, LineSeries, createSeriesMarkers, type IChartApi, type ISeriesApi, type SeriesMarker, type Time } from 'lightweight-charts';
+import type { DailyBar, MovingAverageSeries, PatternMatch, RsiSeries } from '../api/types';
 
 interface PriceChartProps {
   bars: DailyBar[];
   patterns?: PatternMatch[];
+  movingAverages?: MovingAverageSeries[];
+  rsi?: RsiSeries | null;
 }
+
+const MA_COLORS = ['#f59e0b', '#38bdf8', '#a78bfa'];
 
 const CATEGORY_STYLE = {
   'reversal-bullish': { color: '#10b981', shape: 'arrowUp' as const, position: 'belowBar' as const },
@@ -40,10 +44,12 @@ function toMarkers(patterns: PatternMatch[]): SeriesMarker<Time>[] {
     });
 }
 
-export function PriceChart({ bars, patterns = [] }: PriceChartProps) {
+export function PriceChart({ bars, patterns = [], movingAverages = [], rsi = null }: PriceChartProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<IChartApi | null>(null);
   const seriesRef = useRef<ISeriesApi<'Candlestick'> | null>(null);
+  const maSeriesRef = useRef<ISeriesApi<'Line'>[]>([]);
+  const rsiSeriesRef = useRef<ISeriesApi<'Line'> | null>(null);
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -51,7 +57,7 @@ export function PriceChart({ bars, patterns = [] }: PriceChartProps) {
     const chart = createChart(containerRef.current, {
       layout: { background: { color: 'transparent' }, textColor: '#a3a3a3' },
       grid: { vertLines: { color: '#262626' }, horzLines: { color: '#262626' } },
-      height: 360,
+      height: 480,
       width: containerRef.current.clientWidth,
       timeScale: { borderColor: '#262626' },
       rightPriceScale: { borderColor: '#262626' },
@@ -67,6 +73,11 @@ export function PriceChart({ bars, patterns = [] }: PriceChartProps) {
     });
     seriesRef.current = series;
 
+    // RSI lives in its own pane (index 1) below the price chart, per its 0-100 scale.
+    const rsiSeries = chart.addSeries(LineSeries, { color: '#38bdf8', lineWidth: 1 }, 1);
+    rsiSeriesRef.current = rsiSeries;
+    chart.panes()[1]?.setHeight(120);
+
     const resizeObserver = new ResizeObserver((entries) => {
       const width = entries[0]?.contentRect.width;
       if (width) chart.applyOptions({ width });
@@ -78,8 +89,10 @@ export function PriceChart({ bars, patterns = [] }: PriceChartProps) {
       chart.remove();
       chartRef.current = null;
       seriesRef.current = null;
+      maSeriesRef.current = [];
+      rsiSeriesRef.current = null;
     };
-    // Chart instance is created once; data updates happen in the effect below.
+    // Chart/pane structure is created once; data updates happen in the effects below.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -101,6 +114,24 @@ export function PriceChart({ bars, patterns = [] }: PriceChartProps) {
     createSeriesMarkers(series, toMarkers(patterns));
     chartRef.current?.timeScale().fitContent();
   }, [bars, patterns]);
+
+  useEffect(() => {
+    const chart = chartRef.current;
+    if (!chart) return;
+
+    // Rebuild MA line series to match however many periods the API returned.
+    for (const s of maSeriesRef.current) chart.removeSeries(s);
+    maSeriesRef.current = movingAverages.map((ma, i) =>
+      chart.addSeries(LineSeries, { color: MA_COLORS[i % MA_COLORS.length], lineWidth: 2, title: ma.label }),
+    );
+    movingAverages.forEach((ma, i) => {
+      maSeriesRef.current[i].setData(ma.points.map((p) => ({ time: p.date as Time, value: p.value })));
+    });
+  }, [movingAverages]);
+
+  useEffect(() => {
+    rsiSeriesRef.current?.setData((rsi?.points ?? []).map((p) => ({ time: p.date as Time, value: p.value })));
+  }, [rsi]);
 
   return <div ref={containerRef} className="w-full" />;
 }

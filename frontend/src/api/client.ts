@@ -1,4 +1,4 @@
-import type { AnomalyResult, CandlestickResult, CompositeScoreResult, DailySeries, FrameworkResult, PeerComparisonResult, ScreenerResult, SubsectorOption } from './types';
+import type { AnomalyResult, CandlestickResult, CompositeScoreResult, DailySeries, FrameworkResult, IndicatorResult, PeerComparisonResult, ScreenerResult, SubsectorOption } from './types';
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:4000/api';
 
@@ -37,6 +37,10 @@ export function getDailyPrices(symbol: string): Promise<DailySeries> {
 
 export function getCandlestickPatterns(symbol: string): Promise<CandlestickResult> {
   return getJson(`/emiten/${encodeURIComponent(symbol)}/pola`);
+}
+
+export function getIndicators(symbol: string): Promise<IndicatorResult> {
+  return getJson(`/emiten/${encodeURIComponent(symbol)}/indikator`);
 }
 
 export async function askAboutEmiten(symbol: string, question: string): Promise<string> {
