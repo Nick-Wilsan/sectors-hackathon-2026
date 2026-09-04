@@ -11,9 +11,11 @@ createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <BrowserRouter>
       <Routes>
+        {/* Fullscreen workstation page — provides its own header/footer chrome, not App's. */}
+        <Route path="emiten/:symbol" element={<EmitenDetailPage />} />
+
         <Route element={<App />}>
           <Route index element={<ScreenerPage />} />
-          <Route path="emiten/:symbol" element={<EmitenDetailPage />} />
           <Route path="berita" element={<NewsPage />} />
         </Route>
       </Routes>

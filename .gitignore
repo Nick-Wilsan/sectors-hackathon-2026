@@ -25,3 +25,7 @@ Thumbs.db
 
 # Office lock files
 ~$*
+
+# Local design-reference screenshots of third-party sites — never publish
+# these to the public repo (copyright/redistribution risk).
+Img Referensi/
