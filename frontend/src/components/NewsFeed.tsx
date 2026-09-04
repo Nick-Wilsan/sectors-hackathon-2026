@@ -3,6 +3,8 @@ import type { NewsArticleFull } from '../api/types';
 interface NewsFeedProps {
   articles: NewsArticleFull[];
   compact?: boolean;
+  /** Render as a multi-column card grid instead of a single vertical list — fills a wide row properly. */
+  grid?: boolean;
 }
 
 function timeAgo(timestamp: string): string {
@@ -14,16 +16,16 @@ function timeAgo(timestamp: string): string {
   return `${days} hari lalu`;
 }
 
-export function NewsFeed({ articles, compact = false }: NewsFeedProps) {
+export function NewsFeed({ articles, compact = false, grid = false }: NewsFeedProps) {
   return (
-    <div className="divide-y divide-neutral-800/70">
+    <div className={grid ? 'grid grid-cols-1 gap-3 sm:grid-cols-3' : 'divide-y divide-neutral-800/70'}>
       {articles.map((a, i) => (
         <a
           key={i}
           href={a.source}
           target="_blank"
           rel="noreferrer"
-          className="flex gap-3 py-2.5 hover:bg-neutral-800/40"
+          className={`flex gap-3 hover:bg-neutral-800/40 ${grid ? 'rounded-md border border-neutral-800 p-2' : 'py-2.5'}`}
         >
           {a.thumbnail && !compact && (
             <img src={a.thumbnail} alt="" className="h-14 w-20 shrink-0 rounded object-cover" loading="lazy" />

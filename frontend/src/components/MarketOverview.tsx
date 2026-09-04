@@ -42,7 +42,7 @@ export function MarketOverview() {
     getMarketOverview()
       .then(setData)
       .catch(() => {});
-    getMarketNews(8)
+    getMarketNews(9)
       .then((r) => setNews(r.articles))
       .catch(() => {});
   }, []);
@@ -57,54 +57,60 @@ export function MarketOverview() {
   return (
     <div className="border-b border-neutral-800 bg-neutral-950">
       {/* Hero search — the primary entry point, matching a search-first market homepage. */}
-      <div className="flex justify-center border-b border-neutral-900 px-4 py-6 sm:px-6">
+      <div className="flex justify-center border-b border-neutral-900 px-4 py-4 sm:px-6">
         <div className="w-full max-w-xl text-center">
-          <p className="mb-3 text-xs uppercase tracking-widest text-neutral-500">Cari emiten IDX</p>
+          <p className="mb-2 text-xs uppercase tracking-widest text-neutral-500">Cari emiten IDX</p>
           <SymbolSearch size="lg" />
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 px-4 py-4 lg:grid-cols-3 sm:px-6">
-        {/* Left: IHSG hero + index chips + movers, spans 2 of 3 columns on large screens */}
-        <div className="space-y-3 lg:col-span-2">
-          <div className="rounded-lg border border-neutral-800 bg-neutral-900 p-4">
-            <div className="flex items-center justify-between">
+      <div className="space-y-3 px-4 py-3 sm:px-6">
+        {/* IHSG hero + index chips, one wide row so the card's full width carries content. */}
+        <div className="flex flex-col gap-4 rounded-lg border border-neutral-800 bg-neutral-900 p-4 lg:flex-row lg:items-center">
+          <div className="lg:w-64 lg:shrink-0">
+            <div className="flex items-center justify-between lg:block">
               <span className="text-xs font-medium uppercase tracking-wide text-neutral-500">IHSG</span>
               {change1d !== null && <ChangeTag value={change1d} />}
             </div>
-            <div className="mt-1 flex items-end justify-between gap-4">
-              <span className="font-mono text-3xl tabular-nums text-neutral-100">{ihsgLast?.toFixed(2) ?? '—'}</span>
-              {ihsgPrices.length > 1 && <Sparkline values={ihsgPrices} width={200} height={56} color={(change1d ?? 0) >= 0 ? '#10b981' : '#f43f5e'} />}
-            </div>
-
-            <div className="mt-3 flex gap-6 border-t border-neutral-800 pt-3 text-xs">
-              <div>
-                <div className="text-neutral-500">1 Hari</div>
-                {change1d !== null ? <ChangeTag value={change1d} /> : <span className="text-neutral-600">—</span>}
-              </div>
-              <div>
-                <div className="text-neutral-500">7 Hari</div>
-                {change7d !== null ? <ChangeTag value={change7d} /> : <span className="text-neutral-600">—</span>}
-              </div>
-              <div>
-                <div className="text-neutral-500">30 Hari</div>
-                {change30d !== null ? <ChangeTag value={change30d} /> : <span className="text-neutral-600">—</span>}
-              </div>
-              {latestMcap !== undefined && (
-                <div className="ml-auto text-right">
-                  <div className="text-neutral-500">Kap. Pasar Total</div>
-                  <div className="font-mono tabular-nums text-neutral-300">Rp{formatIdr(latestMcap)}</div>
-                </div>
+            <div className="mt-1 flex items-end gap-3">
+              <span className="font-mono text-2xl tabular-nums text-neutral-100">{ihsgLast?.toFixed(2) ?? '—'}</span>
+              {ihsgPrices.length > 1 && (
+                <Sparkline values={ihsgPrices} width={100} height={36} color={(change1d ?? 0) >= 0 ? '#10b981' : '#f43f5e'} />
               )}
             </div>
           </div>
 
-          {data && <IndexChipRow indexChips={data.indexChips} />}
+          <div className="flex flex-wrap gap-6 border-t border-neutral-800 pt-3 text-xs lg:border-l lg:border-t-0 lg:pl-4 lg:pt-0">
+            <div>
+              <div className="text-neutral-500">1 Hari</div>
+              {change1d !== null ? <ChangeTag value={change1d} /> : <span className="text-neutral-600">—</span>}
+            </div>
+            <div>
+              <div className="text-neutral-500">7 Hari</div>
+              {change7d !== null ? <ChangeTag value={change7d} /> : <span className="text-neutral-600">—</span>}
+            </div>
+            <div>
+              <div className="text-neutral-500">30 Hari</div>
+              {change30d !== null ? <ChangeTag value={change30d} /> : <span className="text-neutral-600">—</span>}
+            </div>
+            {latestMcap !== undefined && (
+              <div>
+                <div className="text-neutral-500">Kap. Pasar Total</div>
+                <div className="font-mono tabular-nums text-neutral-300">Rp{formatIdr(latestMcap)}</div>
+              </div>
+            )}
+          </div>
 
-          {data && <MoversWidget gainers={data.movers.gainers} losers={data.movers.losers} mostTraded={data.mostTraded} />}
+          {data && (
+            <div className="lg:ml-auto">
+              <IndexChipRow indexChips={data.indexChips} />
+            </div>
+          )}
         </div>
 
-        {/* Right: news feed */}
+        {data && <MoversWidget gainers={data.movers.gainers} losers={data.movers.losers} mostTraded={data.mostTraded} />}
+
+        {/* News as a card grid — fills the full row width instead of a narrow sidebar list. */}
         <div className="rounded-lg border border-neutral-800 bg-neutral-900 p-3">
           <div className="flex items-center justify-between">
             <span className="text-xs font-medium uppercase tracking-wide text-neutral-500">Berita Pasar</span>
@@ -112,8 +118,8 @@ export function MarketOverview() {
               Lihat semua
             </Link>
           </div>
-          <div className="mt-1">
-            <NewsFeed articles={news} compact />
+          <div className="mt-2">
+            <NewsFeed articles={news} compact grid />
           </div>
         </div>
       </div>
