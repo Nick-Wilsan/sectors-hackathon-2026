@@ -105,7 +105,10 @@ export function PriceChart({
       grid: { vertLines: { color: '#262626' }, horzLines: { color: '#262626' } },
       height: containerRef.current.clientHeight || 480,
       width: containerRef.current.clientWidth,
-      timeScale: { borderColor: '#262626' },
+      // rightOffset reserves a few empty bars after the last candle so the
+      // MA/RSI last-value price labels have room to sit without visually
+      // overlapping (and appearing to clip) the tail end of those lines.
+      timeScale: { borderColor: '#262626', rightOffset: 4 },
       rightPriceScale: { borderColor: '#262626' },
     });
     chartRef.current = chart;

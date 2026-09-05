@@ -55,7 +55,7 @@ export function SymbolSearch({ size = 'sm' }: SymbolSearchProps) {
   const isLg = size === 'lg';
 
   return (
-    <div ref={containerRef} className={`relative ${isLg ? 'w-full max-w-xl' : 'w-40 sm:w-56'}`}>
+    <div ref={containerRef} className={`relative w-full ${isLg ? 'max-w-xl' : ''}`}>
       <input
         value={query}
         onChange={(e) => {

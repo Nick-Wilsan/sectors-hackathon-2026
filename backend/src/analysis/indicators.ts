@@ -6,12 +6,12 @@ import type { DailyBar } from '../data/types.js';
 // menambah pemanggilan data baru" — computed from the same 90-day close
 // series F-06/F-07 already fetch, no new Sectors API calls.
 
-const MA_PERIODS = [10, 20];
+const MA_PERIODS = [20, 50];
 const RSI_PERIOD = 14;
 
 export const INDICATOR_EXPLANATIONS = {
   movingAverage:
-    'Rata-rata bergerak (MA) meratakan harga penutupan pada sejumlah hari terakhir menjadi satu garis, sehingga arah tren lebih mudah dilihat tanpa terganggu naik-turun harga harian. Garis MA10 mengikuti harga lebih cepat, MA20 lebih lambat dan lebih halus.',
+    'Rata-rata bergerak (MA) meratakan harga penutupan pada sejumlah hari terakhir menjadi satu garis, sehingga arah tren lebih mudah dilihat tanpa terganggu naik-turun harga harian. Garis MA20 mengikuti harga lebih cepat, MA50 lebih lambat dan lebih halus.',
   rsi:
     'Indeks Kekuatan Relatif (RSI) membandingkan rata-rata kenaikan dan rata-rata penurunan harga dalam 14 hari terakhir, pada skala 0 sampai 100. Angka di atas 70 menunjukkan kenaikan harga yang tergolong cepat dibanding kebiasaannya, angka di bawah 30 menunjukkan penurunan yang tergolong cepat. Ini deskripsi kondisi statistik semata, bukan sinyal untuk membeli atau menjual.',
 };

@@ -1,4 +1,4 @@
-import type { AnomalyResult, CandlestickResult, CompanyLite, CompositeScoreResult, DailySeries, FrameworkResult, IndicatorResult, MarketOverview, NewsResult, PatternSimilarityResult, PeerComparisonResult, ScreenerResult, SubsectorOption } from './types';
+import type { AnomalyResult, CandlestickResult, CompanyLite, CompositeScoreResult, DailySeries, FrameworkResult, FundamentalExtras, IndicatorResult, MarketOverview, MarketSorotan, NewsResult, PatternSimilarityResult, PeerComparisonResult, ScreenerResult, SubsectorOption } from './types';
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:4000/api';
 
@@ -19,6 +19,10 @@ export function getMarketOverview(): Promise<MarketOverview> {
   return getJson('/market/overview');
 }
 
+export function getMarketSorotan(): Promise<MarketSorotan> {
+  return getJson('/market/sorotan');
+}
+
 export function getAllCompanies(): Promise<CompanyLite[]> {
   return getJson('/companies');
 }
@@ -33,8 +37,13 @@ export function getCompositeScore(symbol: string): Promise<CompositeScoreResult>
   return getJson(`/emiten/${encodeURIComponent(symbol)}/skor`);
 }
 
-export function getPeerComparison(symbol: string): Promise<PeerComparisonResult> {
-  return getJson(`/emiten/${encodeURIComponent(symbol)}/peer`);
+export function getPeerComparison(symbol: string, limit?: number): Promise<PeerComparisonResult> {
+  const query = limit !== undefined ? `?limit=${limit}` : '';
+  return getJson(`/emiten/${encodeURIComponent(symbol)}/peer${query}`);
+}
+
+export function getFundamentalExtras(symbol: string): Promise<FundamentalExtras> {
+  return getJson(`/emiten/${encodeURIComponent(symbol)}/tambahan`);
 }
 
 export function getFramework(symbol: string): Promise<FrameworkResult> {

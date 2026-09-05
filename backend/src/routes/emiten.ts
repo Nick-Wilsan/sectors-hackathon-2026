@@ -8,6 +8,7 @@ import { getAnomalyWithContext } from '../analysis/anomalyService.js';
 import { getCandlestickPatterns } from '../analysis/candlestickService.js';
 import { getIndicators } from '../analysis/indicatorsService.js';
 import { getPatternSimilarity } from '../analysis/patternSimilarityService.js';
+import { getFundamentalExtras } from '../analysis/fundamentalExtras.js';
 import { getDailySeries } from '../data/transactions.js';
 import { daysAgoIso, todayIso } from '../data/dateRange.js';
 
@@ -106,6 +107,17 @@ emitenRouter.post('/:symbol/tanya', async (req, res) => {
   try {
     const result = await askAboutEmiten(symbol, question);
     res.json({ answer: result.answer });
+  } catch (err) {
+    res.status(502).json({ error: err instanceof Error ? err.message : 'Unknown error' });
+  }
+});
+
+emitenRouter.get('/:symbol/tambahan', async (req, res) => {
+  const { symbol } = req.params;
+
+  try {
+    const result = await getFundamentalExtras(symbol);
+    res.json(result);
   } catch (err) {
     res.status(502).json({ error: err instanceof Error ? err.message : 'Unknown error' });
   }

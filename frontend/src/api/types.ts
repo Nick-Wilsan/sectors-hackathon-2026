@@ -140,12 +140,19 @@ export interface MostTradedRow {
   price: number;
 }
 
+export interface TickerTapeRow {
+  symbol: string;
+  price: number | null;
+  change: number | null;
+}
+
 export interface MarketOverview {
   ihsg: IndexPoint[];
   idxTotal: IdxTotalPoint[];
   movers: { gainers: MoverRow[]; losers: MoverRow[] };
   mostTraded: MostTradedRow[];
   indexChips: Record<string, IndexPoint[]>;
+  tickerTape: TickerTapeRow[];
 }
 
 export interface SimilarityMatch {
@@ -225,6 +232,51 @@ export interface FrameworkCriterion {
   label: string;
   met: boolean | null;
   detail: string;
+}
+
+export interface SectorSpotlightCompanyRef {
+  symbol: string;
+  companyName: string;
+  score: number;
+}
+
+export interface SectorSpotlightCard {
+  sector: string;
+  subsector: string;
+  label: string;
+  groupSize: number;
+  scoredCount: number;
+  healthyCount: number;
+  criticalCount: number;
+  topCompany: SectorSpotlightCompanyRef | null;
+  laggardCompany: SectorSpotlightCompanyRef | null;
+}
+
+export type ValuationRelativeToPeers = 'below-average' | 'in-line' | 'above-average' | 'unknown';
+
+export interface ValuationSpotlightRow {
+  symbol: string;
+  companyName: string;
+  year: number | null;
+  pe: number | null;
+  pePeerAvg: number | null;
+  relativeToPeers: ValuationRelativeToPeers;
+}
+
+export interface MarketSorotan {
+  sektor: SectorSpotlightCard[];
+  valuasi: ValuationSpotlightRow[];
+}
+
+export interface FundamentalExtras {
+  symbol: string;
+  year: number | null;
+  pe: number | null;
+  pePeerAvg: number | null;
+  pb: number | null;
+  dividendYieldTtm: number | null;
+  casaRatio: number | null;
+  costToIncomeRatio: number | null;
 }
 
 export interface FrameworkResult {

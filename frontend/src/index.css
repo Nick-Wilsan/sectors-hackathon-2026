@@ -11,4 +11,173 @@
   --color-negative: #f43f5e;
 
   --font-wordmark: "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
+
+  /* --- Verbatim port of Mockup/Dashboard/code.html's tailwind.config ---
+     Same token names as the Stitch-generated mockup so its markup/classes
+     can be copied into components unchanged (bg-surface-card, text-headline-lg,
+     p-space-16, ...) instead of hand-translating every class on the way in. */
+  --color-on-error: #690005;
+  --color-error-container: #93000a;
+  --color-primary-fixed-dim: #89ceff;
+  --color-inverse-surface: #e5e2e1;
+  --color-primary-container: #0ea5e9;
+  --color-state-warning: #f59e0b;
+  --color-background-base: #0a0a0a;
+  --color-surface-bright: #393939;
+  --color-on-secondary-fixed: #002113;
+  --color-outline-variant: #3e4850;
+  --color-on-surface-variant: #bec8d2;
+  --color-tertiary-fixed-dim: #ffb2b7;
+  --color-outline: #88929b;
+  --color-on-primary-fixed: #001e2f;
+  --color-tertiary: #ffb2b7;
+  --color-primary: #89ceff;
+  --color-surface-variant: #353534;
+  --color-on-background: #e5e2e1;
+  --color-secondary: #4edea3;
+  --color-on-secondary-container: #00311f;
+  --color-on-tertiary: #67001b;
+  --color-error: #ffb4ab;
+  --color-primary-fixed: #c9e6ff;
+  --color-secondary-fixed: #6ffbbe;
+  --color-background: #131313;
+  --color-inverse-on-surface: #313030;
+  --color-accent-hover: #38bdf8;
+  --color-on-primary: #00344d;
+  --color-on-tertiary-fixed: #40000d;
+  --color-on-secondary-fixed-variant: #005236;
+  --color-text-secondary: #a3a3a3;
+  --color-on-error-container: #ffdad6;
+  --color-surface-container-highest: #353534;
+  --color-surface-container-low: #1c1b1b;
+  --color-secondary-fixed-dim: #4edea3;
+  --color-on-tertiary-container: #6c001d;
+  --color-surface-container-lowest: #0e0e0e;
+  --color-surface-container-high: #2a2a2a;
+  --color-surface: #131313;
+  --color-tertiary-fixed: #ffdadb;
+  --color-on-primary-fixed-variant: #004c6e;
+  --color-inverse-primary: #006591;
+  --color-on-surface: #e5e2e1;
+  --color-state-positive: #10b981;
+  --color-text-primary: #f5f5f5;
+  --color-tertiary-container: #ff697b;
+  --color-on-secondary: #003824;
+  --color-surface-container: #201f1f;
+  --color-on-primary-container: #003751;
+  --color-surface-dim: #131313;
+  --color-surface-card: #171717;
+  --color-border-subtle: #262626;
+  --color-surface-tint: #89ceff;
+  --color-text-muted: #737373;
+  --color-state-negative: #f43f5e;
+  --color-on-tertiary-fixed-variant: #92002a;
+  --color-secondary-container: #00a572;
+
+  /* Tailwind v4's bare `rounded` utility reads the unsuffixed --radius var,
+     not --radius-DEFAULT (that key is a v3 JS-config convention and is
+     silently ignored here — confirmed by inspecting the generated
+     stylesheet, where `rounded` was falling back to Tailwind's built-in
+     4px instead of the mockup's 2px). */
+  --radius: 0.125rem;
+  --radius-lg: 0.25rem;
+  --radius-xl: 0.5rem;
+  --radius-full: 0.75rem;
+
+  --spacing-ticker-tape-height: 32px;
+  --spacing-space-12: 0.75rem;
+  --spacing-gutter-terminal: 0.5rem;
+  --spacing-nav-height: 48px;
+  --spacing-space-16: 1rem;
+  --spacing-space-24: 1.5rem;
+  --spacing-space-6: 0.375rem;
+  --spacing-space-8: 0.5rem;
+  --spacing-space-4: 0.25rem;
+  --spacing-space-2: 0.125rem;
+  --spacing-space-20: 1.25rem;
+  --spacing-space-32: 2rem;
+
+  --font-display-lg: "Space Grotesk", sans-serif;
+  --font-body-md: "Inter", sans-serif;
+  --font-label-mono-md: "JetBrains Mono", monospace;
+  --font-headline-sm: "Space Grotesk", sans-serif;
+  --font-label-mono-sm: "JetBrains Mono", monospace;
+  --font-headline-lg: "Space Grotesk", sans-serif;
+  --font-headline-md: "Space Grotesk", sans-serif;
+  --font-body-sm: "Inter", sans-serif;
+  --font-body-lg: "Inter", sans-serif;
+  --font-label-mono-lg: "JetBrains Mono", monospace;
+  --font-table-header: "Inter", sans-serif;
+
+  --text-display-lg: 36px;
+  --text-display-lg--line-height: 44px;
+  --text-display-lg--letter-spacing: -0.02em;
+  --text-display-lg--font-weight: 700;
+
+  --text-body-md: 14px;
+  --text-body-md--line-height: 20px;
+  --text-body-md--font-weight: 400;
+
+  --text-label-mono-md: 13px;
+  --text-label-mono-md--line-height: 18px;
+  --text-label-mono-md--font-weight: 500;
+
+  --text-headline-sm: 16px;
+  --text-headline-sm--line-height: 24px;
+  --text-headline-sm--font-weight: 600;
+
+  --text-label-mono-sm: 11px;
+  --text-label-mono-sm--line-height: 14px;
+  --text-label-mono-sm--font-weight: 400;
+
+  --text-headline-lg: 24px;
+  --text-headline-lg--line-height: 32px;
+  --text-headline-lg--letter-spacing: -0.015em;
+  --text-headline-lg--font-weight: 700;
+
+  --text-headline-md: 20px;
+  --text-headline-md--line-height: 28px;
+  --text-headline-md--letter-spacing: -0.01em;
+  --text-headline-md--font-weight: 700;
+
+  --text-body-sm: 12px;
+  --text-body-sm--line-height: 16px;
+  --text-body-sm--font-weight: 400;
+
+  --text-body-lg: 16px;
+  --text-body-lg--line-height: 24px;
+  --text-body-lg--font-weight: 400;
+
+  --text-label-mono-lg: 16px;
+  --text-label-mono-lg--line-height: 20px;
+  --text-label-mono-lg--letter-spacing: -0.01em;
+  --text-label-mono-lg--font-weight: 600;
+
+  --text-table-header: 11px;
+  --text-table-header--line-height: 14px;
+  --text-table-header--letter-spacing: 0.04em;
+  --text-table-header--font-weight: 600;
+}
+
+/* Dashboard ticker tape marquee — track is rendered twice back-to-back, this
+   scrolls exactly one copy's width so the loop has no visible seam. */
+@keyframes ticker-scroll {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+
+/* Verbatim port of the mockup's own <style> reset (code.html) — scrollbars
+   hidden (mockup relies on wheel/trackpad scroll, no visible track) and
+   antialiased text, which is part of why its type reads crisper/"glowing"
+   compared to the browser's default subpixel rendering on a near-black bg. */
+body {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overscroll-behavior: none;
+}
+::-webkit-scrollbar {
+  display: none;
+}
+* {
+  scrollbar-width: none;
 }

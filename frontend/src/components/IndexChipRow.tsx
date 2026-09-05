@@ -15,32 +15,37 @@ function changeOf(points: IndexPoint[]): number {
   return prev ? (last - prev) / prev : 0;
 }
 
-// Matches Sectors.app's "Top Indices" chip grid — several benchmark indices
-// at a glance, not just IHSG.
+// Structure/classes ported verbatim from the reference mockup's "Indeks
+// Komparasi" row — icon + label, then each index as value + %change with a
+// vertical divider between entries.
 export function IndexChipRow({ indexChips }: { indexChips: Record<string, IndexPoint[]> }) {
   const codes = Object.keys(indexChips).filter((c) => indexChips[c].length > 0);
   if (codes.length === 0) return null;
 
   return (
-    <div className="flex gap-2 overflow-x-auto pb-1">
-      {codes.map((code) => {
-        const change = changeOf(indexChips[code]);
-        const positive = change >= 0;
-        return (
-          <div
-            key={code}
-            className="flex shrink-0 flex-col rounded-md border border-neutral-800 bg-neutral-900 px-3 py-1.5"
-          >
-            <span className="text-[10px] font-semibold uppercase tracking-wide text-neutral-400">
-              {LABELS[code] ?? code}
-            </span>
-            <span className={`font-mono text-sm font-bold tabular-nums ${positive ? 'text-emerald-400' : 'text-rose-400'}`}>
-              {positive ? '+' : ''}
-              {(change * 100).toFixed(2)}%
-            </span>
-          </div>
-        );
-      })}
+    <div className="flex flex-wrap items-center justify-between gap-space-8 font-label-mono-sm text-label-mono-sm">
+      <div className="flex items-center gap-space-4 text-text-muted">
+        <span className="material-symbols-outlined text-[16px] text-primary">analytics</span>
+        <span className="font-semibold text-text-primary">Indeks Komparasi:</span>
+      </div>
+      <div className="flex flex-wrap items-center gap-space-12">
+        {codes.map((code, i) => {
+          const change = changeOf(indexChips[code]);
+          const positive = change >= 0;
+          return (
+            <div key={code} className="contents">
+              {i > 0 && <div className="h-3 w-px bg-border-subtle" />}
+              <div className="flex items-center gap-space-4">
+                <span className="text-text-muted">{LABELS[code] ?? code}:</span>
+                <span className={`font-bold ${positive ? 'text-state-positive' : 'text-state-negative'}`}>
+                  {positive ? '+' : ''}
+                  {(change * 100).toFixed(2)}%
+                </span>
+              </div>
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }
