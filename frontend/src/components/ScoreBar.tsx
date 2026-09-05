@@ -16,10 +16,12 @@ export function ScoreBar({ value, label }: ScoreBarProps) {
   return (
     <div className="flex items-center gap-3">
       {label && <span className="w-40 shrink-0 text-sm text-neutral-400">{label}</span>}
-      <div className="h-2.5 flex-1 overflow-hidden rounded-full bg-neutral-800">
+      <div className="h-3 flex-1 overflow-hidden rounded-full bg-neutral-800">
         <div className={`h-full rounded-full ${barColor(clamped)}`} style={{ width: `${clamped}%` }} />
       </div>
-      <span className="w-12 shrink-0 text-right text-sm font-medium text-neutral-200">{clamped.toFixed(0)}</span>
+      <span className="w-12 shrink-0 text-right font-mono text-base font-bold tabular-nums text-neutral-100">
+        {clamped.toFixed(0)}
+      </span>
     </div>
   );
 }

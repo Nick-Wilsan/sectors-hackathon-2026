@@ -14,10 +14,14 @@ function formatIdr(value: number): string {
   return value.toLocaleString('id-ID');
 }
 
-function ChangeTag({ value }: { value: number }) {
+function ChangeTag({ value, size = 'sm' }: { value: number; size?: 'sm' | 'lg' }) {
   const positive = value >= 0;
   return (
-    <span className={`font-mono text-xs tabular-nums ${positive ? 'text-emerald-400' : 'text-rose-400'}`}>
+    <span
+      className={`font-mono tabular-nums ${positive ? 'text-emerald-400' : 'text-rose-400'} ${
+        size === 'lg' ? 'text-lg font-bold' : 'text-xs font-semibold'
+      }`}
+    >
       {positive ? '+' : ''}
       {(value * 100).toFixed(2)}%
     </span>
@@ -67,20 +71,20 @@ export function MarketOverview() {
       <div className="space-y-3 px-4 py-3 sm:px-6">
         {/* IHSG hero + index chips, one wide row so the card's full width carries content. */}
         <div className="flex flex-col gap-4 rounded-lg border border-neutral-800 bg-neutral-900 p-4 lg:flex-row lg:items-center">
-          <div className="lg:w-64 lg:shrink-0">
+          <div className="lg:w-72 lg:shrink-0">
             <div className="flex items-center justify-between lg:block">
-              <span className="text-xs font-medium uppercase tracking-wide text-neutral-500">IHSG</span>
-              {change1d !== null && <ChangeTag value={change1d} />}
+              <span className="text-xs font-semibold uppercase tracking-wide text-neutral-400">IHSG</span>
+              {change1d !== null && <ChangeTag value={change1d} size="lg" />}
             </div>
             <div className="mt-1 flex items-end gap-3">
-              <span className="font-mono text-2xl tabular-nums text-neutral-100">{ihsgLast?.toFixed(2) ?? '—'}</span>
+              <span className="font-mono text-4xl font-black tabular-nums text-neutral-50">{ihsgLast?.toFixed(2) ?? '—'}</span>
               {ihsgPrices.length > 1 && (
-                <Sparkline values={ihsgPrices} width={100} height={36} color={(change1d ?? 0) >= 0 ? '#10b981' : '#f43f5e'} />
+                <Sparkline values={ihsgPrices} width={110} height={40} color={(change1d ?? 0) >= 0 ? '#10b981' : '#f43f5e'} />
               )}
             </div>
           </div>
 
-          <div className="flex flex-wrap gap-6 border-t border-neutral-800 pt-3 text-xs lg:border-l lg:border-t-0 lg:pl-4 lg:pt-0">
+          <div className="flex flex-wrap gap-6 border-t border-neutral-800 pt-3 text-xs lg:border-l lg:border-t-0 lg:pl-5 lg:pt-0">
             <div>
               <div className="text-neutral-500">1 Hari</div>
               {change1d !== null ? <ChangeTag value={change1d} /> : <span className="text-neutral-600">—</span>}
@@ -96,7 +100,7 @@ export function MarketOverview() {
             {latestMcap !== undefined && (
               <div>
                 <div className="text-neutral-500">Kap. Pasar Total</div>
-                <div className="font-mono tabular-nums text-neutral-300">Rp{formatIdr(latestMcap)}</div>
+                <div className="font-mono text-base font-bold tabular-nums text-neutral-100">Rp{formatIdr(latestMcap)}</div>
               </div>
             )}
           </div>
@@ -119,7 +123,7 @@ export function MarketOverview() {
             </Link>
           </div>
           <div className="mt-2">
-            <NewsFeed articles={news} compact grid />
+            <NewsFeed articles={news} grid />
           </div>
         </div>
       </div>

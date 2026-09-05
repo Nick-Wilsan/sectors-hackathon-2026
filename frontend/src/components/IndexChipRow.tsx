@@ -31,10 +31,10 @@ export function IndexChipRow({ indexChips }: { indexChips: Record<string, IndexP
             key={code}
             className="flex shrink-0 flex-col rounded-md border border-neutral-800 bg-neutral-900 px-3 py-1.5"
           >
-            <span className="text-[10px] font-medium uppercase tracking-wide text-neutral-500">
+            <span className="text-[10px] font-semibold uppercase tracking-wide text-neutral-400">
               {LABELS[code] ?? code}
             </span>
-            <span className={`font-mono text-xs tabular-nums ${positive ? 'text-emerald-400' : 'text-rose-400'}`}>
+            <span className={`font-mono text-sm font-bold tabular-nums ${positive ? 'text-emerald-400' : 'text-rose-400'}`}>
               {positive ? '+' : ''}
               {(change * 100).toFixed(2)}%
             </span>
