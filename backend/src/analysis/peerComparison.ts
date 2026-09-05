@@ -26,6 +26,8 @@ export interface PeerComparisonResult {
   /** Percentile position on each metric — see score.ts SCORE_COMPONENTS for definitions. */
   metrics: ComponentScoreDetail[];
   peers: PeerListEntry[];
+  /** Peers whose report failed to download and are therefore missing from the percentile group. */
+  fetchFailures: number;
 }
 
 // Same rationale as scoreService.ts: covers the largest known IDX sub-sector with headroom.
@@ -47,11 +49,12 @@ export async function getPeerComparison(symbol: string, options: { limit?: numbe
       status: 'inadequate',
       metrics: [],
       peers: [],
+      fetchFailures: 0,
     };
   }
 
   const subSectorSlug = slugify(subSectorName);
-  const { companies } = await getScoredCompaniesInSubSector(subSectorSlug, { limit });
+  const { companies, fetchFailures } = await getScoredCompaniesInSubSector(subSectorSlug, { limit });
 
   const target = companies.find((c) => c.symbol === overviewReport.symbol);
   if (!target) {
@@ -69,5 +72,6 @@ export async function getPeerComparison(symbol: string, options: { limit?: numbe
     status: target.status,
     metrics: target.components,
     peers: companies.map((c) => ({ symbol: c.symbol, companyName: c.companyName, score: c.score, status: c.status })),
+    fetchFailures,
   };
 }

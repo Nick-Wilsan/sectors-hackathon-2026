@@ -12,6 +12,7 @@ import {
 import { loadCompanyIndex } from '../api/companyIndex';
 import type { AnomalyResult, CandlestickResult, CompanyLite, DailyBar, FrameworkResult, FundamentalExtras, IndicatorResult, PeerComparisonResult, TickerTapeRow } from '../api/types';
 import { PriceChart } from './PriceChart';
+import { PatternSimilarityPanel } from './PatternSimilarityPanel';
 import { ScoreBar } from './ScoreBar';
 
 // Dashboard preview of the reference mockup's "Analisis Interaktif TradingView
@@ -530,6 +531,8 @@ export function FeaturedStockPanel({ tickerTape = [] }: { tickerTape?: TickerTap
           </p>
         </div>
       </div>
+
+      <PatternSimilarityPanel symbol={FEATURED_SYMBOL} variant="card" />
     </div>
   );
 }

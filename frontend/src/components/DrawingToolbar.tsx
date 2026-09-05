@@ -6,38 +6,48 @@ interface DrawingToolbarProps {
   onClearAll: () => void;
 }
 
+// Every icon here is wired to behaviour that actually runs: the cursor tool
+// releases the chart back to pan/zoom, the horizontal tool drops a real price
+// line at the clicked level, and the trend tool draws a real two-point line
+// series. The reference mockup shows seven icons; we ship three plus clear
+// rather than padding the strip with tools that do nothing when pressed.
 const TOOLS: { key: DrawingTool; label: string; icon: string }[] = [
-  { key: 'none', label: 'Kursor', icon: '↖' },
-  { key: 'horizontal', label: 'Garis Horizontal', icon: '—' },
-  { key: 'trendline', label: 'Garis Tren (klik 2 titik)', icon: '⟋' },
+  { key: 'none', label: 'Kursor — geser & zoom grafik', icon: 'near_me' },
+  { key: 'horizontal', label: 'Garis harga — klik satu titik', icon: 'horizontal_rule' },
+  { key: 'trendline', label: 'Garis tren — klik dua titik', icon: 'trending_up' },
 ];
 
-// Real drawing tools (horizontal price line, 2-click trend line) — not a
-// decorative icon strip. Scoped smaller than TradingView's full drawing
-// suite deliberately: these two cover the common "mark a level" use case
-// without pretending we have a full annotation engine.
 export function DrawingToolbar({ tool, onToolChange, onClearAll }: DrawingToolbarProps) {
   return (
-    <div className="flex w-11 shrink-0 flex-col items-center gap-1 border-r border-neutral-800 bg-neutral-900 py-2">
+    <div className="flex w-[40px] shrink-0 flex-col items-center gap-space-2 border-r border-border-subtle bg-surface-card py-space-8">
       {TOOLS.map((t) => (
         <button
           key={t.key}
+          type="button"
           title={t.label}
+          aria-label={t.label}
+          aria-pressed={tool === t.key}
           onClick={() => onToolChange(t.key)}
-          className={`flex h-8 w-8 items-center justify-center rounded text-sm ${
-            tool === t.key ? 'bg-brand text-neutral-950' : 'text-neutral-400 hover:bg-neutral-800 hover:text-neutral-200'
+          className={`flex h-[28px] w-[28px] items-center justify-center rounded transition-colors ${
+            tool === t.key
+              ? 'bg-primary-container text-background-base'
+              : 'text-text-muted hover:bg-surface-container hover:text-text-primary'
           }`}
         >
-          {t.icon}
+          <span className="material-symbols-outlined text-[17px]">{t.icon}</span>
         </button>
       ))}
-      <div className="my-1 h-px w-6 bg-neutral-800" />
+
+      <span className="my-space-4 h-px w-5 bg-border-subtle" />
+
       <button
-        title="Hapus semua gambar"
+        type="button"
+        title="Hapus semua garis yang digambar"
+        aria-label="Hapus semua garis yang digambar"
         onClick={onClearAll}
-        className="flex h-8 w-8 items-center justify-center rounded text-sm text-neutral-400 hover:bg-neutral-800 hover:text-rose-400"
+        className="flex h-[28px] w-[28px] items-center justify-center rounded text-text-muted transition-colors hover:bg-surface-container hover:text-state-negative"
       >
-        🗑
+        <span className="material-symbols-outlined text-[17px]">delete</span>
       </button>
     </div>
   );

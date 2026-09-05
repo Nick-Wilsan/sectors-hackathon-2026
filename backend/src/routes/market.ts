@@ -5,6 +5,7 @@ import { daysAgoIso, todayIso } from '../data/dateRange.js';
 import { getSectorSpotlight } from '../analysis/sectorSpotlight.js';
 import { getValuationSpotlight } from '../analysis/valuationSpotlight.js';
 import { getTickerTape } from '../analysis/tickerTape.js';
+import { getMarketAnomalyScan } from '../analysis/marketAnomalyScan.js';
 
 export const marketRouter = Router();
 
@@ -31,12 +32,23 @@ marketRouter.get('/overview', async (_req, res) => {
       getIndexDaily('ihsg', { start: daysAgoIso(90), end: todayIso() }),
       getIdxTotal({ start: daysAgoIso(30), end: todayIso() }),
       getTopMoversToday(8),
-      getMostTradedToday(5),
+      getMostTradedToday(8),
       getMultipleIndices(INDEX_CHIP_CODES),
       getTickerTape(),
     ]);
 
     res.json({ ihsg, idxTotal, movers, mostTraded, indexChips, tickerTape });
+  } catch (err) {
+    res.status(502).json({ error: err instanceof Error ? err.message : 'Unknown error' });
+  }
+});
+
+// F-06 run across the day's busiest names. Separate from /overview because it
+// costs one daily-series credit per scanned symbol; keeping it its own request
+// means the main dashboard still paints if this is slow or unavailable.
+marketRouter.get('/anomali', async (_req, res) => {
+  try {
+    res.json(await getMarketAnomalyScan());
   } catch (err) {
     res.status(502).json({ error: err instanceof Error ? err.message : 'Unknown error' });
   }

@@ -1,4 +1,4 @@
-import type { AnomalyResult, CandlestickResult, CompanyLite, CompositeScoreResult, DailySeries, FrameworkResult, FundamentalExtras, IndicatorResult, MarketOverview, MarketSorotan, NewsResult, PatternSimilarityResult, PeerComparisonResult, ScreenerResult, SubsectorOption } from './types';
+import type { AnomalyResult, CandlestickResult, CompanyLite, CompositeScoreResult, DailySeries, FrameworkResult, FundamentalExtras, IndicatorResult, MarketOverview, MarketSorotan, NewsResult, PatternSimilarityResult, PeerComparisonResult, ScreenerResult, SubsectorOption, MarketAnomalyScan } from './types';
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:4000/api';
 
@@ -100,4 +100,12 @@ export function screenCompanies(query: ScreenerQuery): Promise<ScreenerResult> {
   if (query.minScore !== undefined) params.set('minScore', String(query.minScore));
   if (query.limit !== undefined) params.set('limit', String(query.limit));
   return getJson(`/screener?${params.toString()}`);
+}
+
+export function getMarketAnomalyScan(): Promise<MarketAnomalyScan> {
+  return getJson('/market/anomali');
+}
+
+export function getEmitenNews(symbol: string, limit = 6): Promise<NewsResult> {
+  return getJson(`/emiten/${encodeURIComponent(symbol)}/berita?limit=${limit}`);
 }

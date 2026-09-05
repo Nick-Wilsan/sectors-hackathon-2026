@@ -28,7 +28,7 @@ function HealthShareBadge({ card }: { card: SectorSpotlightCard }) {
       }`}
       title="Persentase emiten berskor sehat (>=66) dari yang berhasil dinilai"
     >
-      {pct}%
+      {pct}% sehat
     </span>
   );
 }
@@ -37,11 +37,16 @@ function Card({ card }: { card: SectorSpotlightCard }) {
   return (
     <div className="relative overflow-hidden rounded border border-border-subtle bg-surface-card p-space-12">
       <span aria-hidden className={`absolute inset-x-0 top-0 h-0.5 ${tierColor(card)}`} />
-      <div className="flex items-start justify-between gap-space-4">
-        <span className="truncate font-headline-sm text-headline-sm font-bold text-text-primary">{card.label}</span>
+      {/* Badge dropped to the sub-line: spelling out "sehat" made it wide
+          enough that sharing the title row truncated sector names like
+          "Makanan & Minuman" down to a few characters. */}
+      <span className="block truncate font-headline-sm text-headline-sm font-bold text-text-primary" title={card.label}>
+        {card.label}
+      </span>
+      <div className="mt-space-2 flex items-center justify-between gap-space-4">
+        <p className="truncate font-body-sm text-body-sm text-text-muted">{card.groupSize} emiten dinilai</p>
         <HealthShareBadge card={card} />
       </div>
-      <p className="mt-space-2 font-body-sm text-body-sm text-text-muted">{card.groupSize} emiten dinilai</p>
       {card.scoredCount > 0 && (
         <p className="mt-space-4 font-label-mono-sm text-label-mono-sm tabular-nums">
           <span className="text-state-positive">{card.healthyCount} sehat</span>

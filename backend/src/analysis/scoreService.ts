@@ -24,13 +24,14 @@ const DEFAULT_GROUP_LIMIT = 150;
 export async function getCompositeScoreForSymbol(
   symbol: string,
   options: CompositeScoreOptions = {},
-): Promise<CompositeScoreResult> {
+): Promise<CompositeScoreResult & { peerFetchFailures: number }> {
   const limit = options.peerLimit ?? DEFAULT_GROUP_LIMIT;
 
   const overviewReport = await getCompanyReport(symbol, ['overview']);
   const subSectorName = overviewReport.overview?.sub_sector as string | undefined;
 
-  const inadequate = (): CompositeScoreResult => ({
+  const inadequate = (): CompositeScoreResult & { peerFetchFailures: number } => ({
+    peerFetchFailures: 0,
     symbol: overviewReport.symbol,
     status: 'inadequate',
     score: null,
@@ -42,7 +43,7 @@ export async function getCompositeScoreForSymbol(
   if (!subSectorName) return inadequate();
 
   const subSectorSlug = slugify(subSectorName);
-  const { companies } = await getScoredCompaniesInSubSector(subSectorSlug, { limit });
+  const { companies, fetchFailures } = await getScoredCompaniesInSubSector(subSectorSlug, { limit });
 
   const match = companies.find((c) => c.symbol === overviewReport.symbol);
   if (!match) {
@@ -54,5 +55,5 @@ export async function getCompositeScoreForSymbol(
     );
   }
 
-  return match;
+  return { ...match, peerFetchFailures: fetchFailures };
 }

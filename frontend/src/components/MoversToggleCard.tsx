@@ -12,13 +12,13 @@ interface MoversToggleCardProps {
 // GAINERS/LOSERS/TERAKTIF row already fetches, just a second presentation.
 export function MoversToggleCard({ gainers, losers }: MoversToggleCardProps) {
   const [tab, setTab] = useState<'gainers' | 'losers'>('gainers');
-  const rows = (tab === 'gainers' ? gainers : losers).slice(0, 4);
+  const rows = (tab === 'gainers' ? gainers : losers).slice(0, 6);
 
   return (
-    <div className="flex flex-col justify-between rounded border border-border-subtle bg-surface-card p-space-16 lg:col-span-2">
+    <div className="flex flex-col justify-between rounded border border-border-subtle bg-surface-card p-space-16 lg:col-span-3">
       <div>
-        <div className="mb-space-12 flex items-center justify-between">
-          <h2 className="font-headline-sm text-headline-sm font-bold text-text-primary">Movers Harian</h2>
+        <div className="mb-space-12 flex flex-wrap items-center justify-between gap-space-8">
+          <h2 className="shrink-0 font-headline-sm text-headline-sm font-bold text-text-primary">Movers Harian</h2>
           <div className="inline-flex rounded border border-border-subtle bg-background-base p-space-2 font-label-mono-sm text-label-mono-sm">
             <button
               type="button"

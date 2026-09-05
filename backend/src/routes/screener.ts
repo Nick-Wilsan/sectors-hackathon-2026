@@ -35,7 +35,7 @@ screenerRouter.get('/', async (req, res) => {
   const sortDirection = req.query.sortDirection === 'asc' ? 'asc' : 'desc';
 
   try {
-    const { companies, groupSize } = await getScoredCompaniesInSubSector(subSector, {
+    const { companies, groupSize, fetchFailures } = await getScoredCompaniesInSubSector(subSector, {
       limit: parseNumber(req.query.limit) ?? 100,
     });
 
@@ -46,7 +46,7 @@ screenerRouter.get('/', async (req, res) => {
       minScore: parseNumber(req.query.minScore),
       maxScore: parseNumber(req.query.maxScore),
       componentFilters,
-    });
+    }, fetchFailures);
 
     res.json({ ...result, groupSize });
   } catch (err) {

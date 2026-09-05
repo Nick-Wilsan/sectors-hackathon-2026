@@ -41,21 +41,28 @@ function Row({ row }: { row: ValuationSpotlightRow }) {
 
   return (
     <div>
-      <div className="mb-space-4 flex items-center justify-between font-label-mono-sm text-label-mono-sm">
+      {/* Ticker and figure share the top line (both short, both scannable);
+          the company name gets its own line below. Keeping all three on one
+          row in this narrow column made the truncated name butt straight
+          into the P/E value with no visible gap. */}
+      <div className="flex items-baseline justify-between gap-space-8 font-label-mono-sm text-label-mono-sm">
         <Link
           to={`/emiten/${row.symbol.replace('.JK', '')}`}
-          className={`truncate underline decoration-dotted underline-offset-4 hover:opacity-80 ${SYMBOL_COLORS[row.relativeToPeers]}`}
+          className={`shrink-0 font-bold underline decoration-dotted underline-offset-4 hover:opacity-80 ${SYMBOL_COLORS[row.relativeToPeers]}`}
         >
-          {row.symbol.replace('.JK', '')} <span className="font-body-sm text-body-sm text-text-muted no-underline">{row.companyName}</span>
+          {row.symbol.replace('.JK', '')}
         </Link>
         {meaningful ? (
-          <span className="shrink-0 font-bold text-text-primary">
+          <span className="shrink-0 font-bold tabular-nums text-text-primary">
             {row.pe!.toFixed(1)}x <span className="font-normal text-text-muted">/ peer {row.pePeerAvg!.toFixed(1)}x</span>
           </span>
         ) : (
           <span className="shrink-0 text-text-muted">—</span>
         )}
       </div>
+      <p className="mb-space-4 truncate font-body-sm text-body-sm text-text-muted" title={row.companyName}>
+        {row.companyName}
+      </p>
       {meaningful ? (
         <>
           <div className="h-1.5 w-full overflow-hidden rounded-full bg-surface-container">

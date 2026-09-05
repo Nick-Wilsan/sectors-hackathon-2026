@@ -87,6 +87,14 @@ export interface MostTradedRow {
   companyName: string;
   volume: number;
   price: number;
+  /**
+   * Close-over-close change against the immediately preceding trading day,
+   * or null when that day's price for this symbol isn't in the response.
+   * Deliberately not filled from an older date in the window: the symbol
+   * only appears on days it made the most-traded list, so a gap would make
+   * this a multi-day change wearing a daily label.
+   */
+  priceChange: number | null;
 }
 
 interface RawMostTradedRow {
@@ -105,7 +113,24 @@ export async function getMostTradedToday(nStock = 8): Promise<MostTradedRow[]> {
   const dates = Object.keys(raw).sort();
   const latestDate = dates[dates.length - 1];
   const rows = latestDate ? raw[latestDate] : [];
-  return rows.map((r) => ({ symbol: r.symbol, companyName: r.company_name, volume: r.volume, price: r.price }));
+
+  // The endpoint returns a whole window of days, not just the latest one, so
+  // the previous session's close for these symbols is already in hand — no
+  // extra request and no extra credit to turn it into a daily change.
+  const previousDate = dates[dates.length - 2];
+  const previousPrice = new Map<string, number>();
+  for (const r of previousDate ? raw[previousDate] : []) previousPrice.set(r.symbol, r.price);
+
+  return rows.map((r) => {
+    const prev = previousPrice.get(r.symbol);
+    return {
+      symbol: r.symbol,
+      companyName: r.company_name,
+      volume: r.volume,
+      price: r.price,
+      priceChange: prev ? (r.price - prev) / prev : null,
+    };
+  });
 }
 
 /** Multiple indices in one shot — 1 credit each, cached 6h. Powers the Sectors.app-style index chip row. */

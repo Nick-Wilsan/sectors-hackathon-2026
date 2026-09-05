@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
-import { getMarketNews, getMarketOverview, getMarketSorotan } from '../api/client';
-import type { MarketOverview as MarketOverviewData, MarketSorotan, NewsArticleFull } from '../api/types';
+import { getMarketAnomalyScan, getMarketNews, getMarketOverview, getMarketSorotan } from '../api/client';
+import type { MarketAnomalyScan, MarketOverview as MarketOverviewData, MarketSorotan, NewsArticleFull } from '../api/types';
 import { IhsgAreaChart } from './IhsgAreaChart';
 import { NewsSpotlightCard } from './NewsSpotlightCard';
 import { IndexChipRow } from './IndexChipRow';
@@ -9,6 +9,7 @@ import { MoversToggleCard } from './MoversToggleCard';
 import { SectorSpotlightGrid } from './SectorSpotlightGrid';
 import { ValuationSpotlight } from './ValuationSpotlight';
 import { FeaturedStockPanel } from './FeaturedStockPanel';
+import { MarketAnomalyStrip } from './MarketAnomalyStrip';
 
 function formatIdr(value: number): string {
   const num = (n: number) => n.toLocaleString('id-ID', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -66,11 +67,17 @@ const RANGE_OPTIONS = [
   { days: 90, label: '3 Bln' },
 ] as const;
 
-export function MarketOverview() {
+interface MarketOverviewProps {
+  /** Rendered directly beneath the IHSG hero — the page's primary analysis panel. */
+  insightSlot?: React.ReactNode;
+}
+
+export function MarketOverview({ insightSlot }: MarketOverviewProps) {
   const [data, setData] = useState<MarketOverviewData | null>(null);
   const [news, setNews] = useState<NewsArticleFull[]>([]);
   const [sorotan, setSorotan] = useState<MarketSorotan | null>(null);
   const [rangeDays, setRangeDays] = useState<30 | 90>(90);
+  const [anomalyScan, setAnomalyScan] = useState<MarketAnomalyScan | null>(null);
 
   useEffect(() => {
     getMarketOverview()
@@ -93,6 +100,11 @@ export function MarketOverview() {
     getMarketSorotan()
       .then(setSorotan)
       .catch(() => {});
+    // Costs one daily-series credit per scanned symbol (24h cached), so it is
+    // its own request rather than part of /overview.
+    getMarketAnomalyScan()
+      .then(setAnomalyScan)
+      .catch(() => {});
 
     return () => clearInterval(newsInterval);
   }, []);
@@ -111,6 +123,9 @@ export function MarketOverview() {
   const change30d = changeOverWindow(ihsgPrices, 30);
   const periodHigh = ihsgPrices.length > 0 ? Math.max(...ihsgPrices) : null;
   const periodLow = ihsgPrices.length > 0 ? Math.min(...ihsgPrices) : null;
+  // Negative (or zero at a new high) by construction — how far below the
+  // window's peak the index currently sits.
+  const fromHigh = periodHigh && ihsgLast !== undefined ? (ihsgLast - periodHigh) / periodHigh : null;
   const latestMcap = data?.idxTotal[data.idxTotal.length - 1]?.marketCap;
 
   const rangeLabel = RANGE_OPTIONS.find((o) => o.days === rangeDays)?.label;
@@ -195,12 +210,18 @@ export function MarketOverview() {
                 <span className="block font-body-sm text-body-sm text-text-muted">Performa 30 Hari</span>
                 {change30d !== null ? <ChangeTag value={change30d} /> : <span className="text-text-muted">—</span>}
               </div>
-              <div
-                className="cursor-not-allowed rounded border border-border-subtle/60 bg-surface-container-lowest p-space-8 opacity-50"
-                title="Segera hadir — histori indeks dibatasi ~90 hari oleh Sectors API, tidak cukup untuk YTD"
-              >
-                <span className="block font-body-sm text-body-sm text-text-muted">Performa YTD</span>
-                <span className="text-text-muted">Segera</span>
+              {/* The mockup's fourth pill is YTD, which this data can't honestly
+                  fill (Sectors clamps index history to ~90 days). Rather than
+                  leave a greyed-out "Segera" cell in the hero, this shows the
+                  index's distance from its high in the window on screen —
+                  purely descriptive, and derived from the same series. */}
+              <div className="rounded border border-border-subtle/60 bg-surface-container-lowest p-space-8">
+                <span className="block font-body-sm text-body-sm text-text-muted">Dari Tertinggi ({rangeLabel})</span>
+                {fromHigh !== null ? (
+                  <ChangeTag value={fromHigh} />
+                ) : (
+                  <span className="text-text-muted">—</span>
+                )}
               </div>
               <div className="rounded border border-border-subtle/60 bg-surface-container-lowest p-space-8">
                 <span className="block font-body-sm text-body-sm text-text-muted">Market Cap Bursa</span>
@@ -224,8 +245,12 @@ export function MarketOverview() {
           </div>
         </div>
 
+        {insightSlot}
+
+        {anomalyScan && anomalyScan.rows.length > 0 && <MarketAnomalyStrip scan={anomalyScan} />}
+
         {sorotan && (
-          <div id="screener" className="scroll-mt-20">
+          <div>
             <div className="flex flex-col gap-space-4 border-b border-border-subtle pb-space-8 md:flex-row md:items-end md:justify-between">
               <div>
                 <div className="mb-space-4 flex items-center gap-space-8">
@@ -248,7 +273,7 @@ export function MarketOverview() {
 
         {data && (
           <div className="grid grid-cols-1 gap-space-8 lg:grid-cols-12">
-            <VolumeLeadersTable mostTraded={data.mostTraded} gainers={data.movers.gainers} losers={data.movers.losers} />
+            <VolumeLeadersTable mostTraded={data.mostTraded} />
             <MoversToggleCard gainers={data.movers.gainers} losers={data.movers.losers} />
             {sorotan && <ValuationSpotlight rows={sorotan.valuasi} />}
           </div>

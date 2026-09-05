@@ -11,12 +11,14 @@ createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <BrowserRouter>
       <Routes>
-        {/* Fullscreen workstation page — provides its own header/footer chrome, not App's. */}
-        <Route path="emiten/:symbol" element={<EmitenDetailPage />} />
-
+        {/* Every page now shares App's chrome (nav, ticker tape, disclaimer).
+            The emiten page used to opt out as a fullscreen workstation; the
+            reference mockup shows it as a normal scrolling page inside the
+            same shell, and losing the nav there was a dead end for the user. */}
         <Route element={<App />}>
           <Route index element={<ScreenerPage />} />
           <Route path="berita" element={<NewsPage />} />
+          <Route path="emiten/:symbol" element={<EmitenDetailPage />} />
         </Route>
       </Routes>
     </BrowserRouter>

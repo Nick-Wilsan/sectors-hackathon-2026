@@ -24,20 +24,27 @@ export interface ScoredCompany extends CompositeScoreResult {
 export async function getScoredCompaniesInSubSector(
   subSectorSlug: string,
   options: { limit?: number } = {},
-): Promise<{ companies: ScoredCompany[]; groupSize: number }> {
+): Promise<{ companies: ScoredCompany[]; groupSize: number; fetchFailures: number }> {
   const listing = await searchCompanies({
     where: `sub_sector = '${subSectorSlug}'`,
     limit: options.limit ?? 100,
   });
 
+  // A null `ratios` used to mean two different things — the company genuinely
+  // lacks the reported figures, or its report simply failed to download. Only
+  // the first is a real finding; the second silently shrinks the percentile
+  // group and shifts EVERY score in it, with nothing on screen to say so.
+  // `fetchFailed` keeps them apart so callers can disclose the difference.
   const withRatios = await mapWithConcurrency(listing.items, 5, async (item) => {
     try {
       const report = await getCompanyReport(item.symbol, ['financials']);
-      return { symbol: item.symbol, companyName: item.companyName, ratios: extractRatios(report.financials) };
+      return { symbol: item.symbol, companyName: item.companyName, ratios: extractRatios(report.financials), fetchFailed: false };
     } catch {
-      return { symbol: item.symbol, companyName: item.companyName, ratios: null as ComponentRatios | null };
+      return { symbol: item.symbol, companyName: item.companyName, ratios: null as ComponentRatios | null, fetchFailed: true };
     }
   });
+
+  const fetchFailures = withRatios.filter((c) => c.fetchFailed).length;
 
   const group: ComponentRatios[] = withRatios
     .map((c) => c.ratios)
@@ -48,7 +55,7 @@ export async function getScoredCompaniesInSubSector(
     companyName: c.companyName,
   }));
 
-  return { companies, groupSize: group.length };
+  return { companies, groupSize: group.length, fetchFailures };
 }
 
 export interface ComponentRange {
@@ -73,6 +80,12 @@ export interface ScreenerResult {
   ranked: ScoredCompany[];
   /** Companies with >1 missing component — excluded from ranking, listed separately for transparency. */
   dataTidakMemadai: ScoredCompany[];
+  /**
+   * Peers whose financial report could not be downloaded at all. They are
+   * absent from the percentile group, which shifts every score here, so this
+   * count must reach the UI rather than be swallowed.
+   */
+  fetchFailures: number;
 }
 
 function rawValueOf(company: ScoredCompany, key: ComponentKey): number | undefined {
@@ -86,7 +99,7 @@ function sortValueOf(company: ScoredCompany, sortBy: NonNullable<ScreenerParams[
 }
 
 /** Applies our own filter + sort logic on top of already-scored companies. */
-export function screenCompanies(companies: ScoredCompany[], params: ScreenerParams): ScreenerResult {
+export function screenCompanies(companies: ScoredCompany[], params: ScreenerParams, fetchFailures = 0): ScreenerResult {
   const dataTidakMemadai = companies.filter((c) => c.status === 'inadequate');
   let ranked = companies.filter((c) => c.status !== 'inadequate');
 
@@ -116,5 +129,5 @@ export function screenCompanies(companies: ScoredCompany[], params: ScreenerPara
     return direction === 'desc' ? -diff : diff;
   });
 
-  return { subSector: params.subSector, groupSize: companies.length, ranked, dataTidakMemadai };
+  return { subSector: params.subSector, groupSize: companies.length, ranked, dataTidakMemadai, fetchFailures };
 }

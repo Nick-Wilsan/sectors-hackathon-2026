@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link, Outlet } from 'react-router-dom';
+import { Link, Outlet, useLocation } from 'react-router-dom';
 import { Footer } from './components/Footer';
 import { SymbolSearch } from './components/SymbolSearch';
 import { Wordmark } from './components/Wordmark';
@@ -24,16 +24,19 @@ function useMarketStatus(): MarketStatus {
 // five don't correspond to a page that exists yet — kept as visible, inert
 // links (rather than deleted) per the plan to build them out later; see the
 // pending-features list.
-const NAV_LINKS = [
-  { label: 'Ringkasan Pasar', to: '/', active: true },
+const NAV_LINKS: { label: string; to: string | null }[] = [
+  { label: 'Ringkasan Pasar', to: '/' },
   { label: 'Sektor IDX', to: null },
   { label: 'Chart & Analisis', to: null },
   { label: 'Berita', to: '/berita' },
   { label: 'Komunitas & Ide', to: null },
-] as const;
+];
 
 export function App() {
   const marketStatus = useMarketStatus();
+  // Which nav item is highlighted follows the actual route, rather than a
+  // flag pinned to the home link (which left /berita with no active state).
+  const { pathname } = useLocation();
   const [ihsg, setIhsg] = useState<IndexPoint[]>([]);
   const [tickerRows, setTickerRows] = useState<TickerTapeRow[]>([]);
 
@@ -69,8 +72,9 @@ export function App() {
                 <Link
                   key={item.label}
                   to={item.to}
+                  aria-current={pathname === item.to ? 'page' : undefined}
                   className={
-                    item.active
+                    pathname === item.to
                       ? 'border-b-2 border-primary-container py-[14px] font-semibold text-text-primary transition-colors'
                       : 'py-[14px] font-body-sm text-body-sm text-on-surface-variant transition-colors hover:text-on-surface'
                   }
@@ -105,7 +109,10 @@ export function App() {
         <TickerTape ihsg={ihsg} rows={tickerRows} />
       </header>
 
-      <main className="flex-1">
+      {/* The disclaimer footer is `sticky bottom-0`, so it floats over whatever
+          is at the bottom of the viewport. Without this reserve the last rows
+          of the page sit permanently underneath it and can never be read. */}
+      <main className="flex-1 pb-16">
         <Outlet />
       </main>
 

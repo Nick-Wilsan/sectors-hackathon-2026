@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import {
   createChart,
+  AreaSeries,
   CandlestickSeries,
   HistogramSeries,
   LineSeries,
@@ -14,6 +15,18 @@ import {
 import type { DailyBar, MovingAverageSeries, PatternMatch, RsiSeries } from '../api/types';
 
 export type DrawingTool = 'none' | 'horizontal' | 'trendline';
+export type ChartType = 'candles' | 'area';
+
+/** One bar's values, emitted as the crosshair moves so the toolbar can show a live OHLC readout. */
+export interface ReadoutBar {
+  date: string;
+  open: number;
+  high: number;
+  low: number;
+  close: number;
+  volume: number;
+  movingAverages: { label: string; value: number }[];
+}
 
 interface PriceChartProps {
   bars: DailyBar[];
@@ -26,6 +39,12 @@ interface PriceChartProps {
   onDrawComplete?: () => void;
   /** Increment to clear all user-drawn lines. */
   clearSignal?: number;
+  /** Candlestick or filled area. Both render the same closes; area is calmer for a quick read. */
+  chartType?: ChartType;
+  /** Increment to re-fit the visible range after the user has zoomed or panned. */
+  resetSignal?: number;
+  /** Fires on crosshair move (and falls back to the last bar when the pointer leaves). */
+  onReadoutChange?: (bar: ReadoutBar | null) => void;
 }
 
 const MA_COLORS = ['#f59e0b', '#38bdf8', '#a78bfa'];
@@ -72,10 +91,13 @@ export function PriceChart({
   drawingTool = 'none',
   onDrawComplete,
   clearSignal = 0,
+  chartType = 'candles',
+  resetSignal = 0,
+  onReadoutChange,
 }: PriceChartProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<IChartApi | null>(null);
-  const seriesRef = useRef<ISeriesApi<'Candlestick'> | null>(null);
+  const seriesRef = useRef<ISeriesApi<'Candlestick'> | ISeriesApi<'Area'> | null>(null);
   const volumeSeriesRef = useRef<ISeriesApi<'Histogram'> | null>(null);
   const maSeriesRef = useRef<ISeriesApi<'Line'>[]>([]);
   const rsiSeriesRef = useRef<ISeriesApi<'Line'> | null>(null);
@@ -87,6 +109,9 @@ export function PriceChart({
   const priceLinesRef = useRef<IPriceLine[]>([]);
   const trendLineSeriesRef = useRef<ISeriesApi<'Line'>[]>([]);
   const pendingTrendPointRef = useRef<{ time: Time; price: number } | null>(null);
+  const barsRef = useRef(bars);
+  const maRef = useRef(movingAverages);
+  const onReadoutRef = useRef(onReadoutChange);
 
   useEffect(() => {
     drawingToolRef.current = drawingTool;
@@ -96,6 +121,32 @@ export function PriceChart({
   useEffect(() => {
     onDrawCompleteRef.current = onDrawComplete;
   }, [onDrawComplete]);
+
+  useEffect(() => {
+    barsRef.current = bars;
+    maRef.current = movingAverages;
+    onReadoutRef.current = onReadoutChange;
+  }, [bars, movingAverages, onReadoutChange]);
+
+  /** Bar for a given date, packaged with whatever MA values exist on that date. */
+  function readoutFor(date: string | null): ReadoutBar | null {
+    const list = barsRef.current;
+    if (list.length === 0) return null;
+    const sorted = [...list].sort((a, b) => a.date.localeCompare(b.date));
+    const bar = date ? sorted.find((b) => b.date === date) : sorted[sorted.length - 1];
+    if (!bar) return null;
+    return {
+      date: bar.date,
+      open: bar.open ?? bar.close,
+      high: bar.high ?? bar.close,
+      low: bar.low ?? bar.close,
+      close: bar.close,
+      volume: bar.volume,
+      movingAverages: maRef.current
+        .map((ma) => ({ label: ma.label, value: ma.points.find((p) => p.date === bar.date)?.value }))
+        .filter((m): m is { label: string; value: number } => m.value !== undefined),
+    };
+  }
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -112,15 +163,6 @@ export function PriceChart({
       rightPriceScale: { borderColor: '#262626' },
     });
     chartRef.current = chart;
-
-    const series = chart.addSeries(CandlestickSeries, {
-      upColor: '#10b981',
-      downColor: '#f43f5e',
-      borderVisible: false,
-      wickUpColor: '#10b981',
-      wickDownColor: '#f43f5e',
-    });
-    seriesRef.current = series;
 
     // Volume overlays the bottom ~20% of the main price pane on its own price
     // scale (never sharing the price axis), same convention TradingView uses.
@@ -170,9 +212,27 @@ export function PriceChart({
       }
     });
 
+    // lightweight-charts keeps bar spacing (px per candle) fixed across a
+    // resize, so a chart first laid out narrow — which is what happens here,
+    // because the container is measured before the flex/grid parents have
+    // settled — keeps that spacing after it widens and leaves every candle
+    // crammed into a thin band at the right edge. Re-fitting on each width
+    // change is what actually keeps the series filling the plot area.
+    let lastWidth = 0;
+    chart.subscribeCrosshairMove((param) => {
+      if (!onReadoutRef.current) return;
+      const date = typeof param.time === 'string' ? param.time : null;
+      onReadoutRef.current(readoutFor(date));
+    });
+
     const resizeObserver = new ResizeObserver((entries) => {
       const { width, height } = entries[0]?.contentRect ?? {};
-      if (width) chart.applyOptions({ width, height: height || undefined });
+      if (!width) return;
+      chart.applyOptions({ width, height: height || undefined });
+      if (width !== lastWidth) {
+        lastWidth = width;
+        chart.timeScale().fitContent();
+      }
     });
     resizeObserver.observe(containerRef.current);
 
@@ -192,21 +252,49 @@ export function PriceChart({
   }, []);
 
   useEffect(() => {
-    const series = seriesRef.current;
-    if (!series) return;
+    const chart = chartRef.current;
+    if (!chart) return;
+
+    // Switching type means a different series class, so the old one is
+    // removed and rebuilt rather than mutated.
+    if (seriesRef.current) {
+      chart.removeSeries(seriesRef.current);
+      seriesRef.current = null;
+      priceLinesRef.current = [];
+    }
 
     const sorted = [...bars].sort((a, b) => a.date.localeCompare(b.date));
-    series.setData(
-      sorted.map((b) => ({
-        time: b.date as Time,
-        open: b.open ?? b.close,
-        high: b.high ?? b.close,
-        low: b.low ?? b.close,
-        close: b.close,
-      })),
-    );
 
-    createSeriesMarkers(series, toMarkers(patterns));
+    if (chartType === 'area') {
+      const area = chart.addSeries(AreaSeries, {
+        lineColor: '#0ea5e9',
+        topColor: 'rgba(14,165,233,0.28)',
+        bottomColor: 'rgba(14,165,233,0.02)',
+        lineWidth: 2,
+      });
+      area.setData(sorted.map((b) => ({ time: b.date as Time, value: b.close })));
+      seriesRef.current = area;
+    } else {
+      const candles = chart.addSeries(CandlestickSeries, {
+        upColor: '#10b981',
+        downColor: '#f43f5e',
+        borderVisible: false,
+        wickUpColor: '#10b981',
+        wickDownColor: '#f43f5e',
+      });
+      candles.setData(
+        sorted.map((b) => ({
+          time: b.date as Time,
+          open: b.open ?? b.close,
+          high: b.high ?? b.close,
+          low: b.low ?? b.close,
+          close: b.close,
+        })),
+      );
+      seriesRef.current = candles;
+    }
+
+    createSeriesMarkers(seriesRef.current, toMarkers(patterns));
 
     volumeSeriesRef.current?.setData(
       sorted.map((b, i) => {
@@ -215,8 +303,14 @@ export function PriceChart({
       }),
     );
 
+    chart.timeScale().fitContent();
+  }, [bars, patterns, chartType]);
+
+  // Re-fit on demand — the "reset zoom" control in the toolbar.
+  useEffect(() => {
+    if (resetSignal === 0) return;
     chartRef.current?.timeScale().fitContent();
-  }, [bars, patterns]);
+  }, [resetSignal]);
 
   useEffect(() => {
     const chart = chartRef.current;

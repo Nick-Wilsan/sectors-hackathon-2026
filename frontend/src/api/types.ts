@@ -29,11 +29,16 @@ export interface ScoredCompany extends CompositeScoreResult {
   companyName: string;
 }
 
+/** Composite score for one emiten, plus how many peers were missing when it was computed. */
+export type CompositeScoreWithPeers = CompositeScoreResult & { peerFetchFailures: number };
+
 export interface ScreenerResult {
   subSector: string;
   groupSize: number;
   ranked: ScoredCompany[];
   dataTidakMemadai: ScoredCompany[];
+  /** Peers whose report failed to download — they are absent from the percentile group. */
+  fetchFailures: number;
 }
 
 export interface PeerListEntry {
@@ -52,6 +57,7 @@ export interface PeerComparisonResult {
   status: ScoreStatus;
   metrics: ComponentScoreDetail[];
   peers: PeerListEntry[];
+  fetchFailures: number;
 }
 
 export interface SubsectorOption {
@@ -138,6 +144,8 @@ export interface MostTradedRow {
   companyName: string;
   volume: number;
   price: number;
+  /** Close-over-close vs the previous trading day; null when that day is not in the API window. */
+  priceChange: number | null;
 }
 
 export interface TickerTapeRow {
@@ -268,6 +276,25 @@ export interface MarketSorotan {
   valuasi: ValuationSpotlightRow[];
 }
 
+export interface ValuationYear {
+  year: number;
+  pe: number | null;
+  pePeerAvg: number | null;
+  pb: number | null;
+  pbPeerAvg: number | null;
+  ps: number | null;
+  psPeerAvg: number | null;
+  pcf: number | null;
+  peg: number | null;
+}
+
+export interface FinancialYear {
+  year: number;
+  revenue: number | null;
+  earnings: number | null;
+  ebitda: number | null;
+}
+
 export interface FundamentalExtras {
   symbol: string;
   year: number | null;
@@ -277,6 +304,11 @@ export interface FundamentalExtras {
   dividendYieldTtm: number | null;
   casaRatio: number | null;
   costToIncomeRatio: number | null;
+  historicalValuation: ValuationYear[];
+  historicalFinancials: FinancialYear[];
+  lastClosePrice: number | null;
+  latestCloseDate: string | null;
+  dailyCloseChange: number | null;
 }
 
 export interface FrameworkResult {
@@ -290,4 +322,20 @@ export interface FrameworkResult {
   pointsApplicable: number;
   classification: string;
   status: 'ok' | 'inadequate';
+}
+
+/** F-06 run across the day's busiest names — see backend/src/analysis/marketAnomalyScan.ts */
+export interface MarketAnomalyRow {
+  symbol: string;
+  companyName: string;
+  status: 'ok' | 'inadequate';
+  date: string | null;
+  hasAnomaly: boolean;
+  triggered: AnomalyMetric[];
+}
+
+export interface MarketAnomalyScan {
+  scannedAt: string;
+  threshold: number;
+  rows: MarketAnomalyRow[];
 }

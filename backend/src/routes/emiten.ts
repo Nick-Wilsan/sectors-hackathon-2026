@@ -4,6 +4,7 @@ import { getPeerComparison } from '../analysis/peerComparison.js';
 import { evaluatePiotroskiAdapted } from '../analysis/framework.js';
 import { getCompanyReport } from '../data/companyReport.js';
 import { askAboutEmiten } from '../ai/askService.js';
+import { getNews } from '../data/news.js';
 import { getAnomalyWithContext } from '../analysis/anomalyService.js';
 import { getCandlestickPatterns } from '../analysis/candlestickService.js';
 import { getIndicators } from '../analysis/indicatorsService.js';
@@ -107,6 +108,19 @@ emitenRouter.post('/:symbol/tanya', async (req, res) => {
   try {
     const result = await askAboutEmiten(symbol, question);
     res.json({ answer: result.answer });
+  } catch (err) {
+    res.status(502).json({ error: err instanceof Error ? err.message : 'Unknown error' });
+  }
+});
+
+// Berita yang menyebut emiten ini. Sectors memberi tags per artikel, jadi
+// kategori di UI adalah label asli dari sumber data, bukan hasil tebakan.
+emitenRouter.get('/:symbol/berita', async (req, res) => {
+  const { symbol } = req.params;
+  const limit = req.query.limit ? Number(req.query.limit) : 6;
+
+  try {
+    res.json(await getNews({ symbols: [symbol], limit }));
   } catch (err) {
     res.status(502).json({ error: err instanceof Error ? err.message : 'Unknown error' });
   }
