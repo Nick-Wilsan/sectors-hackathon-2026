@@ -5,6 +5,7 @@ import { App } from './App'
 import { ScreenerPage } from './pages/ScreenerPage'
 import { EmitenDetailPage } from './pages/EmitenDetailPage'
 import { NewsPage } from './pages/NewsPage'
+import { NewsDetailPage } from './pages/NewsDetailPage'
 import './index.css'
 
 createRoot(document.getElementById('root')!).render(
@@ -18,6 +19,7 @@ createRoot(document.getElementById('root')!).render(
         <Route element={<App />}>
           <Route index element={<ScreenerPage />} />
           <Route path="berita" element={<NewsPage />} />
+          <Route path="berita/:id" element={<NewsDetailPage />} />
           <Route path="emiten/:symbol" element={<EmitenDetailPage />} />
         </Route>
       </Routes>

@@ -106,6 +106,8 @@ export interface CompanyLite {
 }
 
 export interface NewsArticleFull {
+  /** Penanda stabil untuk route /berita/:id — dihitung backend dari URL sumber. */
+  id?: string;
   title: string;
   body?: string;
   source: string;
@@ -115,10 +117,33 @@ export interface NewsArticleFull {
   tags?: string[];
   symbols?: string[];
   thumbnail?: string | null;
+  /** Sectors' own topic scoring, one count per axis (financials, future, ...). */
+  dimension?: Record<string, number>;
 }
 
 export interface NewsResult {
   articles: NewsArticleFull[];
+  totalCount: number;
+}
+
+export interface Counted {
+  key: string;
+  count: number;
+}
+
+export interface NewsIndexResult {
+  articles: NewsArticleFull[];
+  corpusSize: number;
+  totalCount: number;
+  aggregates: {
+    tags: Counted[];
+    symbols: Counted[];
+    subSectors: Counted[];
+    sources: Counted[];
+    perDay: { date: string; count: number }[];
+    dimensions: Counted[];
+  };
+  fetchedAt: string;
 }
 
 export interface IndexPoint {
@@ -338,4 +363,13 @@ export interface MarketAnomalyScan {
   scannedAt: string;
   threshold: number;
   rows: MarketAnomalyRow[];
+}
+
+export interface GlossaryEntry {
+  term: string;
+  definition: string;
+}
+
+export interface GlossaryResult {
+  terms: GlossaryEntry[];
 }

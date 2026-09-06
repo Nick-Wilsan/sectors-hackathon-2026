@@ -1,4 +1,4 @@
-import type { AnomalyResult, CandlestickResult, CompanyLite, CompositeScoreResult, DailySeries, FrameworkResult, FundamentalExtras, IndicatorResult, MarketOverview, MarketSorotan, NewsResult, PatternSimilarityResult, PeerComparisonResult, ScreenerResult, SubsectorOption, MarketAnomalyScan } from './types';
+import type { AnomalyResult, CandlestickResult, CompanyLite, CompositeScoreResult, DailySeries, FrameworkResult, FundamentalExtras, IndicatorResult, MarketOverview, MarketSorotan, NewsResult, PatternSimilarityResult, PeerComparisonResult, ScreenerResult, SubsectorOption, MarketAnomalyScan, NewsIndexResult, GlossaryResult } from './types';
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:4000/api';
 
@@ -31,6 +31,16 @@ export function getMarketNews(limit = 15, offset?: number): Promise<NewsResult> 
   const params = new URLSearchParams({ limit: String(limit) });
   if (offset !== undefined) params.set('offset', String(offset));
   return getJson(`/market/news?${params.toString()}`);
+}
+
+/** Full /berita index: one fetched corpus plus every facet, filtered client-side. */
+/** Kamus istilah untuk tooltip glosarium. Tidak memanggil Sectors — 0 kredit. */
+export function getGlosarium(): Promise<GlossaryResult> {
+  return getJson('/market/glosarium');
+}
+
+export function getNewsIndex(): Promise<NewsIndexResult> {
+  return getJson('/market/berita');
 }
 
 export function getCompositeScore(symbol: string): Promise<CompositeScoreResult> {
