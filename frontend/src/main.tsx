@@ -7,6 +7,12 @@ import { EmitenDetailPage } from './pages/EmitenDetailPage'
 import { NewsPage } from './pages/NewsPage'
 import { NewsDetailPage } from './pages/NewsDetailPage'
 import './index.css'
+import { temaAwal, terapkanTema } from './lib/theme'
+
+// Dijalankan sebelum React merender apa pun: kalau atribut tema baru dipasang
+// di dalam komponen, halaman sempat tampil gelap satu frame lalu berkedip
+// menjadi terang bagi pengguna yang memilih tema terang.
+terapkanTema(temaAwal())
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

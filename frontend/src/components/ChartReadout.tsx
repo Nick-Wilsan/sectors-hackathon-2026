@@ -40,7 +40,7 @@ export function ChartReadout({ symbol, bar }: Props) {
           </span>
           {bar.movingAverages.map((ma, i) => (
             <span key={ma.label} className="text-text-muted">
-              {ma.label}: <span className="tabular-nums" style={{ color: i === 0 ? '#f59e0b' : '#38bdf8' }}>{num(Math.round(ma.value))}</span>
+              {ma.label}: <span className="tabular-nums" style={{ color: i === 0 ? 'var(--color-state-warning)' : 'var(--color-accent-hover)' }}>{num(Math.round(ma.value))}</span>
             </span>
           ))}
           <span className="ml-auto text-text-muted">

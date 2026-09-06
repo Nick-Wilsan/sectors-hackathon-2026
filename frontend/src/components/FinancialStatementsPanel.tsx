@@ -103,8 +103,8 @@ function Sparkline({ values }: { values: (number | null)[] }) {
 
   return (
     <svg viewBox={`0 0 ${w} ${h}`} preserveAspectRatio="none" className="h-4 w-16" role="img" aria-label={naik ? 'tren menaik' : 'tren menurun'}>
-      <polyline points={coords.join(' ')} fill="none" stroke="#0ea5e9" strokeWidth={1.4} vectorEffect="non-scaling-stroke" />
-      <circle cx={w} cy={h - ((points[points.length - 1] - min) / span) * h} r={1.8} fill="#38bdf8" />
+      <polyline points={coords.join(' ')} fill="none" stroke="var(--color-primary-container)" strokeWidth={1.4} vectorEffect="non-scaling-stroke" />
+      <circle cx={w} cy={h - ((points[points.length - 1] - min) / span) * h} r={1.8} fill="var(--color-accent-hover)" />
     </svg>
   );
 }

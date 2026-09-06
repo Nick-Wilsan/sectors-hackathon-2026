@@ -44,7 +44,7 @@ export function TickerTape({ ihsg, rows }: { ihsg: IndexPoint[]; rows: TickerTap
   );
 
   return (
-    <div className="flex h-ticker-tape-height items-center overflow-hidden border-t border-border-subtle bg-[#0d0d0d] px-space-16">
+    <div className="flex h-ticker-tape-height items-center overflow-hidden border-t border-border-subtle bg-surface-container-lowest px-space-16">
       <div className="flex w-max animate-[ticker-scroll_35s_linear_infinite] motion-reduce:animate-none">
         {track}
         {track}

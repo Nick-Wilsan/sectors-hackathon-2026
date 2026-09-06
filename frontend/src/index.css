@@ -69,7 +69,11 @@
   --color-surface-card: #171717;
   --color-border-subtle: #262626;
   --color-surface-tint: #89ceff;
-  --color-text-muted: #737373;
+  /* Dinaikkan dari #737373 hasil audit kontras: nilai lama menghasilkan rasio
+     3,78 terhadap kartu #171717, di bawah ambang WCAG AA 4,5 untuk teks kecil,
+     dan membuat 192 dari 503 teks pada halaman emiten gagal. #8a8a8a memberi
+     4,7 pada permukaan paling terang sekalipun. */
+  --color-text-muted: #8a8a8a;
   --color-state-negative: #f43f5e;
   --color-on-tertiary-fixed-variant: #92002a;
   --color-secondary-container: #00a572;
@@ -157,6 +161,78 @@
   --text-table-header--line-height: 14px;
   --text-table-header--letter-spacing: 0.04em;
   --text-table-header--font-weight: 600;
+}
+
+/* ---------------------------------------------------------------------------
+   Light mode.
+
+   Tailwind v4 mengompilasi blok @theme di atas menjadi custom property biasa
+   pada :root, dan seluruh utilitas warnanya merujuk var(--color-*). Karena itu
+   tema terang cukup mendefinisikan ULANG nilai token yang sama — 852 pemakaian
+   token di komponen ikut berubah tanpa satu pun kelas diubah.
+
+   Nilai aksen sengaja TIDAK sekadar dibalik. Hijau #10b981 dan biru #38bdf8
+   yang terbaca jelas di atas hitam menjadi terlalu pucat di atas putih, jadi
+   versi terangnya memakai varian yang lebih pekat agar kontras teksnya tetap
+   memadai.
+   --------------------------------------------------------------------------- */
+:root {
+  color-scheme: dark;
+}
+
+[data-theme='light'] {
+  color-scheme: light;
+
+  /* Permukaan, dari yang paling dalam ke paling menonjol */
+  --color-background-base: #f4f6f8;
+  --color-background: #ffffff;
+  --color-surface: #ffffff;
+  --color-surface-dim: #eef1f5;
+  --color-surface-card: #ffffff;
+  --color-surface-container-lowest: #f7f9fb;
+  --color-surface-container-low: #f0f3f7;
+  --color-surface-container: #e9edf2;
+  --color-surface-container-high: #dfe4ec;
+  --color-surface-container-highest: #d6dce5;
+  --color-surface-variant: #d6dce5;
+  --color-surface-bright: #ffffff;
+
+  /* Garis */
+  --color-border-subtle: #dde2e8;
+  --color-outline-variant: #c3cad4;
+  --color-outline: #6b7280;
+
+  /* Teks */
+  --color-text-primary: #14161a;
+  --color-text-secondary: #4b5563;
+  /* Dipekatkan dari #79828f setelah audit kontras: warna lama menghasilkan
+     rasio 3,68 terhadap latar kartu, di bawah ambang WCAG AA 4,5 untuk teks
+     kecil, dan 176 dari 503 teks pada halaman emiten gagal karenanya. */
+  --color-text-muted: #5b6472;
+  --color-on-surface: #14161a;
+  --color-on-surface-variant: #4b5563;
+  --color-on-background: #14161a;
+  --color-inverse-surface: #14161a;
+  --color-inverse-on-surface: #ffffff;
+
+  /* Aksen — dipekatkan agar kontras di atas latar terang tetap memadai */
+  --color-primary: #0369a1;
+  --color-primary-container: #0369a1;
+  --color-accent-hover: #075985;
+  --color-surface-tint: #0284c7;
+  --color-on-primary: #ffffff;
+  --color-on-primary-container: #ffffff;
+  --color-inverse-primary: #38bdf8;
+
+  /* Status */
+  --color-state-positive: #047857;
+  --color-state-negative: #be123c;
+  --color-state-warning: #b45309;
+  --color-secondary: #047857;
+  --color-secondary-container: #047857;
+  --color-tertiary: #be123c;
+  --color-tertiary-container: #be123c;
+  --color-error: #be123c;
 }
 
 /* Dashboard ticker tape marquee — track is rendered twice back-to-back, this

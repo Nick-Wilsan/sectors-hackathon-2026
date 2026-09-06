@@ -32,7 +32,7 @@ function Sparkline({ bars, positive }: { bars: DailyBar[]; positive: boolean }) 
   const w = 100;
   const h = 32;
   const pts = closes.map((c, i) => `${(i / (closes.length - 1)) * w},${h - ((c - min) / span) * h}`);
-  const stroke = positive ? '#10b981' : '#f43f5e';
+  const stroke = positive ? 'var(--color-state-positive)' : 'var(--color-state-negative)';
 
   return (
     <div className="hidden min-w-[140px] flex-1 flex-col justify-center xl:flex">

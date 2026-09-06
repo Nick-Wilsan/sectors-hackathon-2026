@@ -13,6 +13,7 @@ import {
   type Time,
 } from 'lightweight-charts';
 import type { DailyBar, MovingAverageSeries, PatternMatch, RsiSeries } from '../api/types';
+import { tokenWarna, useTemaAktif } from '../lib/theme';
 
 export type DrawingTool = 'none' | 'horizontal' | 'trendline';
 export type ChartType = 'candles' | 'area';
@@ -47,13 +48,16 @@ interface PriceChartProps {
   onReadoutChange?: (bar: ReadoutBar | null) => void;
 }
 
-const MA_COLORS = ['#f59e0b', '#38bdf8', '#a78bfa'];
-const DRAWING_COLOR = '#0ea5e9';
+// Warna dibaca dari token CSS agar mengikuti tema. lightweight-charts menerima
+// warna sebagai nilai JavaScript, bukan kelas, sehingga tidak bisa ikut berubah
+// sendiri seperti elemen SVG biasa.
+const maColors = () => [tokenWarna('state-warning', '#f59e0b'), tokenWarna('accent-hover', '#38bdf8'), '#a78bfa'];
+const drawingColor = () => tokenWarna('primary-container', '#0ea5e9');
 
 const CATEGORY_STYLE = {
-  'reversal-bullish': { color: '#10b981', shape: 'arrowUp' as const, position: 'belowBar' as const },
-  'reversal-bearish': { color: '#f43f5e', shape: 'arrowDown' as const, position: 'aboveBar' as const },
-  indecision: { color: '#a3a3a3', shape: 'circle' as const, position: 'inBar' as const },
+  'reversal-bullish': { color: 'state-positive', fallback: '#10b981', shape: 'arrowUp' as const, position: 'belowBar' as const },
+  'reversal-bearish': { color: 'state-negative', fallback: '#f43f5e', shape: 'arrowDown' as const, position: 'aboveBar' as const },
+  indecision: { color: 'text-muted', fallback: '#a3a3a3', shape: 'circle' as const, position: 'inBar' as const },
 };
 
 // F-07 kriteria selesai: "penanda muncul pada posisi yang tepat di grafik."
@@ -76,7 +80,7 @@ function toMarkers(patterns: PatternMatch[]): SeriesMarker<Time>[] {
       return {
         time: date as Time,
         position: style.position,
-        color: style.color,
+        color: tokenWarna(style.color, style.fallback),
         shape: style.shape,
         text: matches.map((m) => m.label).join(', '),
       };
@@ -148,19 +152,21 @@ export function PriceChart({
     };
   }
 
+  const tema = useTemaAktif();
+
   useEffect(() => {
     if (!containerRef.current) return;
 
     const chart = createChart(containerRef.current, {
-      layout: { background: { color: 'transparent' }, textColor: '#a3a3a3' },
-      grid: { vertLines: { color: '#262626' }, horzLines: { color: '#262626' } },
+      layout: { background: { color: 'transparent' }, textColor: tokenWarna('text-muted', '#a3a3a3') },
+      grid: { vertLines: { color: tokenWarna('border-subtle', '#262626') }, horzLines: { color: tokenWarna('border-subtle', '#262626') } },
       height: containerRef.current.clientHeight || 480,
       width: containerRef.current.clientWidth,
       // rightOffset reserves a few empty bars after the last candle so the
       // MA/RSI last-value price labels have room to sit without visually
       // overlapping (and appearing to clip) the tail end of those lines.
-      timeScale: { borderColor: '#262626', rightOffset: 4 },
-      rightPriceScale: { borderColor: '#262626' },
+      timeScale: { borderColor: tokenWarna('border-subtle', '#262626'), rightOffset: 4 },
+      rightPriceScale: { borderColor: tokenWarna('border-subtle', '#262626') },
     });
     chartRef.current = chart;
 
@@ -185,7 +191,7 @@ export function PriceChart({
       if (tool === 'horizontal') {
         const line = seriesRef.current.createPriceLine({
           price,
-          color: DRAWING_COLOR,
+          color: drawingColor(),
           lineWidth: 1,
           lineStyle: 2,
           axisLabelVisible: true,
@@ -198,7 +204,7 @@ export function PriceChart({
         if (!pending) {
           pendingTrendPointRef.current = { time: param.time, price };
         } else {
-          const lineSeries = chart.addSeries(LineSeries, { color: DRAWING_COLOR, lineWidth: 2, lastValueVisible: false, priceLineVisible: false });
+          const lineSeries = chart.addSeries(LineSeries, { color: drawingColor(), lineWidth: 2, lastValueVisible: false, priceLineVisible: false });
           lineSeries.setData(
             [
               { time: pending.time, value: pending.price },
@@ -267,7 +273,7 @@ export function PriceChart({
 
     if (chartType === 'area') {
       const area = chart.addSeries(AreaSeries, {
-        lineColor: '#0ea5e9',
+        lineColor: tokenWarna('primary-container', '#0ea5e9'),
         topColor: 'rgba(14,165,233,0.28)',
         bottomColor: 'rgba(14,165,233,0.02)',
         lineWidth: 2,
@@ -276,11 +282,11 @@ export function PriceChart({
       seriesRef.current = area;
     } else {
       const candles = chart.addSeries(CandlestickSeries, {
-        upColor: '#10b981',
-        downColor: '#f43f5e',
+        upColor: tokenWarna('state-positive', '#10b981'),
+        downColor: tokenWarna('state-negative', '#f43f5e'),
         borderVisible: false,
-        wickUpColor: '#10b981',
-        wickDownColor: '#f43f5e',
+        wickUpColor: tokenWarna('state-positive', '#10b981'),
+        wickDownColor: tokenWarna('state-negative', '#f43f5e'),
       });
       candles.setData(
         sorted.map((b) => ({
@@ -299,12 +305,27 @@ export function PriceChart({
     volumeSeriesRef.current?.setData(
       sorted.map((b, i) => {
         const prevClose = i > 0 ? sorted[i - 1].close : b.close;
-        return { time: b.date as Time, value: b.volume, color: b.close >= prevClose ? '#10b98166' : '#f43f5e66' };
+        return { time: b.date as Time, value: b.volume, color: b.close >= prevClose ? `${tokenWarna('state-positive', '#10b981')}66` : `${tokenWarna('state-negative', '#f43f5e')}66` };
       }),
     );
 
     chart.timeScale().fitContent();
-  }, [bars, patterns, chartType]);
+  }, [bars, patterns, chartType, tema]);
+
+  // Warna rangka chart diterapkan ulang saat tema berganti. Membuat ulang
+  // instansi chart akan menghilangkan posisi zoom dan garis yang sudah digambar
+  // pengguna, jadi cukup opsinya yang diperbarui.
+  useEffect(() => {
+    const chart = chartRef.current;
+    if (!chart) return;
+    const garis = tokenWarna('border-subtle', '#262626');
+    chart.applyOptions({
+      layout: { background: { color: 'transparent' }, textColor: tokenWarna('text-muted', '#a3a3a3') },
+      grid: { vertLines: { color: garis }, horzLines: { color: garis } },
+      timeScale: { borderColor: garis },
+      rightPriceScale: { borderColor: garis },
+    });
+  }, [tema]);
 
   // Re-fit on demand — the "reset zoom" control in the toolbar.
   useEffect(() => {
@@ -319,7 +340,7 @@ export function PriceChart({
     // Rebuild MA line series to match however many periods are enabled (0 by default).
     for (const s of maSeriesRef.current) chart.removeSeries(s);
     maSeriesRef.current = movingAverages.map((ma, i) =>
-      chart.addSeries(LineSeries, { color: MA_COLORS[i % MA_COLORS.length], lineWidth: 2, title: ma.label }),
+      chart.addSeries(LineSeries, { color: maColors()[i % maColors().length], lineWidth: 2, title: ma.label }),
     );
     movingAverages.forEach((ma, i) => {
       maSeriesRef.current[i].setData(ma.points.map((p) => ({ time: p.date as Time, value: p.value })));
@@ -334,7 +355,7 @@ export function PriceChart({
     // dead vertical space while indicators are off by default.
     if (rsi && rsi.points.length > 0) {
       if (!rsiSeriesRef.current) {
-        rsiSeriesRef.current = chart.addSeries(LineSeries, { color: '#38bdf8', lineWidth: 1 }, 1);
+        rsiSeriesRef.current = chart.addSeries(LineSeries, { color: tokenWarna('accent-hover', '#38bdf8'), lineWidth: 1 }, 1);
         chart.panes()[1]?.setHeight(120);
       }
       rsiSeriesRef.current.setData(rsi.points.map((p) => ({ time: p.date as Time, value: p.value })));

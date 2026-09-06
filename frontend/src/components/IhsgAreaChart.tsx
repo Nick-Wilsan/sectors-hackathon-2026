@@ -18,7 +18,8 @@ export function IhsgAreaChart({ points, positive, height = 160 }: IhsgAreaChartP
   const min = Math.min(...values);
   const max = Math.max(...values);
   const range = max - min || 1;
-  const color = positive ? '#10b981' : '#f43f5e';
+  // var() dibaca langsung oleh atribut SVG, jadi warnanya ikut tema.
+  const color = positive ? 'var(--color-state-positive)' : 'var(--color-state-negative)';
   const gradientId = `ihsg-gradient-${positive ? 'up' : 'down'}`;
 
   const coords = values.map((v, i) => {
@@ -46,7 +47,7 @@ export function IhsgAreaChart({ points, positive, height = 160 }: IhsgAreaChartP
           </linearGradient>
         </defs>
         {gridLines.map((y) => (
-          <line key={y} x1="0" x2={VIEW_W} y1={y} y2={y} stroke="#262626" strokeDasharray="3 3" strokeWidth="1" />
+          <line key={y} x1="0" x2={VIEW_W} y1={y} y2={y} stroke="var(--color-border-subtle)" strokeDasharray="3 3" strokeWidth="1" />
         ))}
         <polygon points={areaPath} fill={`url(#${gradientId})`} />
         <polyline points={linePath} fill="none" stroke={color} strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" />

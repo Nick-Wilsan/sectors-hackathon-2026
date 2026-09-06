@@ -5,6 +5,7 @@ import { SymbolSearch } from './components/SymbolSearch';
 import { Wordmark } from './components/Wordmark';
 import { TickerTape } from './components/TickerTape';
 import { getMarketStatus, type MarketStatus } from './lib/marketHours';
+import { useTheme } from './lib/theme';
 import { getMarketOverview } from './api/client';
 import type { IndexPoint, TickerTapeRow } from './api/types';
 
@@ -63,6 +64,7 @@ function useHashScroll(): void {
 
 export function App() {
   const marketStatus = useMarketStatus();
+  const { theme, toggle: toggleTheme } = useTheme();
   useHashScroll();
   // Which nav item is highlighted follows the actual route, rather than a
   // flag pinned to the home link (which left /berita with no active state).
@@ -118,6 +120,16 @@ export function App() {
           </nav>
 
           <div className="flex items-center gap-space-12">
+            <button
+              type="button"
+              onClick={toggleTheme}
+              aria-label={theme === 'dark' ? 'Ganti ke tema terang' : 'Ganti ke tema gelap'}
+              title={theme === 'dark' ? 'Tema terang' : 'Tema gelap'}
+              className="flex h-8 w-8 items-center justify-center rounded border border-border-subtle bg-surface-card text-text-secondary transition-colors hover:border-surface-variant hover:text-text-primary"
+            >
+              <span className="material-symbols-outlined text-[18px]">{theme === 'dark' ? 'light_mode' : 'dark_mode'}</span>
+            </button>
+
             <span
               className={`hidden items-center gap-space-6 rounded border px-space-8 py-space-4 md:flex ${
                 marketStatus.open ? 'border-border-subtle bg-surface-card' : 'border-border-subtle bg-surface-card'
