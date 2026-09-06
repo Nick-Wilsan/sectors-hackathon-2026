@@ -36,6 +36,12 @@ const FACTORS = [
 type FactorKey = (typeof FACTORS)[number]['key'];
 type RangeInput = { min: string; max: string };
 
+// Sub-sektor terbesar berisi hampir seratus emiten. Menampilkan semuanya
+// sekaligus membuat panel ini memanjang jauh melewati sisa dashboard, jadi
+// daftarnya dipenggal. Seluruh data sudah ada di browser, sehingga berpindah
+// halaman tidak memanggil API dan tidak menagih kredit.
+const BARIS_PER_HALAMAN = 10;
+
 const EMPTY_FILTERS: Record<FactorKey, RangeInput> = {
   roe: { min: '', max: '' },
   netProfitMargin: { min: '', max: '' },
@@ -79,6 +85,7 @@ function FactorCell({ company, factorKey }: { company: ScoredCompany; factorKey:
     const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
     const [filters, setFilters] = useState<Record<FactorKey, RangeInput>>(EMPTY_FILTERS);
     const [showFilters, setShowFilters] = useState(false);
+    const [halaman, setHalaman] = useState(0);
     const [result, setResult] = useState<ScreenerResult | null>(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -105,6 +112,7 @@ function FactorCell({ company, factorKey }: { company: ScoredCompany; factorKey:
         if (min !== undefined || max !== undefined) componentFilters[f.key] = { min, max };
       }
 
+      setHalaman(0);
       screenCompanies({
         subSector,
         sortBy,
@@ -119,6 +127,11 @@ function FactorCell({ company, factorKey }: { company: ScoredCompany; factorKey:
       // efek tidak berjalan ulang setiap render akibat objek baru yang isinya sama.
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [subSector, minScore, sortBy, sortDirection, JSON.stringify(filters)]);
+
+    const totalHalaman = Math.max(1, Math.ceil((result?.ranked.length ?? 0) / BARIS_PER_HALAMAN));
+    const halamanAman = Math.min(halaman, totalHalaman - 1);
+    const mulai = halamanAman * BARIS_PER_HALAMAN;
+    const barisTampil = result?.ranked.slice(mulai, mulai + BARIS_PER_HALAMAN) ?? [];
 
     const healthy = result?.ranked.filter((c) => (c.score ?? 0) >= 67).length ?? 0;
     const critical = result?.ranked.filter((c) => (c.score ?? 0) < 34).length ?? 0;
@@ -325,13 +338,13 @@ function FactorCell({ company, factorKey }: { company: ScoredCompany; factorKey:
               </tr>
             </thead>
             <tbody className="divide-y divide-border-subtle/40">
-              {result.ranked.map((c, i) => {
+              {barisTampil.map((c, i) => {
                 const symbolShort = c.symbol.replace('.JK', '');
                 const score = c.score ?? 0;
                 const tier = tierColors(score);
                 return (
                   <tr key={c.symbol} className="transition-colors hover:bg-surface-container-low">
-                    <td className="py-space-8 text-right font-label-mono-sm text-label-mono-sm tabular-nums text-text-muted">{i + 1}</td>
+                    <td className="py-space-8 text-right font-label-mono-sm text-label-mono-sm tabular-nums text-text-muted">{mulai + i + 1}</td>
                     {/* w-full max-w-0 gives this column the leftover width while
                         still letting the company name truncate instead of pushing
                         the numeric columns off the card. */}
@@ -372,6 +385,37 @@ function FactorCell({ company, factorKey }: { company: ScoredCompany; factorKey:
             </tbody>
           </table>
         </div>
+
+        {result.ranked.length > BARIS_PER_HALAMAN && (
+          <nav className="mt-space-12 flex flex-wrap items-center justify-between gap-space-8" aria-label="Navigasi halaman screener">
+            <span className="font-label-mono-sm text-label-mono-sm tabular-nums text-text-muted">
+              Menampilkan {mulai + 1}&ndash;{Math.min(mulai + BARIS_PER_HALAMAN, result.ranked.length)} dari {result.ranked.length} emiten
+            </span>
+            <div className="flex items-center gap-space-8">
+              <button
+                type="button"
+                onClick={() => setHalaman((h) => Math.max(0, h - 1))}
+                disabled={halamanAman === 0}
+                className="flex items-center gap-space-4 rounded border border-border-subtle px-space-12 py-space-6 font-body-sm text-body-sm text-text-secondary transition-colors enabled:hover:border-surface-variant disabled:opacity-30"
+              >
+                <span className="material-symbols-outlined text-[16px]">chevron_left</span>
+                Sebelumnya
+              </button>
+              <span className="font-label-mono-sm text-label-mono-sm tabular-nums text-text-muted">
+                Halaman {halamanAman + 1} dari {totalHalaman}
+              </span>
+              <button
+                type="button"
+                onClick={() => setHalaman((h) => Math.min(totalHalaman - 1, h + 1))}
+                disabled={halamanAman >= totalHalaman - 1}
+                className="flex items-center gap-space-4 rounded border border-border-subtle px-space-12 py-space-6 font-body-sm text-body-sm text-text-secondary transition-colors enabled:hover:border-surface-variant disabled:opacity-30"
+              >
+                Selanjutnya
+                <span className="material-symbols-outlined text-[16px]">chevron_right</span>
+              </button>
+            </div>
+          </nav>
+        )}
 
         <div className="mt-space-8 flex flex-wrap items-center justify-between gap-space-8 border-t border-border-subtle pt-space-8 font-body-sm text-body-sm text-text-muted">
           <span className="flex items-center gap-space-4">
