@@ -94,11 +94,20 @@ export async function askAboutEmiten(symbol: string, question: string): Promise<
   return data.answer;
 }
 
+/** Batas bawah/atas untuk nilai MENTAH sebuah komponen skor (bukan persentilnya). */
+export interface ComponentRange {
+  min?: number;
+  max?: number;
+}
+
 export interface ScreenerQuery {
   subSector: string;
   sortBy?: string;
   sortDirection?: 'asc' | 'desc';
   minScore?: number;
+  maxScore?: number;
+  /** Kunci memakai nama komponen: roe, netProfitMargin, der, ocfMargin, roa. */
+  componentFilters?: Record<string, ComponentRange>;
   limit?: number;
 }
 
@@ -108,7 +117,16 @@ export function screenCompanies(query: ScreenerQuery): Promise<ScreenerResult> {
   if (query.sortBy) params.set('sortBy', query.sortBy);
   if (query.sortDirection) params.set('sortDirection', query.sortDirection);
   if (query.minScore !== undefined) params.set('minScore', String(query.minScore));
+  if (query.maxScore !== undefined) params.set('maxScore', String(query.maxScore));
   if (query.limit !== undefined) params.set('limit', String(query.limit));
+
+  // Backend membaca tiap komponen sebagai minRoe/maxRoe, minDer/maxDer, dan
+  // seterusnya — huruf pertama kunci dikapitalkan.
+  for (const [key, range] of Object.entries(query.componentFilters ?? {})) {
+    const suffix = key.charAt(0).toUpperCase() + key.slice(1);
+    if (range.min !== undefined) params.set(`min${suffix}`, String(range.min));
+    if (range.max !== undefined) params.set(`max${suffix}`, String(range.max));
+  }
   return getJson(`/screener?${params.toString()}`);
 }
 

@@ -19,13 +19,38 @@ function tierColors(score: number): { bar: string; text: string; chip: string; l
 // `glossary` adalah kunci pencarian di kamus istilah, sengaja dipisah dari
 // `full` yang merupakan label tampilan. Keduanya sempat disamakan dan empat
 // dari lima tooltip diam-diam tidak muncul karena kuncinya tidak pernah cocok.
+//
+// `unit` menentukan bagaimana penyaring lanjutan menampilkan dan mengirim
+// angkanya. Empat rasio disimpan Sectors sebagai pecahan (ROE 0,204 = 20,4%),
+// sehingga pengguna mengetik "15" untuk 15% dan nilainya dibagi seratus sebelum
+// dikirim. DER adalah rasio telanjang dan dikirim apa adanya. Meminta pemula
+// mengetik "0.15" adalah cara tercepat membuat penyaring ini tidak terpakai.
 const FACTORS = [
-  { key: 'roe', short: 'ROE', full: 'Profitabilitas Modal (ROE)', glossary: 'ROE', weight: '25%' },
-  { key: 'netProfitMargin', short: 'NPM', full: 'Margin Laba Bersih', glossary: 'Margin laba', weight: '20%' },
-  { key: 'der', short: 'DER', full: 'Struktur Modal (DER)', glossary: 'DER', weight: '20%' },
-  { key: 'ocfMargin', short: 'OCF', full: 'Margin Arus Kas Operasional', glossary: 'Margin Arus Kas Operasional', weight: '20%' },
-  { key: 'roa', short: 'ROA', full: 'Profitabilitas Aset (ROA)', glossary: 'ROA', weight: '15%' },
+  { key: 'roe', short: 'ROE', full: 'Profitabilitas Modal (ROE)', glossary: 'ROE', weight: '25%', unit: 'persen' },
+  { key: 'netProfitMargin', short: 'NPM', full: 'Margin Laba Bersih', glossary: 'Margin laba', weight: '20%', unit: 'persen' },
+  { key: 'der', short: 'DER', full: 'Struktur Modal (DER)', glossary: 'DER', weight: '20%', unit: 'rasio' },
+  { key: 'ocfMargin', short: 'OCF', full: 'Margin Arus Kas Operasional', glossary: 'Margin Arus Kas Operasional', weight: '20%', unit: 'persen' },
+  { key: 'roa', short: 'ROA', full: 'Profitabilitas Aset (ROA)', glossary: 'ROA', weight: '15%', unit: 'persen' },
 ] as const;
+
+type FactorKey = (typeof FACTORS)[number]['key'];
+type RangeInput = { min: string; max: string };
+
+const EMPTY_FILTERS: Record<FactorKey, RangeInput> = {
+  roe: { min: '', max: '' },
+  netProfitMargin: { min: '', max: '' },
+  der: { min: '', max: '' },
+  ocfMargin: { min: '', max: '' },
+  roa: { min: '', max: '' },
+};
+
+/** Ubah isian pengguna menjadi nilai mentah yang dipahami backend. */
+function toRawValue(text: string, unit: 'persen' | 'rasio'): number | undefined {
+  if (text.trim() === '') return undefined;
+  const n = Number(text);
+  if (!Number.isFinite(n)) return undefined;
+  return unit === 'persen' ? n / 100 : n;
+}
 
 /** A component percentile: how the company ranks against its own sub-sector on that one factor. */
 function FactorCell({ company, factorKey }: { company: ScoredCompany; factorKey: string }) {
@@ -50,9 +75,15 @@ function FactorCell({ company, factorKey }: { company: ScoredCompany; factorKey:
     const [subsectors, setSubsectors] = useState<SubsectorOption[]>([]);
     const [subSector, setSubSector] = useState('');
     const [minScore, setMinScore] = useState('');
+    const [sortBy, setSortBy] = useState<'score' | FactorKey>('score');
+    const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
+    const [filters, setFilters] = useState<Record<FactorKey, RangeInput>>(EMPTY_FILTERS);
+    const [showFilters, setShowFilters] = useState(false);
     const [result, setResult] = useState<ScreenerResult | null>(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+
+    const activeFilters = FACTORS.filter((f) => filters[f.key].min !== '' || filters[f.key].max !== '').length;
 
     useEffect(() => {
       getSubsectors()
@@ -67,11 +98,27 @@ function FactorCell({ company, factorKey }: { company: ScoredCompany; factorKey:
       if (!subSector) return;
       setLoading(true);
       setError(null);
-      screenCompanies({ subSector, sortBy: 'score', sortDirection: 'desc', minScore: minScore ? Number(minScore) : undefined })
+      const componentFilters: Record<string, { min?: number; max?: number }> = {};
+      for (const f of FACTORS) {
+        const min = toRawValue(filters[f.key].min, f.unit);
+        const max = toRawValue(filters[f.key].max, f.unit);
+        if (min !== undefined || max !== undefined) componentFilters[f.key] = { min, max };
+      }
+
+      screenCompanies({
+        subSector,
+        sortBy,
+        sortDirection,
+        minScore: minScore ? Number(minScore) : undefined,
+        componentFilters,
+      })
         .then(setResult)
         .catch((err) => setError(err instanceof Error ? err.message : 'Gagal memuat data screener'))
         .finally(() => setLoading(false));
-    }, [subSector, minScore]);
+      // `filters` sengaja dibaca lewat JSON.stringify pada daftar dependensi agar
+      // efek tidak berjalan ulang setiap render akibat objek baru yang isinya sama.
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [subSector, minScore, sortBy, sortDirection, JSON.stringify(filters)]);
 
     const healthy = result?.ranked.filter((c) => (c.score ?? 0) >= 67).length ?? 0;
     const critical = result?.ranked.filter((c) => (c.score ?? 0) < 34).length ?? 0;
@@ -131,8 +178,107 @@ function FactorCell({ company, factorKey }: { company: ScoredCompany; factorKey:
             className="h-[32px] w-24 rounded border border-border-subtle bg-surface-container-lowest px-space-8 font-label-mono-md text-label-mono-md tabular-nums text-text-primary transition-colors placeholder:text-text-muted focus:border-primary-container focus:outline-none"
           />
         </label>
+
+        <label className="flex flex-col gap-space-4">
+          <span className="font-table-header text-table-header uppercase text-text-muted">Urutkan menurut</span>
+          <select
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value as 'score' | FactorKey)}
+            className="h-[32px] rounded border border-border-subtle bg-surface-container-lowest px-space-8 font-body-sm text-body-sm text-text-primary transition-colors focus:border-primary-container focus:outline-none"
+          >
+            <option value="score">Skor Komposit</option>
+            {FACTORS.map((f) => (
+              <option key={f.key} value={f.key}>
+                {f.full}
+              </option>
+            ))}
+          </select>
+        </label>
+
+        <button
+          type="button"
+          onClick={() => setSortDirection((d) => (d === 'desc' ? 'asc' : 'desc'))}
+          title={sortDirection === 'desc' ? 'Tertinggi lebih dulu' : 'Terendah lebih dulu'}
+          className="flex h-[32px] items-center gap-space-4 rounded border border-border-subtle bg-surface-container-lowest px-space-8 font-body-sm text-body-sm text-text-secondary transition-colors hover:border-surface-variant"
+        >
+          <span className="material-symbols-outlined text-[16px]">{sortDirection === 'desc' ? 'arrow_downward' : 'arrow_upward'}</span>
+          {sortDirection === 'desc' ? 'Tertinggi' : 'Terendah'}
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setShowFilters((v) => !v)}
+          aria-expanded={showFilters}
+          className={
+            activeFilters > 0
+              ? 'flex h-[32px] items-center gap-space-4 rounded border border-primary-container bg-primary-container/10 px-space-8 font-body-sm text-body-sm text-primary transition-colors'
+              : 'flex h-[32px] items-center gap-space-4 rounded border border-border-subtle bg-surface-container-lowest px-space-8 font-body-sm text-body-sm text-text-secondary transition-colors hover:border-surface-variant'
+          }
+        >
+          <span className="material-symbols-outlined text-[16px]">tune</span>
+          Penyaring faktor
+          {activeFilters > 0 && (
+            <span className="rounded-full bg-primary-container px-space-6 font-label-mono-sm text-label-mono-sm font-bold text-background-base">
+              {activeFilters}
+            </span>
+          )}
+        </button>
       </div>
     </div>
+
+    {/* Penyaring per faktor. Mesin skor sudah mendukungnya sejak awal, tetapi
+        kontrolnya belum pernah sampai ke layar — sehingga pengguna hanya bisa
+        mengurutkan, tidak bisa bertanya "ROE tinggi TAPI utangnya rendah". */}
+    {showFilters && (
+      <div className="mt-space-12 rounded border border-border-subtle bg-surface-container-lowest p-space-12">
+        <div className="flex flex-wrap items-center justify-between gap-space-8">
+          <p className="font-body-sm text-body-sm text-text-muted">
+            Menyaring berdasarkan <span className="font-semibold text-text-secondary">nilai asli</span> tiap faktor, bukan
+            persentilnya. Kosongkan bila tidak dipakai.
+          </p>
+          {activeFilters > 0 && (
+            <button
+              type="button"
+              onClick={() => setFilters(EMPTY_FILTERS)}
+              className="flex items-center gap-space-4 rounded border border-border-subtle px-space-8 py-space-2 font-body-sm text-body-sm text-text-secondary transition-colors hover:border-surface-variant"
+            >
+              <span className="material-symbols-outlined text-[14px]">close</span>
+              Hapus semua
+            </button>
+          )}
+        </div>
+
+        <div className="mt-space-12 grid grid-cols-1 gap-space-8 sm:grid-cols-2 xl:grid-cols-3">
+          {FACTORS.map((f) => (
+            <div key={f.key} className="rounded border border-border-subtle/60 bg-surface-card p-space-8">
+              <span className="block font-body-sm text-body-sm text-text-secondary">
+                <GlossaryTerm term={f.glossary}>{f.full}</GlossaryTerm>
+              </span>
+              <div className="mt-space-6 flex items-center gap-space-6">
+                <input
+                  type="number"
+                  inputMode="decimal"
+                  value={filters[f.key].min}
+                  onChange={(e) => setFilters((prev) => ({ ...prev, [f.key]: { ...prev[f.key], min: e.target.value } }))}
+                  placeholder="min"
+                  className="h-[28px] w-full min-w-0 rounded border border-border-subtle bg-background-base px-space-6 font-label-mono-sm text-label-mono-sm tabular-nums text-text-primary placeholder:text-text-muted focus:border-primary-container focus:outline-none"
+                />
+                <span className="font-label-mono-sm text-label-mono-sm text-text-muted">s.d.</span>
+                <input
+                  type="number"
+                  inputMode="decimal"
+                  value={filters[f.key].max}
+                  onChange={(e) => setFilters((prev) => ({ ...prev, [f.key]: { ...prev[f.key], max: e.target.value } }))}
+                  placeholder="maks"
+                  className="h-[28px] w-full min-w-0 rounded border border-border-subtle bg-background-base px-space-6 font-label-mono-sm text-label-mono-sm tabular-nums text-text-primary placeholder:text-text-muted focus:border-primary-container focus:outline-none"
+                />
+                <span className="shrink-0 font-label-mono-sm text-label-mono-sm text-text-muted">{f.unit === 'persen' ? '%' : '×'}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    )}
 
     {loading && (
       <div className="mt-space-12 flex flex-col gap-space-4" aria-busy="true" aria-label="Memuat data screener">
