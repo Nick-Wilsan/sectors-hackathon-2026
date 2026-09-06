@@ -10,6 +10,7 @@ import {
   getCompanyProfile,
   getIndicators,
   getPeerComparison,
+  askAboutEmiten,
 } from '../api/client';
 import type {
   AnomalyResult,
@@ -23,7 +24,9 @@ import type {
   CompanyProfile,
 } from '../api/types';
 import { ScoreBar } from '../components/ScoreBar';
-import { PriceChart, type ChartType, type DrawingTool, type ReadoutBar } from '../components/PriceChart';
+import { PriceChart, type ChartType, type DrawingTool, type ReadoutBar, type Measurement } from '../components/PriceChart';
+import { PatternPicker } from '../components/PatternPicker';
+import { IndicatorSettings } from '../components/IndicatorSettings';
 import { PatternSimilarityPanel } from '../components/PatternSimilarityPanel';
 import { ChartToolbar, type RangeDays } from '../components/ChartToolbar';
 import { ChartReadout } from '../components/ChartReadout';
@@ -104,6 +107,16 @@ export function EmitenDetailPage() {
   // Pattern markers start OFF so the chart opens clean; the pattern list in
   // the side panel is always there for anyone who wants the detail.
   const [showPatterns, setShowPatterns] = useState(false);
+  // Pola mana yang ditandai. `null` berarti semuanya — keadaan awal, sehingga
+  // sakelar "Pola" tetap berperilaku persis seperti sebelumnya bagi pembaca
+  // yang tidak pernah membuka pemilihnya. Set kosong berarti benar-benar tidak
+  // ada; keduanya perlu dibedakan, jadi sentinel bukan pilihan yang benar.
+  const [selectedPatterns, setSelectedPatterns] = useState<Set<string> | null>(null);
+  // Periode indikator dipilih pengguna; perubahannya memicu pengambilan ulang
+  // ke endpoint yang sama, dan seri hariannya sudah ter-cache — 0 kredit.
+  const [maPeriods, setMaPeriods] = useState<number[]>([20, 50]);
+  const [rsiPeriod, setRsiPeriod] = useState(14);
+  const [measurement, setMeasurement] = useState<Measurement | null>(null);
   const chartWrapperRef = useRef<HTMLDivElement>(null);
 
   // Native fullscreen is preferred (it hides browser chrome too), but it is
@@ -165,7 +178,33 @@ export function EmitenDetailPage() {
     () => (cutoffDate ? (patterns?.matches ?? []).filter((m) => m.date >= cutoffDate) : (patterns?.matches ?? [])),
     [patterns, cutoffDate],
   );
-  const chartPatterns = showPatterns ? visiblePatterns : [];
+  // Angka frekuensi harus menghitung jendela yang SEDANG dilihat, bukan
+  // seluruh 90 hari: menampilkan "34x" di sebelah nama pola sementara grafik
+  // hanya memuat 5 hari akan membuat angkanya berbohong. Definisi, label, dan
+  // kelompoknya tetap diambil dari backend.
+  const visibleFrequencies = useMemo(() => {
+    const semua = patterns?.frequencies ?? [];
+    const jumlahBar = visibleBars.length;
+    if (jumlahBar === 0) return semua;
+    return semua.map((f) => {
+      const hits = visiblePatterns.filter((m) => m.key === f.key);
+      const pertama = hits[0];
+      const terakhir = hits[hits.length - 1];
+      return {
+        ...f,
+        count: hits.length,
+        rate: hits.length / jumlahBar,
+        averageGapDays: hits.length > 1 ? (terakhir.index - pertama.index) / (hits.length - 1) : null,
+        lastDate: terakhir?.date ?? null,
+      };
+    });
+  }, [patterns, visiblePatterns, visibleBars]);
+
+  const chartPatterns = useMemo(() => {
+    if (!showPatterns) return [];
+    if (selectedPatterns === null) return visiblePatterns;
+    return visiblePatterns.filter((m) => selectedPatterns.has(m.key));
+  }, [showPatterns, visiblePatterns, selectedPatterns]);
   const visibleMovingAverages = useMemo(() => {
     if (!showMA) return [];
     return (indicators?.movingAverages ?? []).map((ma) => ({
@@ -188,17 +227,15 @@ export function EmitenDetailPage() {
       getAnomaly(symbol),
       getDailyPrices(symbol),
       getCandlestickPatterns(symbol),
-      getIndicators(symbol),
       getFundamentalExtras(symbol),
     ])
-      .then(([s, p, f, a, prices, pat, ind, ex]) => {
+      .then(([s, p, f, a, prices, pat, ex]) => {
         setScore(s);
         setPeer(p);
         setFramework(f);
         setAnomaly(a);
         setBars(prices.bars);
         setPatterns(pat);
-        setIndicators(ind);
         setExtras(ex);
       })
       .catch((err) => setError(err instanceof Error ? err.message : 'Gagal memuat data emiten'))
@@ -212,6 +249,31 @@ export function EmitenDetailPage() {
       .then(setProfile)
       .catch(() => setProfile(null));
   }, [symbol]);
+
+  // Indikator diambil terpisah karena periodenya dapat diubah pengguna: hanya
+  // permintaan ini yang perlu diulang saat MA atau RSI diganti, bukan seluruh
+  // rangkaian di atas. Seri hariannya sudah ter-cache di backend, jadi
+  // mengganti periode tidak menambah satu pun kredit Sectors.
+  useEffect(() => {
+    let batal = false;
+    getIndicators(symbol, { maPeriods, rsiPeriod })
+      .then((ind) => {
+        if (!batal) setIndicators(ind);
+      })
+      .catch(() => {
+        if (!batal) setIndicators(null);
+      });
+    return () => {
+      batal = true;
+    };
+  }, [symbol, maPeriods, rsiPeriod]);
+
+  // Pengukuran penggaris melekat pada emiten dan rentang yang sedang dilihat;
+  // membiarkannya bertahan setelah keduanya berubah akan menampilkan angka
+  // yang tidak lagi merujuk apa pun di layar.
+  useEffect(() => {
+    setMeasurement(null);
+  }, [symbol, rangeDays]);
 
   if (loading) {
     return (
@@ -299,14 +361,87 @@ export function EmitenDetailPage() {
                 chartType={chartType}
                 resetSignal={resetSignal}
                 onReadoutChange={setReadout}
+                onMeasure={setMeasurement}
               />
             </div>
           </div>
+          {/* Hasil penggaris. Angka murni pengukuran dua titik yang diklik
+              pengguna — tidak ada proyeksi, target, maupun pernyataan arah. */}
+          {measurement && (
+            <div className="flex flex-wrap items-center gap-space-12 border-t border-border-subtle bg-surface-container-lowest px-space-12 py-space-8">
+              <span className="flex items-center gap-space-4 font-table-header text-table-header uppercase text-text-muted">
+                <span className="material-symbols-outlined text-[16px] text-primary">straighten</span>
+                Hasil ukur
+              </span>
+              <span className="font-label-mono-sm text-label-mono-sm text-text-muted">
+                {measurement.fromDate} &rarr; {measurement.toDate}
+              </span>
+              <span className="font-label-mono-md text-label-mono-md font-bold tabular-nums text-text-primary">
+                {measurement.priceChange >= 0 ? '+' : ''}
+                {measurement.priceChange.toFixed(0)}
+              </span>
+              <span className="font-label-mono-md text-label-mono-md font-bold tabular-nums text-text-primary">
+                {measurement.percentChange >= 0 ? '+' : ''}
+                {(measurement.percentChange * 100).toFixed(2)}%
+              </span>
+              <span className="font-label-mono-sm text-label-mono-sm text-text-secondary">
+                {measurement.tradingDays} hari bursa
+              </span>
+              <button
+                type="button"
+                onClick={() => setMeasurement(null)}
+                className="ml-auto font-label-mono-sm text-label-mono-sm text-text-muted transition-colors hover:text-state-negative"
+              >
+                Tutup
+              </button>
+            </div>
+          )}
           <p className="border-t border-border-subtle p-space-12 font-label-mono-sm text-label-mono-sm text-text-muted">
             Rentang maksimal 3 bulan &mdash; Sectors API membatasi riwayat harga harian di sekitar 90 hari, sehingga 6 bulan ke atas tidak
-            tersedia. Aktifkan &quot;Pola&quot; untuk menandai pola candlestick di grafik.
+            tersedia. Aktifkan &quot;Pola&quot; untuk menandai pola candlestick di grafik, lalu pilih pola mana yang ditandai di panel di
+            bawahnya.
           </p>
         </div>
+
+        {/* Kendali pembaca atas grafik di atasnya: pola mana yang ditandai,
+            dan berapa hari yang dipakai tiap indikator. Sebelumnya keduanya
+            terkunci — pembaca hanya bisa menerima apa pun yang muncul. */}
+        {patterns && patterns.status === 'ok' && patterns.frequencies.length > 0 && (
+          <PatternPicker
+            frequencies={visibleFrequencies}
+            barsScanned={visibleBars.length}
+            selected={selectedPatterns ?? new Set(visibleFrequencies.filter((f) => f.count > 0).map((f) => f.key))}
+            onToggle={(key) =>
+              setSelectedPatterns((prev) => {
+                // Dari keadaan "semua", melepas satu centang harus dimulai dari
+                // daftar penuh — bukan dari daftar kosong, yang akan membuat
+                // klik pertama justru mematikan semua pola selain yang ditekan.
+                const dasar =
+                  prev === null ? new Set(visibleFrequencies.filter((f) => f.count > 0).map((f) => f.key)) : new Set(prev);
+                if (dasar.has(key)) dasar.delete(key);
+                else dasar.add(key);
+                return dasar;
+              })
+            }
+            onSelectAll={() => setSelectedPatterns(null)}
+            onClear={() => setSelectedPatterns(new Set())}
+            onSelectRare={() =>
+              setSelectedPatterns(new Set(visibleFrequencies.filter((f) => f.count > 0 && f.rate < 0.15).map((f) => f.key)))
+            }
+          />
+        )}
+
+        {indicators && indicators.status === 'ok' && (
+          <IndicatorSettings
+            indicators={indicators}
+            maPeriods={maPeriods}
+            rsiPeriod={rsiPeriod}
+            onMaPeriodsChange={setMaPeriods}
+            onRsiPeriodChange={setRsiPeriod}
+            showMA={showMA}
+            showRsi={showRsi}
+          />
+        )}
 
         <PriceStatsPanel bars={visibleBars} rangeLabel={RANGE_LABEL[rangeDays]} />
 
@@ -400,7 +535,16 @@ export function EmitenDetailPage() {
 
       <PatternSimilarityPanel symbol={symbol} variant="card" />
 
-      <FloatingAIChat symbol={symbol} />
+      <FloatingAIChat
+        scopeLabel={symbol.toUpperCase()}
+        scopeNote="Hanya menjelaskan data yang sudah dihitung di halaman ini — bukan rekomendasi investasi."
+        ask={(q) => askAboutEmiten(symbol, q)}
+        suggestions={[
+          'Apa arti Skor Komposit di atas?',
+          'Kenapa DER-nya segitu?',
+          'Jelaskan hasil framework investasinya',
+        ]}
+      />
     </div>
   );
 }

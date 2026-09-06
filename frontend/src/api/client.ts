@@ -72,16 +72,24 @@ export function getCandlestickPatterns(symbol: string): Promise<CandlestickResul
   return getJson(`/emiten/${encodeURIComponent(symbol)}/pola`);
 }
 
-export function getIndicators(symbol: string): Promise<IndicatorResult> {
-  return getJson(`/emiten/${encodeURIComponent(symbol)}/indikator`);
+/** Periode MA dan RSI dipilih pengguna; dikirim sebagai query agar backend
+ *  memvalidasinya di satu tempat, bukan dua. */
+export function getIndicators(symbol: string, options: { maPeriods?: number[]; rsiPeriod?: number } = {}): Promise<IndicatorResult> {
+  const params = new URLSearchParams();
+  if (options.maPeriods?.length) params.set('ma', options.maPeriods.join(','));
+  if (options.rsiPeriod) params.set('rsi', String(options.rsiPeriod));
+  const query = params.toString();
+  return getJson(`/emiten/${encodeURIComponent(symbol)}/indikator${query ? `?${query}` : ''}`);
 }
 
 export function getPatternSimilarity(symbol: string): Promise<PatternSimilarityResult> {
   return getJson(`/emiten/${encodeURIComponent(symbol)}/kemiripan`);
 }
 
-export async function askAboutEmiten(symbol: string, question: string): Promise<string> {
-  const res = await fetch(`${BASE_URL}/emiten/${encodeURIComponent(symbol)}/tanya`, {
+/** Asisten AI punya satu endpoint per cakupan halaman; ketiganya menjawab
+ *  dengan bentuk `{ answer }` yang sama. */
+async function ask(path: string, question: string): Promise<string> {
+  const res = await fetch(`${BASE_URL}${path}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ question }),
@@ -92,6 +100,20 @@ export async function askAboutEmiten(symbol: string, question: string): Promise<
   }
   const data = await res.json();
   return data.answer;
+}
+
+export function askAboutEmiten(symbol: string, question: string): Promise<string> {
+  return ask(`/emiten/${encodeURIComponent(symbol)}/tanya`, question);
+}
+
+/** Cakupan dasbor: indeks, penggerak, emiten teramai, pemindaian anomali. */
+export function askAboutMarket(question: string): Promise<string> {
+  return ask('/market/tanya', question);
+}
+
+/** Cakupan satu artikel berita beserta berita terkait di korpus yang sama. */
+export function askAboutArticle(articleId: string, question: string): Promise<string> {
+  return ask(`/market/berita/${encodeURIComponent(articleId)}/tanya`, question);
 }
 
 /** Batas bawah/atas untuk nilai MENTAH sebuah komponen skor (bukan persentilnya). */

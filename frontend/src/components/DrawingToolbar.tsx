@@ -8,13 +8,20 @@ interface DrawingToolbarProps {
 
 // Every icon here is wired to behaviour that actually runs: the cursor tool
 // releases the chart back to pan/zoom, the horizontal tool drops a real price
-// line at the clicked level, and the trend tool draws a real two-point line
-// series. The reference mockup shows seven icons; we ship three plus clear
-// rather than padding the strip with tools that do nothing when pressed.
+// line at the clicked level, the trend tool draws a real two-point line, the
+// ruler reports the measured change between two clicked points, and the zone
+// tool marks a price band. The reference mockup shows seven icons; we ship
+// five plus clear rather than padding the strip with tools that do nothing.
+//
+// The ruler measures and stops there — distance between two points the user
+// chose. It draws no projection and states no target, which is the line this
+// product does not cross.
 const TOOLS: { key: DrawingTool; label: string; icon: string }[] = [
   { key: 'none', label: 'Kursor — geser & zoom grafik', icon: 'near_me' },
   { key: 'horizontal', label: 'Garis harga — klik satu titik', icon: 'horizontal_rule' },
   { key: 'trendline', label: 'Garis tren — klik dua titik', icon: 'trending_up' },
+  { key: 'measure', label: 'Penggaris — klik dua titik untuk mengukur selisih harga, persen, dan jumlah hari bursa', icon: 'straighten' },
+  { key: 'zone', label: 'Zona harga — klik dua titik untuk menandai batas atas dan bawah', icon: 'select_all' },
 ];
 
 export function DrawingToolbar({ tool, onToolChange, onClearAll }: DrawingToolbarProps) {

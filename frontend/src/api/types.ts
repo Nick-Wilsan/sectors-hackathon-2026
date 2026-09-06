@@ -82,7 +82,7 @@ export interface DailySeries {
   bars: DailyBar[];
 }
 
-export type PatternCategory = 'reversal-bullish' | 'reversal-bearish' | 'indecision';
+export type PatternCategory = 'reversal-bullish' | 'reversal-bearish' | 'continuation' | 'indecision';
 
 export interface PatternMatch {
   key: string;
@@ -93,11 +93,28 @@ export interface PatternMatch {
   index: number;
 }
 
+/** Satu baris per pola yang DIDEFINISIKAN, termasuk yang tidak pernah muncul —
+ *  "Three White Soldiers: 0x" sama informatifnya dengan kemunculan. */
+export interface PatternFrequency {
+  key: string;
+  label: string;
+  category: PatternCategory;
+  definition: string;
+  count: number;
+  /** Bagian dari bar yang dipindai, 0-1. */
+  rate: number;
+  /** Rata-rata jarak hari bursa antar kemunculan; null bila muncul 0 atau 1 kali. */
+  averageGapDays: number | null;
+  lastDate: string | null;
+}
+
 export interface CandlestickResult {
   symbol: string;
   status: 'ok' | 'inadequate';
   reliabilityWarning: string;
   matches: PatternMatch[];
+  barsScanned: number;
+  frequencies: PatternFrequency[];
 }
 
 export interface CompanyLite {
@@ -239,6 +256,12 @@ export interface IndicatorResult {
   movingAverages: MovingAverageSeries[];
   rsi: RsiSeries | null;
   explanation: { movingAverage: string; rsi: string };
+  /** Periode yang benar-benar terpakai; periode yang melebihi riwayat dijatuhkan. */
+  maPeriods: number[];
+  rsiPeriod: number;
+  maPeriodChoices: number[];
+  rsiPeriodChoices: number[];
+  barsAvailable: number;
 }
 
 export interface AnomalyMetric {
@@ -259,6 +282,24 @@ export interface NewsArticle {
   thumbnail?: string | null;
 }
 
+export type MoveOrigin = 'market-wide' | 'mixed' | 'idiosyncratic' | 'flat';
+
+/** Same-day split of an emiten's move against IHSG. Purely descriptive — it
+ *  separates the part of the move the whole bourse shared from the part it did
+ *  not, and never names an event or a cause. */
+export interface MarketRelativeMove {
+  date: string;
+  indexCode: string;
+  indexLabel: string;
+  stockReturn: number;
+  marketReturn: number;
+  excessReturn: number;
+  sensitivity: number | null;
+  sensitivityDays: number;
+  origin: MoveOrigin;
+  statement: string;
+}
+
 export interface AnomalyResult {
   symbol: string;
   date: string | null;
@@ -268,6 +309,8 @@ export interface AnomalyResult {
   hasAnomaly: boolean;
   relatedNews: NewsArticle[];
   newsDisclaimer: string | null;
+  marketContext: MarketRelativeMove | null;
+  marketContextDisclaimer: string | null;
 }
 
 export interface FrameworkCriterion {
@@ -406,12 +449,15 @@ export interface MarketAnomalyRow {
   date: string | null;
   hasAnomaly: boolean;
   triggered: AnomalyMetric[];
+  marketContext: MarketRelativeMove | null;
 }
 
 export interface MarketAnomalyScan {
   scannedAt: string;
   threshold: number;
   rows: MarketAnomalyRow[];
+  marketReturn: number | null;
+  marketContextDisclaimer: string;
 }
 
 export interface GlossaryEntry {

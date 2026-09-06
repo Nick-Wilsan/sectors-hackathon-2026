@@ -8,6 +8,8 @@ import { getSectorSpotlight } from '../analysis/sectorSpotlight.js';
 import { getValuationSpotlight } from '../analysis/valuationSpotlight.js';
 import { getTickerTape } from '../analysis/tickerTape.js';
 import { getMarketAnomalyScan } from '../analysis/marketAnomalyScan.js';
+import { askAboutMarket, askAboutArticle } from '../ai/askService.js';
+import { ArticleNotFoundError } from '../ai/newsAiContext.js';
 
 export const marketRouter = Router();
 
@@ -70,6 +72,42 @@ marketRouter.get('/anomali', async (_req, res) => {
   try {
     res.json(await getMarketAnomalyScan());
   } catch (err) {
+    res.status(502).json({ error: err instanceof Error ? err.message : 'Unknown error' });
+  }
+});
+
+// Asisten AI bercakupan dasbor. Konteksnya dibangun dari payload yang sudah
+// dipakai halaman ini, sehingga tidak menambah kredit dan tidak pernah
+// menjawab tentang data yang tidak ditampilkan di layar.
+marketRouter.post('/tanya', async (req, res) => {
+  const question = typeof req.body?.question === 'string' ? req.body.question.trim() : '';
+  if (!question) {
+    res.status(400).json({ error: 'Body harus berisi "question" (string, tidak kosong).' });
+    return;
+  }
+
+  try {
+    res.json({ answer: await askAboutMarket(question) });
+  } catch (err) {
+    res.status(502).json({ error: err instanceof Error ? err.message : 'Unknown error' });
+  }
+});
+
+// Asisten AI bercakupan satu artikel berita.
+marketRouter.post('/berita/:id/tanya', async (req, res) => {
+  const question = typeof req.body?.question === 'string' ? req.body.question.trim() : '';
+  if (!question) {
+    res.status(400).json({ error: 'Body harus berisi "question" (string, tidak kosong).' });
+    return;
+  }
+
+  try {
+    res.json({ answer: await askAboutArticle(req.params.id, question) });
+  } catch (err) {
+    if (err instanceof ArticleNotFoundError) {
+      res.status(404).json({ error: err.message });
+      return;
+    }
     res.status(502).json({ error: err instanceof Error ? err.message : 'Unknown error' });
   }
 });

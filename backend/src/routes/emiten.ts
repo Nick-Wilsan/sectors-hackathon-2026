@@ -8,6 +8,7 @@ import { getNews } from '../data/news.js';
 import { getAnomalyWithContext } from '../analysis/anomalyService.js';
 import { getCandlestickPatterns } from '../analysis/candlestickService.js';
 import { getIndicators } from '../analysis/indicatorsService.js';
+import { parseIndicatorOptions } from '../analysis/indicators.js';
 import { getPatternSimilarity } from '../analysis/patternSimilarityService.js';
 import { getFundamentalExtras } from '../analysis/fundamentalExtras.js';
 import { getDailySeries } from '../data/transactions.js';
@@ -85,11 +86,20 @@ emitenRouter.get('/:symbol/pola', async (req, res) => {
   }
 });
 
+// Periode MA dan RSI dapat dipilih pengguna lewat query string
+// (?ma=20,50&rsi=14). Nilai yang tidak masuk akal dijatuhkan diam-diam ke
+// bawaan oleh parseIndicatorOptions, bukan menggagalkan panel — parameter ini
+// berasal dari kendali di antarmuka, jadi galat di sini tidak dapat ditindak
+// pengguna. Tidak menambah kredit: seri harian yang dipakai sama persis.
 emitenRouter.get('/:symbol/indikator', async (req, res) => {
   const { symbol } = req.params;
+  const options = parseIndicatorOptions(
+    typeof req.query.ma === 'string' ? req.query.ma : undefined,
+    typeof req.query.rsi === 'string' ? req.query.rsi : undefined,
+  );
 
   try {
-    const result = await getIndicators(symbol);
+    const result = await getIndicators(symbol, options);
     res.json(result);
   } catch (err) {
     res.status(502).json({ error: err instanceof Error ? err.message : 'Unknown error' });

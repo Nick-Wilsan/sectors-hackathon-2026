@@ -15,7 +15,20 @@ import {
 import type { DailyBar, MovingAverageSeries, PatternMatch, RsiSeries } from '../api/types';
 import { tokenWarna, useTemaAktif } from '../lib/theme';
 
-export type DrawingTool = 'none' | 'horizontal' | 'trendline';
+export type DrawingTool = 'none' | 'horizontal' | 'trendline' | 'measure' | 'zone';
+
+/** Hasil alat penggaris: selisih dua titik yang diklik, bukan perkiraan apa pun. */
+export interface Measurement {
+  fromDate: string;
+  toDate: string;
+  fromPrice: number;
+  toPrice: number;
+  priceChange: number;
+  /** Perubahan relatif terhadap titik pertama, dalam desimal (0,05 = 5%). */
+  percentChange: number;
+  /** Jumlah hari bursa antara kedua titik, dihitung dari bar yang benar-benar ada. */
+  tradingDays: number;
+}
 export type ChartType = 'candles' | 'area';
 
 /** One bar's values, emitted as the crosshair moves so the toolbar can show a live OHLC readout. */
@@ -46,6 +59,9 @@ interface PriceChartProps {
   resetSignal?: number;
   /** Fires on crosshair move (and falls back to the last bar when the pointer leaves). */
   onReadoutChange?: (bar: ReadoutBar | null) => void;
+  /** Fires when the ruler's second point is placed. Pure measurement of two
+   *  clicked points — no projection, no target, no direction claim. */
+  onMeasure?: (m: Measurement) => void;
 }
 
 // Warna dibaca dari token CSS agar mengikuti tema. lightweight-charts menerima
@@ -57,6 +73,7 @@ const drawingColor = () => tokenWarna('primary-container', '#0ea5e9');
 const CATEGORY_STYLE = {
   'reversal-bullish': { color: 'state-positive', fallback: '#10b981', shape: 'arrowUp' as const, position: 'belowBar' as const },
   'reversal-bearish': { color: 'state-negative', fallback: '#f43f5e', shape: 'arrowDown' as const, position: 'aboveBar' as const },
+  continuation: { color: 'primary-container', fallback: '#0ea5e9', shape: 'square' as const, position: 'aboveBar' as const },
   indecision: { color: 'text-muted', fallback: '#a3a3a3', shape: 'circle' as const, position: 'inBar' as const },
 };
 
@@ -98,6 +115,7 @@ export function PriceChart({
   chartType = 'candles',
   resetSignal = 0,
   onReadoutChange,
+  onMeasure,
 }: PriceChartProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<IChartApi | null>(null);
@@ -112,14 +130,17 @@ export function PriceChart({
   const onDrawCompleteRef = useRef(onDrawComplete);
   const priceLinesRef = useRef<IPriceLine[]>([]);
   const trendLineSeriesRef = useRef<ISeriesApi<'Line'>[]>([]);
-  const pendingTrendPointRef = useRef<{ time: Time; price: number } | null>(null);
+  // Shared by every two-click tool (trend line, ruler, zone). Switching tools
+  // clears it, so one ref cannot leak a half-finished shape into another tool.
+  const pendingPointRef = useRef<{ time: Time; price: number } | null>(null);
+  const onMeasureRef = useRef(onMeasure);
   const barsRef = useRef(bars);
   const maRef = useRef(movingAverages);
   const onReadoutRef = useRef(onReadoutChange);
 
   useEffect(() => {
     drawingToolRef.current = drawingTool;
-    pendingTrendPointRef.current = null; // switching tools cancels an in-progress trend line
+    pendingPointRef.current = null; // switching tools cancels any half-placed shape
   }, [drawingTool]);
 
   useEffect(() => {
@@ -130,7 +151,8 @@ export function PriceChart({
     barsRef.current = bars;
     maRef.current = movingAverages;
     onReadoutRef.current = onReadoutChange;
-  }, [bars, movingAverages, onReadoutChange]);
+    onMeasureRef.current = onMeasure;
+  }, [bars, movingAverages, onReadoutChange, onMeasure]);
 
   /** Bar for a given date, packaged with whatever MA values exist on that date. */
   function readoutFor(date: string | null): ReadoutBar | null {
@@ -199,22 +221,83 @@ export function PriceChart({
         });
         priceLinesRef.current.push(line);
         onDrawCompleteRef.current?.();
-      } else if (tool === 'trendline') {
-        const pending = pendingTrendPointRef.current;
-        if (!pending) {
-          pendingTrendPointRef.current = { time: param.time, price };
-        } else {
-          const lineSeries = chart.addSeries(LineSeries, { color: drawingColor(), lineWidth: 2, lastValueVisible: false, priceLineVisible: false });
-          lineSeries.setData(
-            [
-              { time: pending.time, value: pending.price },
-              { time: param.time, value: price },
-            ].sort((a, b) => (a.time as string).localeCompare(b.time as string)),
-          );
-          trendLineSeriesRef.current.push(lineSeries);
-          pendingTrendPointRef.current = null;
-          onDrawCompleteRef.current?.();
+        return;
+      }
+
+      // Every remaining tool takes two points.
+      const pending = pendingPointRef.current;
+      if (!pending) {
+        pendingPointRef.current = { time: param.time, price };
+        return;
+      }
+      pendingPointRef.current = null;
+
+      if (tool === 'trendline' || tool === 'measure') {
+        const lineSeries = chart.addSeries(LineSeries, {
+          color: drawingColor(),
+          lineWidth: 2,
+          // The ruler is a temporary measurement, not a drawn idea, so it is
+          // dashed to read differently from a trend line the user meant to keep.
+          lineStyle: tool === 'measure' ? 2 : 0,
+          lastValueVisible: false,
+          priceLineVisible: false,
+        });
+        lineSeries.setData(
+          [
+            { time: pending.time, value: pending.price },
+            { time: param.time, value: price },
+          ].sort((a, b) => (a.time as string).localeCompare(b.time as string)),
+        );
+        trendLineSeriesRef.current.push(lineSeries);
+
+        if (tool === 'measure') {
+          const a = { date: pending.time as string, price: pending.price };
+          const b = { date: param.time as string, price };
+          // Ordered by date so the reported change always reads left-to-right,
+          // regardless of which end the user clicked first.
+          const [from, to] = a.date <= b.date ? [a, b] : [b, a];
+          const dates = [...barsRef.current].map((x) => x.date).sort();
+          const iFrom = dates.indexOf(from.date);
+          const iTo = dates.indexOf(to.date);
+          onMeasureRef.current?.({
+            fromDate: from.date,
+            toDate: to.date,
+            fromPrice: from.price,
+            toPrice: to.price,
+            priceChange: to.price - from.price,
+            percentChange: from.price !== 0 ? (to.price - from.price) / from.price : 0,
+            // Falls back to the calendar gap only if a clicked date is somehow
+            // absent from the loaded bars; normally both are real bars.
+            tradingDays: iFrom >= 0 && iTo >= 0 ? Math.abs(iTo - iFrom) : 0,
+          });
         }
+        onDrawCompleteRef.current?.();
+        return;
+      }
+
+      if (tool === 'zone') {
+        // A price band: the two clicked levels, drawn as a pair of labelled
+        // lines. Two lines rather than a filled rectangle because the library
+        // has no rectangle primitive, and a fake one would have to be redrawn
+        // by hand on every pan and zoom.
+        const atas = Math.max(pending.price, price);
+        const bawah = Math.min(pending.price, price);
+        for (const [level, title] of [
+          [atas, `Zona atas ${atas.toFixed(0)}`],
+          [bawah, `Zona bawah ${bawah.toFixed(0)}`],
+        ] as const) {
+          priceLinesRef.current.push(
+            seriesRef.current.createPriceLine({
+              price: level,
+              color: drawingColor(),
+              lineWidth: 1,
+              lineStyle: 3,
+              axisLabelVisible: true,
+              title,
+            }),
+          );
+        }
+        onDrawCompleteRef.current?.();
       }
     });
 
@@ -375,7 +458,7 @@ export function PriceChart({
     priceLinesRef.current = [];
     for (const s of trendLineSeriesRef.current) chart.removeSeries(s);
     trendLineSeriesRef.current = [];
-    pendingTrendPointRef.current = null;
+    pendingPointRef.current = null;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [clearSignal]);
 

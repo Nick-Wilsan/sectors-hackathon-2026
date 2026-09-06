@@ -1,23 +1,24 @@
 import type { AnomalyResult } from '../api/types';
+import { MarketContextBlock } from './MarketContextBlock';
 
 function Panel({ title, icon, children, action }: { title: string; icon: string; children: React.ReactNode; action?: React.ReactNode }) {
   return (
-        <div className="rounded border border-border-subtle bg-surface-card p-space-16">
-          <div className="flex items-center justify-between gap-space-8 border-b border-border-subtle pb-space-8">
-            <div className="flex items-center gap-space-8">
-              <span className="material-symbols-outlined text-[18px] text-primary-container">{icon}</span>
-              <h2 className="font-headline-sm text-headline-sm font-bold text-text-primary">{title}</h2>
-            </div>
-            {action}
-          </div>
-          <div className="mt-space-12">{children}</div>
+    <div className="rounded border border-border-subtle bg-surface-card p-space-16">
+      <div className="flex items-center justify-between gap-space-8 border-b border-border-subtle pb-space-8">
+        <div className="flex items-center gap-space-8">
+          <span className="material-symbols-outlined text-[18px] text-primary-container">{icon}</span>
+          <h2 className="font-headline-sm text-headline-sm font-bold text-text-primary">{title}</h2>
         </div>
-      );
-    }
+        {action}
+      </div>
+      <div className="mt-space-12">{children}</div>
+    </div>
+  );
+}
 
-    /** F-06 for a single emiten, shown directly under the chart it describes. */
-    export function AnomalyPanel({ anomaly }: { anomaly: AnomalyResult }) {
-      return (
+/** F-06 for a single emiten, shown directly under the chart it describes. */
+export function AnomalyPanel({ anomaly }: { anomaly: AnomalyResult }) {
+  return (
     <Panel
       title="Deteksi Anomali"
       icon="radar"
@@ -31,12 +32,12 @@ function Panel({ title, icon, children, action }: { title: string; icon: string;
         </span>
       }
     >
-      {!anomaly.hasAnomaly ? (
-        <p className="font-body-sm text-body-sm text-text-muted">
-          Volume dan pergerakan harga terakhir masih dalam kebiasaan emiten ini selama 90 hari terakhir.
-        </p>
-      ) : (
-        <div className="flex flex-col gap-space-8">
+      <div className="flex flex-col gap-space-8">
+        {!anomaly.hasAnomaly ? (
+          <p className="font-body-sm text-body-sm text-text-muted">
+            Volume dan pergerakan harga terakhir masih dalam kebiasaan emiten ini selama 90 hari terakhir.
+          </p>
+        ) : (
           <div className="grid grid-cols-1 gap-space-8 sm:grid-cols-2">
             {anomaly.metrics.map((m) => (
               <div
@@ -56,27 +57,33 @@ function Panel({ title, icon, children, action }: { title: string; icon: string;
               </div>
             ))}
           </div>
-          {anomaly.relatedNews.length > 0 && (
-            <div className="border-t border-border-subtle pt-space-8">
-              <p className="font-body-sm text-body-sm text-text-muted">{anomaly.newsDisclaimer}</p>
-              <div className="mt-space-6 flex flex-col gap-space-4">
-                {anomaly.relatedNews.map((n, i) => (
-                  <a
-                    key={i}
-                    href={n.source}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="font-body-sm text-body-sm text-text-secondary transition-colors hover:text-primary"
-                  >
-                    {n.title}
-                  </a>
-                ))}
-              </div>
+        )}
+
+        {/* Shown on quiet days too: "the whole bourse moved today" is context a
+            reader needs before the number above means anything. */}
+        {anomaly.marketContext && (
+          <MarketContextBlock context={anomaly.marketContext} disclaimer={anomaly.marketContextDisclaimer} />
+        )}
+
+        {anomaly.relatedNews.length > 0 && (
+          <div className="border-t border-border-subtle pt-space-8">
+            <p className="font-body-sm text-body-sm text-text-muted">{anomaly.newsDisclaimer}</p>
+            <div className="mt-space-6 flex flex-col gap-space-4">
+              {anomaly.relatedNews.map((n, i) => (
+                <a
+                  key={i}
+                  href={n.source}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="font-body-sm text-body-sm text-text-secondary transition-colors hover:text-primary"
+                >
+                  {n.title}
+                </a>
+              ))}
             </div>
-          )}
-        </div>
-      )}
+          </div>
+        )}
+      </div>
     </Panel>
-      
   );
 }

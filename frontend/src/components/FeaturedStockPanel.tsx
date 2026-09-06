@@ -10,7 +10,7 @@ import {
   getPeerComparison,
 } from '../api/client';
 import { loadCompanyIndex } from '../api/companyIndex';
-import type { AnomalyResult, CandlestickResult, CompanyLite, DailyBar, FrameworkResult, FundamentalExtras, IndicatorResult, PeerComparisonResult, TickerTapeRow } from '../api/types';
+import type { AnomalyResult, CandlestickResult, CompanyLite, DailyBar, FrameworkResult, FundamentalExtras, IndicatorResult, PatternCategory, PeerComparisonResult, TickerTapeRow } from '../api/types';
 import { PriceChart } from './PriceChart';
 import { PatternSimilarityPanel } from './PatternSimilarityPanel';
 import { ScoreBar } from './ScoreBar';
@@ -79,12 +79,21 @@ function ChangeBadge({ value }: { value: number }) {
 
 function PatternTallyCard({ candlestick }: { candlestick: CandlestickResult | null }) {
   const tally = useMemo(() => {
-    const counts = { 'reversal-bullish': 0, 'reversal-bearish': 0, indecision: 0 };
+    // Setiap kategori harus punya kunci di sini. Saat kategori 'continuation'
+    // ditambahkan di backend, obyek tanpa kuncinya membuat penambahan bekerja
+    // pada undefined dan seluruh hitungan menjadi NaN — Record<> memaksa
+    // TypeScript menangkapnya bila kategori baru muncul lagi nanti.
+    const counts: Record<PatternCategory, number> = {
+      'reversal-bullish': 0,
+      'reversal-bearish': 0,
+      continuation: 0,
+      indecision: 0,
+    };
     for (const m of candlestick?.matches ?? []) counts[m.category]++;
     return counts;
   }, [candlestick]);
 
-  const total = tally['reversal-bullish'] + tally['reversal-bearish'] + tally.indecision;
+  const total = tally['reversal-bullish'] + tally['reversal-bearish'] + tally.continuation + tally.indecision;
 
   return (
     <div className="rounded border border-border-subtle bg-surface-card p-space-12">
@@ -100,6 +109,9 @@ function PatternTallyCard({ candlestick }: { candlestick: CandlestickResult | nu
             {tally['reversal-bullish'] > 0 && (
               <div className="h-full bg-state-positive" style={{ width: `${(tally['reversal-bullish'] / total) * 100}%` }} />
             )}
+            {tally.continuation > 0 && (
+              <div className="h-full bg-primary-container" style={{ width: `${(tally.continuation / total) * 100}%` }} />
+            )}
             {tally.indecision > 0 && <div className="h-full bg-state-warning" style={{ width: `${(tally.indecision / total) * 100}%` }} />}
             {tally['reversal-bearish'] > 0 && (
               <div className="h-full bg-state-negative" style={{ width: `${(tally['reversal-bearish'] / total) * 100}%` }} />
@@ -111,10 +123,14 @@ function PatternTallyCard({ candlestick }: { candlestick: CandlestickResult | nu
               yang dilarang, "Sinyal Konsensus: SANGAT BELI 16/5/1", dan mudah
               terbaca sebagai pandangan produk atas arah harga. Yang dihitung
               sebenarnya hanya berapa kali tiap keluarga pola muncul. */}
-          <div className="grid grid-cols-3 gap-space-8 font-label-mono-sm text-label-mono-sm">
+          <div className="grid grid-cols-2 gap-space-8 font-label-mono-sm text-label-mono-sm sm:grid-cols-4">
             <div>
               <div className="font-bold text-state-positive">{tally['reversal-bullish']}</div>
               <div className="leading-tight text-text-muted">Pola pembalikan ke atas</div>
+            </div>
+            <div>
+              <div className="font-bold text-primary">{tally.continuation}</div>
+              <div className="leading-tight text-text-muted">Pola penguasaan satu sisi</div>
             </div>
             <div>
               <div className="font-bold text-state-warning">{tally.indecision}</div>

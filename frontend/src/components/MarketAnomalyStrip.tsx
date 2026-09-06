@@ -1,5 +1,7 @@
 import { Link } from 'react-router-dom';
 import type { MarketAnomalyRow, MarketAnomalyScan } from '../api/types';
+import { MarketContextLine, formatSignedPercent } from './MarketContextBlock';
+import { GlossaryTerm } from './GlossaryTerm';
 
 function formatCompact(value: number): string {
   const abs = Math.abs(value);
@@ -55,6 +57,11 @@ function Row({ row }: { row: MarketAnomalyRow }) {
           {row.status === 'inadequate' ? 'Riwayat harga belum cukup untuk diuji.' : 'Volume & pergerakan masih dalam kebiasaan emiten ini.'}
         </p>
       )}
+
+      {/* Separates the part of the day's move the whole bourse shared from the
+          part it did not — the market-wide half of "why did this move",
+          measured rather than guessed. */}
+      {row.marketContext && <MarketContextLine context={row.marketContext} />}
     </div>
   );
 }
@@ -80,23 +87,34 @@ export function MarketAnomalyStrip({ scan }: { scan: MarketAnomalyScan }) {
                 <span className="font-bold tabular-nums text-state-warning">{flagged}</span>
                 <span className="text-text-muted"> dari {tested} tidak biasa</span>
               </span>
+              {scan.marketReturn !== null && (
+                <span className="rounded border border-border-subtle bg-surface-container-lowest px-space-8 py-space-2 font-label-mono-sm text-label-mono-sm text-text-muted">
+                  <GlossaryTerm term="IHSG">IHSG</GlossaryTerm>{' '}
+                  <span className="font-bold tabular-nums text-text-secondary">{formatSignedPercent(scan.marketReturn)}</span>{' '}
+                  sesi ini
+                </span>
+              )}
             </div>
             <p className="font-body-sm text-body-sm text-text-muted">
-              Volume dan pergerakan harga hari ini diuji terhadap kebiasaan emiten itu sendiri selama 90 hari terakhir.
+              Volume dan pergerakan harga hari ini diuji terhadap kebiasaan emiten itu sendiri selama 90 hari terakhir, lalu
+              dibandingkan dengan pergerakan pasar pada hari yang sama.
             </p>
           </div>
         </div>
       </div>
 
-      <div className="mt-space-12 grid grid-cols-1 gap-space-8 sm:grid-cols-2 xl:grid-cols-5">
+      <div className="mt-space-12 grid grid-cols-1 gap-space-8 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         {scan.rows.map((row) => (
           <Row key={row.symbol} row={row} />
         ))}
       </div>
 
-      <p className="mt-space-8 flex items-center gap-space-4 border-t border-border-subtle pt-space-8 font-body-sm text-body-sm text-text-muted">
-        <span className="material-symbols-outlined text-[16px] text-primary">info</span>
-        Ambang: {scan.threshold}σ dari rata-rata 90 hari. Penyimpangan terukur saja &mdash; tidak menyatakan penyebab maupun arah lanjutan harga.
+      <p className="mt-space-8 flex items-start gap-space-4 border-t border-border-subtle pt-space-8 font-body-sm text-body-sm text-text-muted">
+        <span className="material-symbols-outlined shrink-0 text-[16px] text-primary">info</span>
+        <span>
+          Ambang: {scan.threshold}σ dari rata-rata 90 hari. Penyimpangan terukur saja &mdash; tidak menyatakan penyebab maupun
+          arah lanjutan harga. {scan.marketContextDisclaimer}
+        </span>
       </p>
     </div>
   );

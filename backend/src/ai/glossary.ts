@@ -134,6 +134,21 @@ export const GLOSSARY: GlossaryTerm[] = [
       'Ukuran seberapa jauh sebuah angka menyimpang dari kebiasaannya sendiri. Nilai 2 berarti menyimpang dua kali lipat dari sebaran biasanya — cukup jarang terjadi, sehingga dipakai sebagai batas penanda hal yang tidak biasa.',
   },
   {
+    term: 'IHSG',
+    definition:
+      'Angka rata-rata yang merangkum pergerakan seluruh saham di Bursa Efek Indonesia dalam satu bilangan. Kalau IHSG naik, artinya secara umum lebih banyak saham yang naik daripada yang turun hari itu. Dipakai sebagai pembanding untuk melihat apakah satu saham bergerak sendirian atau ikut arus pasar.',
+  },
+  {
+    term: 'Selisih terhadap IHSG',
+    definition:
+      'Selisih antara pergerakan satu saham hari itu dengan pergerakan pasar secara keseluruhan. Kalau saham naik 5% sementara pasar naik 4%, selisihnya hanya 1 poin persen — berarti kenaikannya sebagian besar karena seluruh bursa sedang naik, bukan karena sesuatu yang khusus pada perusahaan itu. Angka ini hanya memisahkan gerakan pasar dari gerakan khas emiten; ia tidak menjelaskan apa yang terjadi.',
+  },
+  {
+    term: 'Sensitivitas terhadap IHSG',
+    definition:
+      'Rata-rata seberapa besar saham ini bergerak setiap kali pasar bergerak 1%, dihitung dari 90 hari terakhir. Nilai 1,5 berarti saham ini biasanya bergerak satu setengah kali lebih heboh daripada pasar, ke atas maupun ke bawah. Nilai di bawah 1 berarti geraknya lebih tenang daripada pasar.',
+  },
+  {
     term: 'Pola candlestick',
     definition:
       'Bentuk khas pada grafik harga yang sudah dinamai sejak lama oleh para pedagang saham. Produk ini hanya menandai bahwa bentuk itu muncul; keandalannya bervariasi dan bukan ramalan.',

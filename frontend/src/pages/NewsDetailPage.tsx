@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { getNewsIndex } from '../api/client';
+import { getNewsIndex, askAboutArticle } from '../api/client';
+import { FloatingAIChat } from '../components/FloatingAIChat';
 import type { NewsArticleFull, NewsIndexResult } from '../api/types';
 
 // Halaman detail berita (/berita/:id).
@@ -475,6 +476,22 @@ export function NewsDetailPage() {
           </section>
         </aside>
       </div>
+
+      {/* Cakupan satu artikel. Batasnya dijaga di sisi server
+          (ai/newsAiContext.ts): boleh meringkas isi dan menjelaskan istilah,
+          dilarang menyimpulkan sentimen atau dampaknya terhadap harga, dan
+          teks artikel diperlakukan sebagai data — bukan sebagai perintah. */}
+      <FloatingAIChat
+        key={article.id}
+        scopeLabel="Berita Ini"
+        scopeNote="Membahas isi artikel dan berita terkait — tidak menilai sentimen maupun dampaknya ke harga."
+        ask={(q) => askAboutArticle(article.id!, q)}
+        suggestions={[
+          'Ringkas berita ini dalam bahasa sederhana',
+          'Ada istilah yang tidak saya mengerti di berita ini',
+          'Berita lain apa yang membahas hal serupa?',
+        ]}
+      />
     </div>
   );
 }

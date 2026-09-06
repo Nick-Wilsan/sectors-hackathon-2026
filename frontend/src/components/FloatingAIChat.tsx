@@ -1,19 +1,26 @@
 import { useEffect, useRef, useState } from 'react';
-import { askAboutEmiten } from '../api/client';
+import { StocketAiMark } from './StocketAiMark';
 
 interface FloatingAIChatProps {
-  /** The AI only ever answers about one emiten's already-computed data; this names it. */
-  symbol: string;
+  /** Subjek yang sedang dibahas, tampil setelah judul — kode emiten, "Dasbor
+   *  Pasar", "Berita Ini". Dikosongkan bila halaman tidak punya subjek tunggal;
+   *  panel lalu hanya berjudul "Tanya AI". */
+  scopeLabel?: string;
+  /** Satu kalimat yang menyatakan batas cakupan, tampil di bawah judul. */
+  scopeNote: string;
   /** Starter questions, tailored to the page the launcher sits on. */
-  suggestions?: string[];
+  suggestions: string[];
+  /** Pemanggil endpoint yang sesuai cakupan halaman. Komponen ini sengaja
+   *  tidak tahu endpoint mana yang dipakai — sebelumnya ia terpaku pada satu
+   *  emiten, sehingga dasbor memakainya dengan simbol BBCA yang dipatok mati
+   *  dan mengumumkan subjek yang bukan isi halamannya. */
+  ask: (question: string) => Promise<string>;
 }
 
 interface ChatEntry {
   question: string;
   answer: string;
 }
-
-const DEFAULT_SUGGESTIONS = ['Apa arti Skor Komposit di atas?', 'Kenapa DER-nya segitu?', 'Jelaskan hasil framework investasinya'];
 
 /**
  * Gemini replies in light markdown, which previously rendered as literal
@@ -51,7 +58,7 @@ function AnswerText({ text }: { text: string }) {
 // Floating launcher docked to the bottom-right corner — the conventional spot,
 // and above the sticky disclaimer bar so the two never overlap. Kept fixed so
 // the AI stays reachable no matter how far down the dashboard you have scrolled.
-export function FloatingAIChat({ symbol, suggestions = DEFAULT_SUGGESTIONS }: FloatingAIChatProps) {
+export function FloatingAIChat({ scopeLabel, scopeNote, suggestions, ask }: FloatingAIChatProps) {
   const [open, setOpen] = useState(false);
   const [question, setQuestion] = useState('');
   const [history, setHistory] = useState<ChatEntry[]>([]);
@@ -80,7 +87,7 @@ export function FloatingAIChat({ symbol, suggestions = DEFAULT_SUGGESTIONS }: Fl
     setLoading(true);
     setError(null);
     try {
-      const answer = await askAboutEmiten(symbol, q);
+      const answer = await ask(q);
       setHistory((h) => [...h, { question: q, answer }]);
       setQuestion('');
     } catch (err) {
@@ -95,27 +102,34 @@ export function FloatingAIChat({ symbol, suggestions = DEFAULT_SUGGESTIONS }: Fl
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
-        aria-label={open ? 'Tutup asisten AI' : `Tanya AI tentang ${symbol.toUpperCase()}`}
+        aria-label={open ? 'Tutup asisten AI' : scopeLabel ? `Tanya AI tentang ${scopeLabel}` : 'Tanya AI'}
         aria-expanded={open}
-        className="fixed bottom-20 right-space-16 z-50 flex h-12 w-12 items-center justify-center rounded-full border border-primary-container bg-primary-container text-background-base shadow-[0_8px_24px_rgba(0,0,0,0.55)] transition-colors hover:bg-accent-hover active:scale-[0.96]"
+        className="fixed bottom-20 right-space-16 z-50 flex h-12 w-12 items-center justify-center rounded-full border border-primary-container bg-primary-container text-background-base shadow-[var(--shadow-popover)] transition-colors hover:bg-accent-hover active:scale-[0.96]"
       >
-        <span className="material-symbols-outlined text-[22px]">{open ? 'close' : 'smart_toy'}</span>
+        {open ? <span className="material-symbols-outlined text-[22px]">close</span> : <StocketAiMark />}
       </button>
 
       {open && (
         <div
           role="dialog"
-          aria-label={`Tanya AI tentang ${symbol.toUpperCase()}`}
-          className="fixed bottom-36 right-space-16 z-50 flex max-h-[min(520px,calc(100vh-14rem))] w-[min(92vw,384px)] flex-col overflow-hidden rounded-xl border border-surface-variant bg-surface-card shadow-[0_12px_32px_rgba(0,0,0,0.65)]"
+          aria-label={scopeLabel ? `Tanya AI tentang ${scopeLabel}` : 'Tanya AI'}
+          className="fixed bottom-36 right-space-16 z-50 flex max-h-[min(520px,calc(100vh-14rem))] w-[min(92vw,384px)] flex-col overflow-hidden rounded-xl border border-surface-variant bg-surface-card shadow-[var(--shadow-popover)]"
         >
-          <div className="flex items-start justify-between gap-space-8 border-b border-border-subtle px-space-12 py-space-8">
+          <div className="flex items-start gap-space-8 border-b border-border-subtle px-space-12 py-space-8">
+            <span className="mt-space-2 shrink-0 text-primary">
+              <StocketAiMark size={18} />
+            </span>
             <div>
               <h2 className="font-headline-sm text-headline-sm font-bold text-text-primary">
-                Tanya AI &middot; <span className="text-primary">{symbol.toUpperCase()}</span>
+                Tanya AI
+                {scopeLabel && (
+                  <>
+                    {' '}
+                    &middot; <span className="text-primary">{scopeLabel}</span>
+                  </>
+                )}
               </h2>
-              <p className="font-body-sm text-body-sm text-text-muted">
-                Hanya menjelaskan data yang sudah dihitung di halaman ini &mdash; bukan rekomendasi investasi.
-              </p>
+              <p className="font-body-sm text-body-sm text-text-muted">{scopeNote}</p>
             </div>
           </div>
 

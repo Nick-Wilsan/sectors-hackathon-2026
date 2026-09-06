@@ -34,6 +34,13 @@ export interface EmitenAiContext {
     tanggal: string | null;
     ambangBatas: string;
     metrik: { label: string; nilaiTerkini: number; rataRataBaseline: number; zScore: number; anomali: boolean }[];
+    konteksPasar: {
+      pergerakanEmiten: number;
+      pergerakanIHSG: number;
+      selisih: number;
+      asal: string;
+      pernyataan: string;
+    } | null;
     catatan: string;
   };
   kamusIstilah: Record<string, string>;
@@ -83,8 +90,18 @@ export async function buildEmitenAiContext(symbol: string): Promise<EmitenAiCont
         zScore: m.zScore,
         anomali: m.isAnomaly,
       })),
+      konteksPasar: anomaly.marketContext
+        ? {
+            pergerakanEmiten: anomaly.marketContext.stockReturn,
+            pergerakanIHSG: anomaly.marketContext.marketReturn,
+            selisih: anomaly.marketContext.excessReturn,
+            asal: anomaly.marketContext.origin,
+            pernyataan: anomaly.marketContext.statement,
+          }
+        : null,
       catatan:
-        'Anomali adalah pernyataan statistik semata (penyimpangan terhadap sebaran historis), bukan penyebab maupun perkiraan kelanjutan pergerakan harga.',
+        'Anomali adalah pernyataan statistik semata (penyimpangan terhadap sebaran historis), bukan penyebab maupun perkiraan kelanjutan pergerakan harga. ' +
+        'konteksPasar hanya memisahkan bagian pergerakan yang juga terjadi pada IHSG dari yang tidak; dilarang menyebutkannya sebagai sebab, peristiwa, atau alasan.',
     },
     kamusIstilah: glossaryAsContext(),
   };

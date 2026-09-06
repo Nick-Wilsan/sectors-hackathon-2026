@@ -73,15 +73,18 @@ function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
  * `context` must be the output of the analysis layer — see Technical Spec section 2
  * ("Lapisan AI tidak boleh mengambil data langsung dari sumber data").
  */
-export async function explainContext(question: string, context: unknown): Promise<string> {
+export async function explainContext(question: string, context: unknown, extraInstruction?: string): Promise<string> {
   const ai = getClient();
+  // Scope rules are appended, never substituted: the six base rules apply on
+  // every surface, and a scope may only add constraints on top of them.
+  const systemInstruction = extraInstruction ? `${SYSTEM_INSTRUCTION}\n\n${extraInstruction}` : SYSTEM_INSTRUCTION;
 
   for (let attempt = 0; ; attempt++) {
     try {
       const response = await withTimeout(
         ai.models.generateContent({
           model: MODEL,
-          config: { systemInstruction: SYSTEM_INSTRUCTION },
+          config: { systemInstruction },
           contents: [
             {
               role: 'user',
