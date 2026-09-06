@@ -73,7 +73,3 @@ npm run dev
 cd frontend
 npm run dev
 ```
-
-## Kredensial
-
-API key **tidak pernah** disimpan di repo. Isi `backend/.env` (sudah di-`.gitignore`) berdasarkan `backend/.env.example`.
