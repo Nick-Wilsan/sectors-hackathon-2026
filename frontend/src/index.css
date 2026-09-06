@@ -229,12 +229,23 @@
   --color-on-primary-container: #ffffff;
   --color-inverse-primary: #38bdf8;
 
-  /* Status */
-  --color-state-positive: #047857;
+  /* Status — dipekatkan setelah audit kontras kedua.
+     Warna status di sini hampir selalu dipakai sebagai teks kecil DI ATAS
+     latar bertinta warnanya sendiri (`bg-state-warning/10`, `/15`), bukan di
+     atas kartu polos, sehingga rasio efektifnya lebih rendah daripada yang
+     terlihat saat diuji terhadap putih:
+
+       state-warning  #b45309 -> 4,38 pada tint 10%, 4,08 pada tint 15%  (gagal)
+       state-positive #047857 -> 4,76 pada tint 10%, 4,43 pada tint 15%  (gagal)
+
+     Nilai baru lolos ambang AA 4,5 pada seluruh kombinasi tersebut dengan
+     margin: warning 6,19/5,77 dan positive 5,67/5,27. Palet gelap tidak
+     diubah — pengukuran di sana sudah lolos. */
+  --color-state-positive: #036b4e;
   --color-state-negative: #be123c;
-  --color-state-warning: #b45309;
-  --color-secondary: #047857;
-  --color-secondary-container: #047857;
+  --color-state-warning: #92400e;
+  --color-secondary: #036b4e;
+  --color-secondary-container: #036b4e;
   --color-tertiary: #be123c;
   --color-tertiary-container: #be123c;
   --color-error: #be123c;
