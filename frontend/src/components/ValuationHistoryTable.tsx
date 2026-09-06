@@ -1,4 +1,5 @@
 import type { ValuationYear } from '../api/types';
+import { GlossaryTerm } from './GlossaryTerm';
 
 interface Props {
   symbol: string;
@@ -10,12 +11,12 @@ type MetricKey = 'pe' | 'pb' | 'ps' | 'pcf' | 'peg';
 // peerKey menunjuk medan rata-rata peer untuk tiap rasio. Sectors tidak
 // menyediakannya untuk P/CF dan PEG — pada baris itu peerKey menunjuk balik ke
 // dirinya sendiri, yang dipakai sebagai penanda "tidak ada pembanding".
-const METRICS: { key: MetricKey; peerKey: keyof ValuationYear; label: string; hint: string }[] = [
-  { key: 'pe', peerKey: 'pePeerAvg', label: 'P/E Ratio (PER)', hint: 'Harga saham dibanding laba bersih per saham' },
-  { key: 'pb', peerKey: 'pbPeerAvg', label: 'Price / Book (PBV)', hint: 'Harga saham dibanding nilai buku ekuitas per saham' },
-  { key: 'ps', peerKey: 'psPeerAvg', label: 'Price / Sales (P/S)', hint: 'Harga saham dibanding pendapatan per saham' },
-  { key: 'pcf', peerKey: 'pcf', label: 'Price / Cash Flow (P/CF)', hint: 'Harga saham dibanding arus kas per saham' },
-  { key: 'peg', peerKey: 'peg', label: 'PEG Ratio', hint: 'P/E dibagi laju pertumbuhan laba' },
+const METRICS: { key: MetricKey; peerKey: keyof ValuationYear; label: string; hint: string; glossary: string }[] = [
+  { key: 'pe', peerKey: 'pePeerAvg', label: 'P/E Ratio (PER)', hint: 'Harga saham dibanding laba bersih per saham', glossary: 'P/E Ratio' },
+  { key: 'pb', peerKey: 'pbPeerAvg', label: 'Price / Book (PBV)', hint: 'Harga saham dibanding nilai buku ekuitas per saham', glossary: 'PBV' },
+  { key: 'ps', peerKey: 'psPeerAvg', label: 'Price / Sales (P/S)', hint: 'Harga saham dibanding pendapatan per saham', glossary: 'Price to Sales' },
+  { key: 'pcf', peerKey: 'pcf', label: 'Price / Cash Flow (P/CF)', hint: 'Harga saham dibanding arus kas per saham', glossary: 'Price to Sales' },
+  { key: 'peg', peerKey: 'peg', label: 'PEG Ratio', hint: 'P/E dibagi laju pertumbuhan laba', glossary: 'PEG Ratio' },
 ];
 
 function fmt(value: number | null): string {
@@ -101,8 +102,10 @@ export function ValuationHistoryTable({ symbol, rows }: Props) {
               const trend = first !== undefined && first !== 0 && own !== null ? (own! - first) / Math.abs(first) : null;
               return (
                 <tr key={m.key} className="transition-colors hover:bg-surface-container-low">
-                  <td className="py-space-8" title={m.hint}>
-                    <span className="font-body-sm text-body-sm font-semibold text-text-primary">{m.label}</span>
+                  <td className="py-space-8">
+                    <span className="font-body-sm text-body-sm font-semibold text-text-primary">
+                      <GlossaryTerm term={m.glossary}>{m.label}</GlossaryTerm>
+                    </span>
                   </td>
                   {rows.map((r) => (
                     <td

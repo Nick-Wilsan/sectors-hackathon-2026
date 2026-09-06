@@ -86,6 +86,54 @@ export const GLOSSARY: GlossaryTerm[] = [
     term: 'Sub-sektor',
     definition: 'Pengelompokan emiten yang lebih rinci daripada sektor, dipakai sebagai kelompok pembanding saat menghitung persentil.',
   },
+  {
+    term: 'Kapitalisasi Pasar',
+    definition:
+      'Nilai seluruh saham perusahaan bila dihitung pada harga saat ini, yaitu harga per saham dikali jumlah saham beredar. Dipakai untuk membandingkan ukuran perusahaan, bukan untuk menilai harganya.',
+  },
+  {
+    term: 'P/E Ratio',
+    definition:
+      'Harga satu saham dibanding laba bersih per saham. Angka 15 berarti harga saham setara lima belas kali laba setahun. Hanya bermakna bila dibandingkan dengan emiten sejenis, dan tidak dapat dihitung ketika perusahaan merugi.',
+  },
+  {
+    term: 'Rata-rata P/E peer',
+    definition:
+      'Rata-rata P/E seluruh emiten pada sub-sektor yang sama untuk tahun buku yang sama. Menjadi pembanding agar P/E sebuah emiten tidak dibaca sendirian tanpa konteks.',
+  },
+  {
+    term: 'PBV (Price to Book Value)',
+    definition:
+      'Harga satu saham dibanding nilai buku ekuitas per saham, yaitu kekayaan bersih perusahaan menurut catatan akuntansinya. Angka 1 berarti harga saham setara nilai bukunya.',
+  },
+  {
+    term: 'Price to Sales',
+    definition: 'Harga satu saham dibanding pendapatan per saham. Dipakai ketika perusahaan belum membukukan laba sehingga P/E tidak dapat dihitung.',
+  },
+  {
+    term: 'PEG Ratio',
+    definition: 'P/E dibagi laju pertumbuhan laba. Menempatkan P/E dalam konteks seberapa cepat laba perusahaan bertumbuh.',
+  },
+  {
+    term: 'Dividend Yield',
+    definition:
+      'Dividen yang dibagikan selama dua belas bulan terakhir dibanding harga saham saat ini, dinyatakan dalam persen. Tidak semua emiten membagikan dividen.',
+  },
+  {
+    term: 'F-Score Piotroski',
+    definition:
+      'Daftar periksa akuntansi yang dipublikasikan Joseph Piotroski pada tahun 2000. Setiap kriteria bernilai terpenuhi atau tidak terpenuhi, lalu dihitung berapa yang terpenuhi. Hasilnya klasifikasi terhadap kriteria yang sudah baku, bukan anjuran tindakan.',
+  },
+  {
+    term: 'Z-score',
+    definition:
+      'Ukuran seberapa jauh sebuah angka menyimpang dari kebiasaannya sendiri, dihitung dalam satuan simpangan baku. Nilai dua berarti menyimpang dua kali lipat dari sebaran normalnya, yang dipakai sebagai ambang penanda anomali.',
+  },
+  {
+    term: 'CASA',
+    definition:
+      'Bagian simpanan nasabah bank yang berupa giro dan tabungan, dibanding seluruh simpanan. Simpanan jenis ini berbiaya bunga lebih rendah bagi bank dibanding deposito berjangka.',
+  },
 ];
 
 export function glossaryAsContext(): Record<string, string> {

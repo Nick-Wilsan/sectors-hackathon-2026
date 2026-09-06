@@ -1,4 +1,5 @@
 import type { FrameworkResult } from '../api/types';
+import { GlossaryTerm } from './GlossaryTerm';
 
 /**
  * Piotroski panel, rebuilt around the score itself rather than a wall of prose.
@@ -26,7 +27,9 @@ export function FScorePanel({ framework }: { framework: FrameworkResult }) {
     <div className="rounded border border-border-subtle bg-surface-card p-space-16">
       <div className="flex items-center gap-space-8 border-b border-border-subtle pb-space-8">
         <span className="material-symbols-outlined text-[18px] text-primary-container">rule</span>
-        <h2 className="font-headline-sm text-headline-sm font-bold text-text-primary">{framework.frameworkName}</h2>
+        <h2 className="font-headline-sm text-headline-sm font-bold text-text-primary">
+          <GlossaryTerm term="F-Score Piotroski">{framework.frameworkName}</GlossaryTerm>
+        </h2>
       </div>
 
       {framework.status === 'inadequate' ? (

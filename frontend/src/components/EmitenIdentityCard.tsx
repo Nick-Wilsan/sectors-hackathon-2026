@@ -56,16 +56,21 @@ function Metric({
   tone = 'text-text-primary',
   hint,
   absent,
+  glossary,
 }: {
   label: string;
   value: string | null;
   tone?: string;
   hint?: string;
   absent?: string;
+  /** Kunci kamus istilah; bila diisi, label mendapat tooltip penjelasan. */
+  glossary?: string;
 }) {
   return (
     <div className="rounded border border-border-subtle/60 bg-surface-container-lowest p-space-8" title={hint}>
-      <span className="block font-body-sm text-body-sm text-text-muted">{label}</span>
+      <span className="block font-body-sm text-body-sm text-text-muted">
+        {glossary ? <GlossaryTerm term={glossary}>{label}</GlossaryTerm> : label}
+      </span>
       {value !== null ? (
         <span className={`font-label-mono-lg text-label-mono-lg font-bold tabular-nums ${tone}`}>{value}</span>
       ) : (
@@ -170,26 +175,30 @@ export function EmitenIdentityCard({ symbol, peer, score, extras, bars }: Props)
 
       {/* Key multiples */}
       <div className="mt-space-16 grid grid-cols-2 gap-space-8 border-t border-border-subtle pt-space-12 sm:grid-cols-3 lg:grid-cols-5">
-        <Metric label="Kapitalisasi Pasar" value={marketCap !== null ? formatIdrCompact(marketCap) : null} />
+        <Metric label="Kapitalisasi Pasar" glossary="Kapitalisasi Pasar" value={marketCap !== null ? formatIdrCompact(marketCap) : null} />
         <Metric
           label={`P/E Ratio${extras?.year ? ` (${extras.year})` : ''}`}
+          glossary="P/E Ratio"
           value={extras?.pe !== null && extras?.pe !== undefined ? `${extras.pe.toFixed(2)}x` : null}
           hint="Harga saham dibanding laba bersih per saham"
           absent="Tidak bermakna — laba negatif"
         />
         <Metric
           label="Rata-rata P/E peer"
+          glossary="Rata-rata P/E peer"
           value={extras?.pePeerAvg !== null && extras?.pePeerAvg !== undefined ? `${extras.pePeerAvg.toFixed(2)}x` : null}
           tone="text-text-secondary"
           hint="Rata-rata P/E emiten sejenis pada tahun buku yang sama"
         />
         <Metric
           label="PBV Ratio"
+          glossary="PBV"
           value={extras?.pb !== null && extras?.pb !== undefined ? `${extras.pb.toFixed(2)}x` : null}
           hint="Harga saham dibanding nilai buku ekuitas per saham"
         />
         <Metric
           label="Dividend Yield (TTM)"
+          glossary="Dividend Yield"
           value={
             extras?.dividendYieldTtm !== null && extras?.dividendYieldTtm !== undefined
               ? `${(extras.dividendYieldTtm * 100).toFixed(2)}%`
