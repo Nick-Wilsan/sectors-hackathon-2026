@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { getSubsectors, screenCompanies } from '../api/client';
 import type { ScoredCompany, ScreenerResult, SubsectorOption } from '../api/types';
 import { PeerDataWarning } from './PeerDataWarning';
+import { GlossaryTerm } from './GlossaryTerm';
 
 /** Same three tiers the rest of the dashboard uses for composite scores. */
 function tierColors(score: number): { bar: string; text: string; chip: string; label: string } {
@@ -15,12 +16,15 @@ function tierColors(score: number): { bar: string; text: string; chip: string; l
 // composite score, so the table can show *why* a company ranks where it does
 // instead of a single opaque bar. Fixed order and short heads keep the row
 // scannable; the full label and weight live in each header's tooltip.
+// `glossary` adalah kunci pencarian di kamus istilah, sengaja dipisah dari
+// `full` yang merupakan label tampilan. Keduanya sempat disamakan dan empat
+// dari lima tooltip diam-diam tidak muncul karena kuncinya tidak pernah cocok.
 const FACTORS = [
-  { key: 'roe', short: 'ROE', full: 'Profitabilitas Modal (ROE)', weight: '25%' },
-  { key: 'netProfitMargin', short: 'NPM', full: 'Margin Laba Bersih', weight: '20%' },
-  { key: 'der', short: 'DER', full: 'Kesehatan Utang (DER)', weight: '20%' },
-  { key: 'ocfMargin', short: 'OCF', full: 'Margin Arus Kas Operasional', weight: '20%' },
-  { key: 'roa', short: 'ROA', full: 'Profitabilitas Aset (ROA)', weight: '15%' },
+  { key: 'roe', short: 'ROE', full: 'Profitabilitas Modal (ROE)', glossary: 'ROE', weight: '25%' },
+  { key: 'netProfitMargin', short: 'NPM', full: 'Margin Laba Bersih', glossary: 'Margin laba', weight: '20%' },
+  { key: 'der', short: 'DER', full: 'Struktur Modal (DER)', glossary: 'DER', weight: '20%' },
+  { key: 'ocfMargin', short: 'OCF', full: 'Margin Arus Kas Operasional', glossary: 'Margin Arus Kas Operasional', weight: '20%' },
+  { key: 'roa', short: 'ROA', full: 'Profitabilitas Aset (ROA)', glossary: 'ROA', weight: '15%' },
 ] as const;
 
 /** A component percentile: how the company ranks against its own sub-sector on that one factor. */
@@ -79,7 +83,7 @@ function FactorCell({ company, factorKey }: { company: ScoredCompany; factorKey:
         <span className="material-symbols-outlined text-[18px] text-primary-container">filter_alt</span>
         <div>
           <div className="flex flex-wrap items-center gap-space-8">
-            <h2 className="font-headline-sm text-headline-sm font-bold text-text-primary">Screener Emiten</h2>
+            <h2 id="screener-emiten" className="scroll-mt-24 font-headline-sm text-headline-sm font-bold text-text-primary">Screener Emiten</h2>
             {/* Tally rides with the title rather than the control group:
                 as a fourth item in that group it had no label above it and
                 broke the row into three ragged lines. */}
@@ -165,12 +169,10 @@ function FactorCell({ company, factorKey }: { company: ScoredCompany; factorKey:
                 <th className="w-8 py-space-6 text-right font-semibold">#</th>
                 <th className="py-space-6 pl-space-12 font-semibold">Emiten</th>
                 {FACTORS.map((f) => (
-                  <th
-                    key={f.key}
-                    className="py-space-6 pl-space-12 text-right font-semibold whitespace-nowrap"
-                    title={`${f.full} — persentil terhadap sub-sektor, bobot ${f.weight}`}
-                  >
-                    {f.short}
+                  <th key={f.key} className="py-space-6 pl-space-12 text-right font-semibold whitespace-nowrap">
+                    <GlossaryTerm term={f.glossary} below>
+                      {f.short}
+                    </GlossaryTerm>
                   </th>
                 ))}
                 <th className="py-space-6 pl-space-12 text-right font-semibold whitespace-nowrap">Skor Komposit</th>

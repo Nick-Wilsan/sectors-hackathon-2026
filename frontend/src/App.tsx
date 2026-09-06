@@ -20,23 +20,53 @@ function useMarketStatus(): MarketStatus {
   return status;
 }
 
-// Nav items ported verbatim from the reference mockup's header. Three of the
-// five don't correspond to a page that exists yet — kept as visible, inert
-// links (rather than deleted) per the plan to build them out later; see the
-// pending-features list.
-const NAV_LINKS: { label: string; to: string | null }[] = [
+// Every nav item goes somewhere real. The mockup's five included three that had
+// no destination; inert menu items read as a half-finished prototype, so they
+// were resolved rather than left greyed out:
+//   Sektor IDX      -> jangkar ke section "Ikhtisar Sub-Sektor IDX" di dashboard
+//   Screener        -> jangkar ke panel "Screener Emiten" di dashboard
+//   Chart & Analisis-> dihapus; chart hidup di dalam tiap halaman emiten,
+//                      dicapai lewat pencarian atau screener
+//   Komunitas & Ide -> dihapus; tidak ada datanya sama sekali
+const NAV_LINKS: { label: string; to: string }[] = [
   { label: 'Ringkasan Pasar', to: '/' },
-  { label: 'Sektor IDX', to: null },
-  { label: 'Chart & Analisis', to: null },
+  { label: 'Sektor IDX', to: '/#sektor-idx' },
+  { label: 'Screener', to: '/#screener-emiten' },
   { label: 'Berita', to: '/berita' },
-  { label: 'Komunitas & Ide', to: null },
 ];
+
+/** Menggulir ke elemen yang ditunjuk hash. React Router tidak melakukannya
+ *  sendiri, jadi tanpa ini tautan /#sektor-idx hanya berpindah route. */
+function useHashScroll(): void {
+  const { hash, pathname } = useLocation();
+  useEffect(() => {
+    if (!hash) return;
+    // Section tujuan bisa belum ter-render saat data dashboard masih dimuat.
+    let batal = false;
+    const coba = (sisa: number) => {
+      if (batal) return;
+      const el = document.querySelector(hash);
+      if (el) {
+        // 'auto', bukan 'smooth': animasi smooth digerakkan rAF dan berhenti
+        // saat tab tidak digambar, sehingga jangkar bisa diam-diam gagal.
+        el.scrollIntoView({ behavior: 'auto', block: 'start' });
+      } else if (sisa > 0) {
+        setTimeout(() => coba(sisa - 1), 250);
+      }
+    };
+    coba(12);
+    return () => {
+      batal = true;
+    };
+  }, [hash, pathname]);
+}
 
 export function App() {
   const marketStatus = useMarketStatus();
+  useHashScroll();
   // Which nav item is highlighted follows the actual route, rather than a
   // flag pinned to the home link (which left /berita with no active state).
-  const { pathname } = useLocation();
+  const { pathname, hash } = useLocation();
   const [ihsg, setIhsg] = useState<IndexPoint[]>([]);
   const [tickerRows, setTickerRows] = useState<TickerTapeRow[]>([]);
 
@@ -66,31 +96,25 @@ export function App() {
             </div>
           </div>
 
-          <nav className="hidden items-center gap-space-20 xl:flex" aria-label="Navigasi utama">
-            {NAV_LINKS.map((item) =>
-              item.to ? (
+          <nav className="hidden items-center gap-space-24 lg:flex" aria-label="Navigasi utama">
+            {NAV_LINKS.map((item) => {
+              // Jangkar dashboard tetap menyorot "Ringkasan Pasar" sebagai induknya.
+              const aktif = item.to.includes('#') ? pathname === '/' && hash === `#${item.to.split('#')[1]}` : pathname === item.to && !hash;
+              return (
                 <Link
                   key={item.label}
                   to={item.to}
-                  aria-current={pathname === item.to ? 'page' : undefined}
+                  aria-current={aktif ? 'page' : undefined}
                   className={
-                    pathname === item.to
-                      ? 'border-b-2 border-primary-container py-[14px] font-semibold text-text-primary transition-colors'
-                      : 'py-[14px] font-body-sm text-body-sm text-on-surface-variant transition-colors hover:text-on-surface'
+                    aktif
+                      ? 'whitespace-nowrap border-b-2 border-primary-container py-[13px] font-body-md text-body-md font-semibold text-text-primary transition-colors'
+                      : 'whitespace-nowrap py-[13px] font-body-md text-body-md font-medium text-on-surface-variant transition-colors hover:text-text-primary'
                   }
                 >
                   {item.label}
                 </Link>
-              ) : (
-                <span
-                  key={item.label}
-                  title="Segera hadir"
-                  className="cursor-not-allowed py-[14px] font-body-sm text-body-sm text-on-surface-variant/50"
-                >
-                  {item.label}
-                </span>
-              ),
-            )}
+              );
+            })}
           </nav>
 
           <div className="flex items-center gap-space-12">
@@ -105,6 +129,30 @@ export function App() {
 
           </div>
         </div>
+
+        {/* Di bawah lg, nav utama dan kolom pencarian sama-sama tersembunyi,
+            sehingga ponsel praktis tidak punya navigasi sama sekali — /berita
+            hanya bisa dicapai dengan mengetik URL. Baris ringkas ini menutup
+            lubang itu; digulir mendatar bila tidak muat. */}
+        <nav className="flex gap-space-16 overflow-x-auto border-t border-border-subtle px-space-16 py-space-8 lg:hidden" aria-label="Navigasi utama ringkas">
+          {NAV_LINKS.map((item) => {
+            const aktif = item.to.includes('#') ? pathname === '/' && hash === `#${item.to.split('#')[1]}` : pathname === item.to && !hash;
+            return (
+              <Link
+                key={item.label}
+                to={item.to}
+                aria-current={aktif ? 'page' : undefined}
+                className={
+                  aktif
+                    ? 'whitespace-nowrap font-body-sm text-body-sm font-semibold text-primary'
+                    : 'whitespace-nowrap font-body-sm text-body-sm text-on-surface-variant'
+                }
+              >
+                {item.label}
+              </Link>
+            );
+          })}
+        </nav>
 
         <TickerTape ihsg={ihsg} rows={tickerRows} />
       </header>

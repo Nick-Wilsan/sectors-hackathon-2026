@@ -1,4 +1,5 @@
 import type { CompositeScoreResult, DailyBar, FundamentalExtras, PeerComparisonResult } from '../api/types';
+import { GlossaryTerm } from './GlossaryTerm';
 
 interface Props {
   symbol: string;
@@ -81,7 +82,7 @@ export function EmitenIdentityCard({ symbol, peer, score, extras, bars }: Props)
           <div className="min-w-0">
             <h1 className="font-headline-lg text-headline-lg tracking-tight text-text-primary">{peer?.companyName ?? symbol.toUpperCase()}</h1>
             <div className="mt-space-6 flex flex-wrap items-center gap-space-6 font-label-mono-sm text-label-mono-sm">
-              <span className="rounded bg-surface-container px-space-6 py-space-2 font-bold text-primary">{symbol.toUpperCase()}.JK</span>
+              <span className="rounded bg-surface-container px-space-6 py-space-2 font-bold text-primary">{symbol.toUpperCase().replace(/\.JK$/, '')}.JK</span>
               {peer?.subSector && (
                 <span className="rounded border border-border-subtle bg-surface-container-lowest px-space-6 py-space-2 text-text-secondary">
                   Sub-sektor: {peer.subSector}
@@ -127,7 +128,9 @@ export function EmitenIdentityCard({ symbol, peer, score, extras, bars }: Props)
 
           {/* Replaces the mockup's "STRONG BUY (92/100)" badge. */}
           <div className="rounded border border-border-subtle bg-surface-container-lowest p-space-12">
-            <span className="block font-table-header text-table-header uppercase text-text-muted">Skor Komposit Fundamental</span>
+            <GlossaryTerm term="Skor Komposit" className="block font-table-header text-table-header uppercase text-text-muted">
+              Skor Komposit Fundamental
+            </GlossaryTerm>
             {score?.score !== null && score?.score !== undefined && t ? (
               <div className="mt-space-4 flex items-baseline gap-space-8">
                 <span className={`font-display-lg text-display-lg tracking-tight tabular-nums ${t.text}`}>{score.score.toFixed(0)}</span>
@@ -138,7 +141,8 @@ export function EmitenIdentityCard({ symbol, peer, score, extras, bars }: Props)
               <p className="mt-space-4 font-body-sm text-body-sm text-text-muted">Data tidak memadai untuk diberi skor.</p>
             )}
             <span className="mt-space-2 block font-label-mono-sm text-label-mono-sm text-text-muted">
-              Persentil terhadap emiten satu sub-sektor
+              <GlossaryTerm term="Persentil">Persentil</GlossaryTerm> terhadap emiten satu{' '}
+              <GlossaryTerm term="Sub-sektor">sub-sektor</GlossaryTerm>
             </span>
           </div>
         </div>

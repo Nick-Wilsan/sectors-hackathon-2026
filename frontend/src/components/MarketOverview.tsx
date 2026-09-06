@@ -259,7 +259,7 @@ export function MarketOverview({ insightSlot }: MarketOverviewProps) {
                     Sectors Intelligence
                   </span>
                 </div>
-                <h2 className="font-headline-lg text-headline-lg tracking-tight text-text-primary">Ikhtisar Sub-Sektor IDX</h2>
+                <h2 id="sektor-idx" className="scroll-mt-24 font-headline-lg text-headline-lg tracking-tight text-text-primary">Ikhtisar Sub-Sektor IDX</h2>
                 <p className="mt-space-2 font-body-sm text-body-sm text-text-secondary">
                   Sebaran Skor Komposit Fundamental pada 6 sub-sektor terpilih.
                 </p>

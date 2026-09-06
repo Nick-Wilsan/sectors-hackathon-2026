@@ -268,23 +268,19 @@ export function FeaturedStockPanel({ tickerTape = [] }: { tickerTape?: TickerTap
             </p>
           </div>
         </div>
+        {/* Dulu di sini ada dua tombol nonaktif, Simpan Watchlist dan Buat Price
+            Alert. Keduanya butuh akun dan pengiriman notifikasi yang tidak ada
+            di produk ini, jadi selamanya akan mati — dan tombol mati terbaca
+            sebagai prototipe setengah jadi. Digantikan satu aksi yang memang
+            bekerja: melanjutkan ke analisis lengkap emiten yang sedang disorot. */}
         <div className="flex items-center gap-space-8">
-          <button
-            type="button"
-            disabled
-            title="Segera hadir — belum ada akun/watchlist"
-            className="flex cursor-not-allowed items-center gap-space-4 rounded border border-border-subtle bg-surface-card px-space-12 py-space-6 font-body-sm text-body-sm text-text-secondary opacity-50"
+          <Link
+            to={`/emiten/${FEATURED_SYMBOL}`}
+            className="flex items-center gap-space-6 rounded bg-primary-container px-space-16 py-space-8 font-body-sm text-body-sm font-bold text-background-base transition-colors hover:bg-accent-hover"
           >
-            <span className="material-symbols-outlined text-[16px]">bookmark_border</span> Simpan Watchlist
-          </button>
-          <button
-            type="button"
-            disabled
-            title="Segera hadir — belum ada sistem alert"
-            className="flex cursor-not-allowed items-center gap-space-4 rounded bg-primary-container px-space-16 py-space-6 font-body-sm text-body-sm font-bold text-background-base opacity-50"
-          >
-            <span className="material-symbols-outlined text-[16px]">notifications_active</span> Buat Price Alert
-          </button>
+            <span className="material-symbols-outlined text-[16px]">analytics</span>
+            Analisis lengkap {FEATURED_SYMBOL}
+          </Link>
         </div>
       </div>
 
