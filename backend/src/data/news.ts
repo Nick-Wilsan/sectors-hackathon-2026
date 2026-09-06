@@ -11,6 +11,7 @@ interface RawNewsItem {
   tags?: string[];
   symbols?: string[];
   thumbnail?: string | null;
+  dimension?: Record<string, number>;
 }
 
 interface RawNewsResponse {
@@ -26,7 +27,7 @@ export interface GetNewsParams {
   keyword?: string;
   start?: string;
   end?: string;
-  /** Max 30 (API limit). */
+  /** Clamped to 30 by the API — larger values return 30 rows without an error. */
   limit?: number;
   offset?: number;
 }
@@ -58,7 +59,8 @@ export async function getNews(params: GetNewsParams = {}): Promise<NewsResult> {
     tags: item.tags,
     symbols: item.symbols,
     thumbnail: item.thumbnail,
+    dimension: item.dimension,
   }));
 
-  return { articles, fetchedAt: new Date().toISOString() };
+  return { articles, totalCount: raw.pagination.total_count, fetchedAt: new Date().toISOString() };
 }

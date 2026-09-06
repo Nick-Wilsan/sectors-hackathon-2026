@@ -1,5 +1,10 @@
 import { sectorsGet } from './sectorsClient.js';
 
+// Market widgets are the only payloads that move daily, so they get a shorter
+// TTL than the 30-day default — but one calendar day, not 6h, so a single
+// evening of work cannot pay for the same index chart more than once.
+const MARKET_TTL_MS = 24 * 60 * 60 * 1000;
+
 // Market-wide overview data (landing page): IHSG index chart, total IDX
 // market cap, and today's top gainers/losers. Not tied to any single emiten.
 
@@ -17,7 +22,7 @@ interface RawIndexDailyItem {
 export async function getIndexDaily(indexCode: string, params: { start?: string; end?: string } = {}): Promise<IndexPoint[]> {
   const raw = await sectorsGet<RawIndexDailyItem[]>(`/v2/index-daily/${indexCode}/`, {
     params: { start: params.start, end: params.end },
-    cacheTtlMs: 6 * 60 * 60 * 1000, // 6h — index level changes intraday, don't need 24h staleness for a "today" widget
+    cacheTtlMs: MARKET_TTL_MS,
   });
   return raw.map((item) => ({ date: item.date, price: item.price }));
 }
@@ -35,7 +40,7 @@ interface RawIdxTotalItem {
 export async function getIdxTotal(params: { start?: string; end?: string } = {}): Promise<IdxTotalPoint[]> {
   const raw = await sectorsGet<RawIdxTotalItem[]>('/v2/idx-total/', {
     params: { start: params.start, end: params.end },
-    cacheTtlMs: 6 * 60 * 60 * 1000,
+    cacheTtlMs: MARKET_TTL_MS,
   });
   return raw.map((item) => ({ date: item.date, marketCap: item.idx_total_market_cap }));
 }
@@ -74,7 +79,7 @@ function toMoverRow(r: RawMoverRow): MoverRow {
 export async function getTopMoversToday(nStock = 8): Promise<TopMovers> {
   const raw = await sectorsGet<RawTopChangesResponse>('/v2/companies/top-changes/', {
     params: { classifications: 'top_gainers,top_losers', periods: '1d', n_stock: nStock },
-    cacheTtlMs: 6 * 60 * 60 * 1000,
+    cacheTtlMs: MARKET_TTL_MS,
   });
   return {
     gainers: (raw.top_gainers['1d'] ?? []).map(toMoverRow),
@@ -108,7 +113,7 @@ interface RawMostTradedRow {
 export async function getMostTradedToday(nStock = 8): Promise<MostTradedRow[]> {
   const raw = await sectorsGet<Record<string, RawMostTradedRow[]>>('/v2/most-traded/', {
     params: { n_stock: nStock },
-    cacheTtlMs: 6 * 60 * 60 * 1000,
+    cacheTtlMs: MARKET_TTL_MS,
   });
   const dates = Object.keys(raw).sort();
   const latestDate = dates[dates.length - 1];

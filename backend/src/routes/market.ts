@@ -1,7 +1,9 @@
 import { Router } from 'express';
 import { getIndexDaily, getIdxTotal, getTopMoversToday, getMostTradedToday, getMultipleIndices } from '../data/market.js';
 import { getNews } from '../data/news.js';
-import { daysAgoIso, todayIso } from '../data/dateRange.js';
+import { recentRange } from '../data/dateRange.js';
+import { getNewsIndex } from '../analysis/newsIndex.js';
+import { GLOSSARY } from '../ai/glossary.js';
 import { getSectorSpotlight } from '../analysis/sectorSpotlight.js';
 import { getValuationSpotlight } from '../analysis/valuationSpotlight.js';
 import { getTickerTape } from '../analysis/tickerTape.js';
@@ -26,11 +28,29 @@ marketRouter.get('/news', async (req, res) => {
   }
 });
 
+// Full index for the /berita page: one fetched corpus plus every facet the
+// page filters on, so the browser can filter, sort and page without spending
+// another credit per interaction.
+// Kamus istilah untuk tooltip di antarmuka. Sumbernya berkas yang sama dengan
+// konteks lapisan AI, supaya penjelasan di tooltip dan jawaban asisten tidak
+// pernah berbeda. Tidak memanggil Sectors — 0 kredit.
+marketRouter.get('/glosarium', (_req, res) => {
+  res.json({ terms: GLOSSARY });
+});
+
+marketRouter.get('/berita', async (_req, res) => {
+  try {
+    res.json(await getNewsIndex());
+  } catch (err) {
+    res.status(502).json({ error: err instanceof Error ? err.message : 'Unknown error' });
+  }
+});
+
 marketRouter.get('/overview', async (_req, res) => {
   try {
     const [ihsg, idxTotal, movers, mostTraded, indexChips, tickerTape] = await Promise.all([
-      getIndexDaily('ihsg', { start: daysAgoIso(90), end: todayIso() }),
-      getIdxTotal({ start: daysAgoIso(30), end: todayIso() }),
+      getIndexDaily('ihsg', recentRange(90)),
+      getIdxTotal(recentRange(30)),
       getTopMoversToday(8),
       getMostTradedToday(8),
       getMultipleIndices(INDEX_CHIP_CODES),

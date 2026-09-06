@@ -1,6 +1,6 @@
 import { getMostTradedToday } from '../data/market.js';
 import { getDailySeries } from '../data/transactions.js';
-import { daysAgoIso, todayIso } from '../data/dateRange.js';
+import { recentRange } from '../data/dateRange.js';
 import { mapWithConcurrency } from '../data/slug.js';
 import { detectAnomaly, type AnomalyMetric } from './anomaly.js';
 
@@ -37,7 +37,7 @@ export async function getMarketAnomalyScan(): Promise<MarketAnomalyScan> {
 
   const rows = await mapWithConcurrency(mostTraded, 3, async (row): Promise<MarketAnomalyRow> => {
     try {
-      const series = await getDailySeries(row.symbol, { start: daysAgoIso(90), end: todayIso() });
+      const series = await getDailySeries(row.symbol, recentRange(90));
       const anomaly = detectAnomaly(row.symbol, series.bars);
       return {
         symbol: row.symbol,

@@ -165,7 +165,12 @@ export interface QuarterlyFinancialsResult extends WithFetchedAt {
 
 // --- E-04: News ---------------------------------------------------------------------
 
+/** Sectors' own topic scoring for an article, one count per axis. */
+export type NewsDimension = Record<string, number>;
+
 export interface NewsArticle {
+  /** Penanda stabil untuk route /berita/:id — turunan dari URL sumber. */
+  id?: string;
   title: string;
   body?: string;
   source: string;
@@ -175,8 +180,11 @@ export interface NewsArticle {
   tags?: string[];
   symbols?: string[];
   thumbnail?: string | null;
+  dimension?: NewsDimension;
 }
 
 export interface NewsResult extends WithFetchedAt {
   articles: NewsArticle[];
+  /** Total articles Sectors reports for the query, not just this page. */
+  totalCount: number;
 }

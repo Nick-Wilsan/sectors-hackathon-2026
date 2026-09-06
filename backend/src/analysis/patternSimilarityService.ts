@@ -1,5 +1,5 @@
 import { getDailySeries } from '../data/transactions.js';
-import { daysAgoIso, todayIso } from '../data/dateRange.js';
+import { recentRange } from '../data/dateRange.js';
 import { mapWithConcurrency } from '../data/slug.js';
 import { getPeerComparison } from './peerComparison.js';
 import { computePatternSimilarity, type CandidateSeries, type PatternSimilarityResult } from './patternSimilarity.js';
@@ -23,7 +23,7 @@ export async function getPatternSimilarity(
   const candidateLimit = options.candidateLimit ?? DEFAULT_CANDIDATE_LIMIT;
 
   const [targetSeries, peer] = await Promise.all([
-    getDailySeries(symbol, { start: daysAgoIso(90), end: todayIso() }),
+    getDailySeries(symbol, recentRange(90)),
     getPeerComparison(symbol),
   ]);
 
@@ -34,7 +34,7 @@ export async function getPatternSimilarity(
 
   const candidates = await mapWithConcurrency(candidatePeers, 5, async (p): Promise<CandidateSeries | null> => {
     try {
-      const series = await getDailySeries(p.symbol, { start: daysAgoIso(90), end: todayIso() });
+      const series = await getDailySeries(p.symbol, recentRange(90));
       return { symbol: p.symbol, companyName: p.companyName, bars: series.bars };
     } catch {
       return null;

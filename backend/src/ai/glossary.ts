@@ -40,8 +40,14 @@ export const GLOSSARY: GlossaryTerm[] = [
       'Persentase yang menunjukkan seberapa besar laba yang dihasilkan perusahaan dibandingkan modal yang disetor pemegang saham.',
   },
   {
+    // Diverifikasi 5 Sep 2026 dari laporan keuangan mentah: nilai
+    // debt_to_equity_ratio milik Sectors sama dengan total_liabilities /
+    // total_equity, BUKAN total_debt / total_equity (BBCA 4,63 versus 0,0085).
+    // Definisi lama menyebut "utang" saja dan menyesatkan untuk bank, yang
+    // liabilitasnya sebagian besar berupa simpanan nasabah.
     term: 'DER (Debt to Equity Ratio)',
-    definition: 'Rasio utang dibandingkan modal sendiri. Angka di atas satu berarti perusahaan lebih banyak dibiayai utang daripada modal sendiri.',
+    definition:
+      'Perbandingan seluruh kewajiban perusahaan terhadap modal sendiri. Pada data Sectors, pembilangnya adalah total liabilitas, bukan utang berbunga saja. Untuk bank, angka ini wajar tinggi karena simpanan nasabah dihitung sebagai kewajiban, sehingga hanya bermakna bila dibandingkan sesama emiten satu sub-sektor.',
   },
   {
     term: 'Margin laba',
@@ -67,6 +73,18 @@ export const GLOSSARY: GlossaryTerm[] = [
     term: 'Framework investasi',
     definition:
       'Kumpulan kriteria penilaian klasik dan telah dipublikasikan luas yang dipakai untuk mengklasifikasikan emiten secara objektif, bukan untuk menyarankan tindakan.',
+  },
+  {
+    term: 'Margin Arus Kas Operasional',
+    definition: 'Bagian dari pendapatan yang benar-benar menjadi kas dari kegiatan usaha sehari-hari, sebelum belanja modal dan pendanaan.',
+  },
+  {
+    term: 'ROA (Return on Assets)',
+    definition: 'Persentase laba yang dihasilkan dibandingkan seluruh aset yang dikelola perusahaan.',
+  },
+  {
+    term: 'Sub-sektor',
+    definition: 'Pengelompokan emiten yang lebih rinci daripada sektor, dipakai sebagai kelompok pembanding saat menghitung persentil.',
   },
 ];
 

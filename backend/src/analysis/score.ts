@@ -7,7 +7,11 @@ import { percentileRank, invertPercentile, MIN_MEANINGFUL_GROUP_SIZE } from './p
 export const SCORE_COMPONENTS = [
   { key: 'roe', label: 'Profitabilitas Modal (ROE)', weight: 0.25, direction: 'higher' as const },
   { key: 'netProfitMargin', label: 'Margin Laba Bersih', weight: 0.2, direction: 'higher' as const },
-  { key: 'der', label: 'Kesehatan Utang (DER)', weight: 0.2, direction: 'lower' as const },
+  // Diverifikasi 5 Sep 2026: debt_to_equity_ratio milik Sectors adalah
+  // total_liabilities/total_equity, bukan utang berbunga saja. Label lama
+  // "Kesehatan Utang" menyesatkan untuk bank, yang liabilitasnya sebagian
+  // besar simpanan nasabah — bukan tanda tekanan keuangan.
+  { key: 'der', label: 'Struktur Modal (DER)', weight: 0.2, direction: 'lower' as const },
   { key: 'ocfMargin', label: 'Margin Arus Kas Operasional', weight: 0.2, direction: 'higher' as const },
   { key: 'roa', label: 'Profitabilitas Aset (ROA)', weight: 0.15, direction: 'higher' as const },
 ] as const;

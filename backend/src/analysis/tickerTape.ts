@@ -1,5 +1,5 @@
 import { getDailySeries } from '../data/transactions.js';
-import { daysAgoIso, todayIso } from '../data/dateRange.js';
+import { recentRange } from '../data/dateRange.js';
 import { mapWithConcurrency } from '../data/slug.js';
 
 // Scrolling ticker strip under the header (design mockup reference) — a
@@ -15,7 +15,7 @@ export interface TickerTapeRow {
 
 async function getTickerRow(symbol: string): Promise<TickerTapeRow> {
   try {
-    const { bars } = await getDailySeries(symbol, { start: daysAgoIso(7), end: todayIso() });
+    const { bars } = await getDailySeries(symbol, recentRange(7));
     if (bars.length === 0) return { symbol, price: null, change: null };
     const last = bars[bars.length - 1];
     const prev = bars.length > 1 ? bars[bars.length - 2] : undefined;

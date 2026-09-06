@@ -11,7 +11,7 @@ import { getIndicators } from '../analysis/indicatorsService.js';
 import { getPatternSimilarity } from '../analysis/patternSimilarityService.js';
 import { getFundamentalExtras } from '../analysis/fundamentalExtras.js';
 import { getDailySeries } from '../data/transactions.js';
-import { daysAgoIso, todayIso } from '../data/dateRange.js';
+import { recentRange } from '../data/dateRange.js';
 
 export const emitenRouter = Router();
 
@@ -55,7 +55,7 @@ emitenRouter.get('/:symbol/harga', async (req, res) => {
 
   try {
     // Same 90-day window used by F-06/F-07 so this call hits the same cache entry.
-    const series = await getDailySeries(symbol, { start: daysAgoIso(90), end: todayIso() });
+    const series = await getDailySeries(symbol, recentRange(90));
     res.json(series);
   } catch (err) {
     res.status(502).json({ error: err instanceof Error ? err.message : 'Unknown error' });

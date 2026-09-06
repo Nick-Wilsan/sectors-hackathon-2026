@@ -1,6 +1,6 @@
 import { getDailySeries } from '../data/transactions.js';
 import { getNews } from '../data/news.js';
-import { daysAgoIso, todayIso } from '../data/dateRange.js';
+import { recentRange } from '../data/dateRange.js';
 import { detectAnomaly, type AnomalyResult } from './anomaly.js';
 import type { NewsArticle } from '../data/types.js';
 
@@ -15,7 +15,7 @@ const NEWS_DISCLAIMER =
 
 export async function getAnomalyWithContext(symbol: string): Promise<AnomalyWithContext> {
   // Max window the Sectors API allows per call — see ADD-SH2026-003 E-03.
-  const series = await getDailySeries(symbol, { start: daysAgoIso(90), end: todayIso() });
+  const series = await getDailySeries(symbol, recentRange(90));
   const anomaly = detectAnomaly(symbol, series.bars);
 
   if (!anomaly.hasAnomaly) {
