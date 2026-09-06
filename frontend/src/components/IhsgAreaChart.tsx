@@ -55,7 +55,7 @@ export function IhsgAreaChart({ points, positive, height = 160 }: IhsgAreaChartP
         <circle cx={last.x} cy={last.y} r="7" fill="none" stroke={color} strokeOpacity="0.5" strokeWidth="1.5" />
       </svg>
       {firstLabel && lastLabel && (
-        <div className="mt-1 flex justify-between text-[10px] text-neutral-600">
+        <div className="mt-1 flex justify-between text-[10px] text-text-muted">
           <span>{firstLabel}</span>
           <span>{lastLabel}</span>
         </div>

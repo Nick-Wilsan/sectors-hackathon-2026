@@ -7,7 +7,7 @@ import type { SectorSpotlightCard } from '../api/types';
 // averaged across the group that defines them cancel out to ~50 regardless
 // of the sector's actual fundamentals).
 function tierColor(card: SectorSpotlightCard): string {
-  if (card.scoredCount === 0) return 'bg-neutral-700';
+  if (card.scoredCount === 0) return 'bg-surface-container-high';
   if (card.healthyCount > card.criticalCount) return 'bg-emerald-500';
   if (card.criticalCount > card.healthyCount) return 'bg-rose-500';
   return 'bg-amber-500';

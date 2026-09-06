@@ -82,13 +82,37 @@ export function FScorePanel({ framework }: { framework: FrameworkResult }) {
                     </span>
                   </span>
                   <div className="min-w-0">
-                    <p className="font-body-sm text-body-sm font-semibold text-text-primary">{c.label}</p>
+                    <p className="font-body-sm text-body-sm font-semibold text-text-primary">
+                      <GlossaryTerm term={c.label}>{c.label}</GlossaryTerm>
+                    </p>
                     <p className="font-label-mono-sm text-label-mono-sm text-text-muted">{c.detail}</p>
                   </div>
                 </li>
               );
             })}
           </ul>
+
+          {/* Warna centang dan silang sebelumnya tidak pernah dijelaskan. Bagi
+              pembaca pemula, merah mudah disalahartikan sebagai "saham buruk"
+              padahal artinya hanya satu kriteria yang tidak terpenuhi. */}
+          <div className="mt-space-12 flex flex-wrap items-center gap-space-12 rounded border border-border-subtle bg-surface-container-lowest px-space-12 py-space-8 font-body-sm text-body-sm text-text-muted">
+            <span className="flex items-center gap-space-4">
+              <span className="flex h-4 w-4 items-center justify-center rounded-full bg-state-positive/20 text-state-positive">
+                <span className="material-symbols-outlined text-[13px]">check</span>
+              </span>
+              kriteria terpenuhi
+            </span>
+            <span className="flex items-center gap-space-4">
+              <span className="flex h-4 w-4 items-center justify-center rounded-full bg-state-negative/20 text-state-negative">
+                <span className="material-symbols-outlined text-[13px]">close</span>
+              </span>
+              tidak terpenuhi
+            </span>
+            <span className="min-w-0 flex-1">
+              Merah berarti satu kriteria tidak terpenuhi, bukan berarti sahamnya buruk. Arahkan kursor ke tiap kriteria untuk
+              tahu apa yang sedang diperiksa.
+            </span>
+          </div>
 
           <details className="mt-space-12 border-t border-border-subtle pt-space-8">
             <summary className="cursor-pointer font-body-sm text-body-sm text-text-secondary transition-colors hover:text-text-primary">
