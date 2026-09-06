@@ -134,7 +134,12 @@ export function GlossaryTerm({ term, children, className = '' }: GlossaryTermPro
           ref={panelRef}
           role="tooltip"
           style={{ position: 'fixed', top: pos.top, left: pos.left, width: LEBAR_PANEL }}
-          className="z-50 rounded-lg border border-surface-variant bg-surface-container p-space-12 text-left normal-case shadow-[var(--shadow-popover)]"
+          // Panel ini bisa muncul dari dalam header tabel, sel angka, atau
+          // judul beruppercase — dan properti teks di sana diwariskan ke sini.
+          // `whitespace-normal` yang paling menentukan: header screener memakai
+          // `whitespace-nowrap`, sehingga tanpa penyetelan ulang ini kalimat
+          // penjelasan menolak membungkus dan terpotong di tepi panel.
+          className="z-50 whitespace-normal break-words rounded-lg border border-surface-variant bg-surface-container p-space-12 text-left normal-case tracking-normal shadow-[var(--shadow-popover)]"
         >
           <span className="block font-label-mono-sm text-label-mono-sm uppercase text-primary">{term}</span>
           <span className="mt-space-4 block font-body-sm text-body-sm leading-relaxed text-text-secondary">{definition}</span>

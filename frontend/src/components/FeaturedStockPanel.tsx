@@ -438,12 +438,12 @@ export function FeaturedStockPanel({ tickerTape = [] }: { tickerTape?: TickerTap
             <div className="mt-space-8 flex flex-wrap items-center justify-between gap-space-8 border-t border-border-subtle pt-space-8 font-body-sm text-body-sm text-text-muted">
               {extras.casaRatio !== null && (
                 <span>
-                  CASA Ratio: <strong className="text-state-positive">{(extras.casaRatio * 100).toFixed(1)}%</strong>
+                  <GlossaryTerm term="CASA">CASA Ratio</GlossaryTerm>: <strong className="text-state-positive">{(extras.casaRatio * 100).toFixed(1)}%</strong>
                 </span>
               )}
               {extras.costToIncomeRatio !== null && (
                 <span title="Substitusi jujur untuk NPL Gross — Sectors API tidak menyediakan data NPL sama sekali">
-                  Cost-to-Income Ratio: <strong className="text-text-primary">{(extras.costToIncomeRatio * 100).toFixed(1)}%</strong>
+                  <GlossaryTerm term="Cost-to-Income Ratio">Cost-to-Income Ratio</GlossaryTerm>: <strong className="text-text-primary">{(extras.costToIncomeRatio * 100).toFixed(1)}%</strong>
                 </span>
               )}
             </div>

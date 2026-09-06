@@ -155,6 +155,11 @@ export const GLOSSARY: GlossaryTerm[] = [
   },
 
   {
+    term: 'Cost-to-Income Ratio',
+    definition:
+      'Berapa bagian dari pendapatan bank yang habis untuk biaya operasional seperti gaji, sewa kantor, dan teknologi. Semakin kecil berarti bank itu semakin hemat menjalankan usahanya. Ukuran ini khusus untuk bank.',
+  },
+  {
     term: 'Framework investasi',
     definition:
       'Daftar periksa penilaian yang sudah diterbitkan dan dipakai luas selama puluhan tahun. Gunanya mengelompokkan perusahaan secara objektif terhadap kriteria baku, bukan menyarankan tindakan.',
