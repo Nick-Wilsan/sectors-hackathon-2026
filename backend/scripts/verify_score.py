@@ -26,7 +26,7 @@ Formula (Technical Spec bagian 11, keputusan 4 September 2026):
 
 Cara pakai (backend harus berjalan di port 4000; 0 kredit bila cache hangat):
 
-    python docs/verifikasi/verify_score.py
+    python backend/scripts/verify_score.py
 
 Keluar dengan kode 0 bila seluruh emiten uji cocok, 1 bila ada yang tidak.
 """
@@ -38,7 +38,7 @@ import os
 import sys
 import urllib.request
 
-REPO = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+REPO = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))  # backend/scripts -> repo
 CACHE_DIR = os.path.join(REPO, "backend", ".cache")
 API = "http://localhost:4000"
 

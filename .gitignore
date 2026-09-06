@@ -29,3 +29,17 @@ Thumbs.db
 # Local design-reference screenshots of third-party sites — never publish
 # these to the public repo (copyright/redistribution risk).
 Img Referensi/
+
+# --- Berkas kerja: sengaja tidak dipublikasikan ---
+# Repo publik dijaga berisi kode aplikasi saja. Dokumen perencanaan, mockup
+# acuan, dan catatan kerja tetap ada di komputer pengerja, tidak di GitHub.
+docs/
+frontend/Mockup/
+handoffprompt.md
+design-brief.html
+
+# Konfigurasi alat bantu lokal
+.claude/
+
+# Boilerplate template Vite, bukan dokumentasi proyek
+frontend/README.md
