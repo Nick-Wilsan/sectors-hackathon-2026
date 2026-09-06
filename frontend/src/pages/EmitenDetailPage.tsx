@@ -59,6 +59,18 @@ function Panel({ title, icon, children, action }: { title: string; icon: string;
   );
 }
 
+// PRD F-05 menuntut penjelasan tersedia untuk SETIAP komponen skor, bukan
+// hanya untuk skor gabungannya. Kunci kamus dipisah dari label tampilan karena
+// keduanya memang berbeda: label menyebut "Profitabilitas Modal (ROE)"
+// sementara kamus berkunci "ROE (Return on Equity)".
+const SCORE_GLOSSARY: Record<string, string> = {
+  roe: 'ROE',
+  netProfitMargin: 'Margin laba',
+  der: 'DER',
+  ocfMargin: 'Margin Arus Kas Operasional',
+  roa: 'ROA',
+};
+
 export function EmitenDetailPage() {
   const { symbol = '' } = useParams();
   const [score, setScore] = useState<CompositeScoreResult | null>(null);
@@ -306,7 +318,7 @@ export function EmitenDetailPage() {
                 )}
                 <div className="flex flex-col gap-space-8">
                   {scoredComponents.map((c) => (
-                    <ScoreBar key={c.key} label={c.label} value={c.percentile} />
+                    <ScoreBar key={c.key} label={c.label} value={c.percentile} glossaryTerm={SCORE_GLOSSARY[c.key]} />
                   ))}
                 </div>
               </>

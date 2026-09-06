@@ -7,8 +7,9 @@ interface Props {
 
 type MetricKey = 'pe' | 'pb' | 'ps' | 'pcf' | 'peg';
 
-// peerKey may point at a field the API does not fill for every ratio; the row
-// simply shows "—" in the peer column when that happens.
+// peerKey menunjuk medan rata-rata peer untuk tiap rasio. Sectors tidak
+// menyediakannya untuk P/CF dan PEG — pada baris itu peerKey menunjuk balik ke
+// dirinya sendiri, yang dipakai sebagai penanda "tidak ada pembanding".
 const METRICS: { key: MetricKey; peerKey: keyof ValuationYear; label: string; hint: string }[] = [
   { key: 'pe', peerKey: 'pePeerAvg', label: 'P/E Ratio (PER)', hint: 'Harga saham dibanding laba bersih per saham' },
   { key: 'pb', peerKey: 'pbPeerAvg', label: 'Price / Book (PBV)', hint: 'Harga saham dibanding nilai buku ekuitas per saham' },
@@ -36,6 +37,18 @@ export function ValuationHistoryTable({ symbol, rows }: Props) {
 
   const years = rows.map((r) => r.year);
   const latest = rows[rows.length - 1];
+
+  // Hanya rasio yang benar-benar punya rata-rata peer yang ditampilkan. Baris
+  // tanpa pembanding dulu mengisi kolom peer dan selisih dengan strip "—", yang
+  // melanggar aturan desain sendiri: kolom tanpa sumber data dihapus, bukan
+  // diisi strip. Penyaringnya dinamis, jadi begitu Sectors mulai mengisi
+  // rata-rata peer untuk sebuah rasio, barisnya muncul sendiri.
+  const comparable = METRICS.filter(
+    (m) => m.key !== m.peerKey && rows.some((r) => r[m.peerKey] !== null && r[m.peerKey] !== undefined),
+  );
+  const omitted = METRICS.filter((m) => !comparable.includes(m));
+
+  if (comparable.length === 0) return null;
 
   return (
     <div className="rounded border border-border-subtle bg-surface-card p-space-16">
@@ -76,7 +89,7 @@ export function ValuationHistoryTable({ symbol, rows }: Props) {
             </tr>
           </thead>
           <tbody className="divide-y divide-border-subtle/40">
-            {METRICS.map((m) => {
+            {comparable.map((m) => {
               const own = latest[m.key];
               const peer = latest[m.peerKey] as number | null;
               const comparable = m.key !== m.peerKey && own !== null && peer !== null && peer !== 0;
@@ -102,7 +115,7 @@ export function ValuationHistoryTable({ symbol, rows }: Props) {
                     </td>
                   ))}
                   <td className="py-space-8 pl-space-12 text-right font-label-mono-md text-label-mono-md tabular-nums whitespace-nowrap text-text-secondary">
-                    {m.key === m.peerKey ? '—' : fmt(peer)}
+                    {fmt(peer)}
                   </td>
                   <td className="py-space-8 pl-space-12 text-right font-label-mono-md text-label-mono-md font-semibold tabular-nums whitespace-nowrap">
                     {gap === null ? (
@@ -150,6 +163,13 @@ export function ValuationHistoryTable({ symbol, rows }: Props) {
         <span>
           &quot;Selisih&quot; adalah jarak rasio emiten ini terhadap rata-rata peer pada tahun buku terakhir. Angka positif berarti lebih tinggi
           dari rata-rata peer, negatif berarti lebih rendah &mdash; bukan penilaian murah atau mahal.
+          {omitted.length > 0 && (
+            <>
+              {' '}
+              {omitted.map((m) => m.label.replace(/\s*\(.*\)/, '')).join(' dan ')} tidak ditampilkan di sini karena Sectors tidak
+              menyediakan rata-rata peer untuk rasio tersebut, sehingga tidak ada yang bisa disandingkan.
+            </>
+          )}
         </span>
       </p>
     </div>

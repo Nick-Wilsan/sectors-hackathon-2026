@@ -99,11 +99,14 @@ export function VolumeLeadersTable({ mostTraded }: VolumeLeadersTableProps) {
         </div>
       </div>
       <div className="mt-space-8 flex flex-wrap items-center justify-between gap-space-8 border-t border-border-subtle pt-space-8 font-body-sm text-body-sm text-text-muted">
-        <span className="flex items-center gap-space-4">
+        <span className="flex items-start gap-space-4">
           <span className="material-symbols-outlined text-[16px] text-primary">info</span>
-          Peringkat berdasarkan volume harian, bukan sinyal beli/jual.
+          <span>
+            Peringkat berdasarkan volume harian, bukan sinyal beli/jual. Perubahan harian dihitung dari daftar teramai sesi
+            sebelumnya, sehingga emiten yang baru masuk daftar hari ini ditandai &mdash; karena belum punya pembanding.
+          </span>
         </span>
-        <a href="#screener" className="flex items-center gap-space-2 font-semibold text-primary transition-colors hover:text-accent-hover">
+        <a href="#screener-emiten" className="flex shrink-0 items-center gap-space-2 font-semibold text-primary transition-colors hover:text-accent-hover">
           Lihat Screener Lengkap <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
         </a>
       </div>

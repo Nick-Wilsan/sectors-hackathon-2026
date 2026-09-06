@@ -2,6 +2,8 @@
 
 Lapisan penerjemah data pasar modal Indonesia (via [Sectors API](https://docs.sectors.app/)) menjadi skor, perbandingan, dan penjelasan berbahasa awam untuk investor pemula.
 
+Dokumen perencanaan dan jejak keputusan teknik ada di [`docs/`](./docs): PRD, Technical Spec, API & Data Dictionary (termasuk log pemakaian kredit), dan Roadmap.
+
 > Produk ini bersifat informasi dan analisis, bukan rekomendasi investasi. Seluruh keputusan investasi merupakan tanggung jawab pengguna.
 
 ## Fitur Analisis (Track 3 — Market Intelligence)
@@ -74,6 +76,7 @@ backend/     Express + TypeScript — lapisan data, analisis, dan AI
   src/ai/         Integrasi Gemini (Google AI Studio) + kamus istilah
   src/routes/     Endpoint yang dipakai frontend
   scripts/        Verifikasi independen skor komposit
+docs/        PRD, Technical Spec, API & Data Dictionary, Roadmap
 frontend/    React + Vite + TypeScript
   src/pages/      Dashboard, detail emiten, indeks berita, detail berita
   src/components/ Panel analisis, grafik, tooltip glosarium

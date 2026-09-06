@@ -31,9 +31,10 @@ Thumbs.db
 Img Referensi/
 
 # --- Berkas kerja: sengaja tidak dipublikasikan ---
-# Repo publik dijaga berisi kode aplikasi saja. Dokumen perencanaan, mockup
-# acuan, dan catatan kerja tetap ada di komputer pengerja, tidak di GitHub.
-docs/
+# Mockup acuan, catatan kerja internal, dan brief desain tetap di komputer
+# pengerja. docs/ TIDAK diabaikan: PRD, Technical Spec, API & Data Dictionary
+# dan Roadmap adalah jejak keputusan teknik yang menjadi bukti kedalaman
+# eksekusi, jadi dipublikasikan bersama kode.
 frontend/Mockup/
 handoffprompt.md
 design-brief.html

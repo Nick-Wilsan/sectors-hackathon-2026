@@ -93,24 +93,30 @@ function PatternTallyCard({ candlestick }: { candlestick: CandlestickResult | nu
               <div className="h-full bg-state-negative" style={{ width: `${(tally['reversal-bearish'] / total) * 100}%` }} />
             )}
           </div>
+          {/* Label sengaja menyebut BENTUK polanya, bukan arah pasar. Versi
+              sebelumnya berbunyi "Bullish / Netral / Bearish" pada tiga angka
+              besar berwarna — secara visual nyaris identik dengan elemen mockup
+              yang dilarang, "Sinyal Konsensus: SANGAT BELI 16/5/1", dan mudah
+              terbaca sebagai pandangan produk atas arah harga. Yang dihitung
+              sebenarnya hanya berapa kali tiap keluarga pola muncul. */}
           <div className="grid grid-cols-3 gap-space-8 font-label-mono-sm text-label-mono-sm">
             <div>
               <div className="font-bold text-state-positive">{tally['reversal-bullish']}</div>
-              <div className="text-text-muted">Bullish</div>
+              <div className="leading-tight text-text-muted">Pola pembalikan ke atas</div>
             </div>
             <div>
               <div className="font-bold text-state-warning">{tally.indecision}</div>
-              <div className="text-text-muted">Netral</div>
+              <div className="leading-tight text-text-muted">Pola keraguan</div>
             </div>
             <div>
               <div className="font-bold text-state-negative">{tally['reversal-bearish']}</div>
-              <div className="text-text-muted">Bearish</div>
+              <div className="leading-tight text-text-muted">Pola pembalikan ke bawah</div>
             </div>
           </div>
         </div>
       )}
       <p className="mt-space-8 border-t border-border-subtle pt-space-8 font-body-sm text-body-sm text-text-muted">
-        Pola candlestick historis, bukan sinyal beli/jual — lihat{' '}
+        Hitungan kemunculan pola pada 90 hari terakhir — bukan sinyal beli/jual dan bukan perkiraan arah harga. Lihat{' '}
         <Link to={`/emiten/${FEATURED_SYMBOL}`} className="text-primary hover:text-accent-hover">
           analisis lengkap
         </Link>{' '}
@@ -118,6 +124,15 @@ function PatternTallyCard({ candlestick }: { candlestick: CandlestickResult | nu
       </p>
     </div>
   );
+}
+
+/** Nama host penerbit dari URL artikel, untuk ditampilkan menggantikan URL mentah. */
+function hostOf(url: string): string {
+  try {
+    return new URL(url).hostname.replace(/^www\./, '');
+  } catch {
+    return 'sumber';
+  }
 }
 
 // Real prices for other blue-chip symbols — reuses the ticker-tape data the
@@ -504,14 +519,20 @@ export function FeaturedStockPanel({ tickerTape = [] }: { tickerTape?: TickerTap
             {anomaly && anomaly.relatedNews.length > 0 && (
               <div className="mt-space-12 flex flex-col gap-space-8 border-t border-border-subtle pt-space-8">
                 {anomaly.relatedNews.slice(0, 2).map((n, i) => (
+                  // Dulu href="#" dengan preventDefault: terlihat bisa diklik
+                  // tetapi tidak menuju ke mana pun. `source` pada data berita
+                  // Sectors berisi URL artikel aslinya, jadi kartunya kini
+                  // benar-benar membuka penerbitnya, dan yang ditampilkan adalah
+                  // nama host-nya, bukan URL mentah.
                   <a
                     key={i}
-                    href="#"
-                    onClick={(e) => e.preventDefault()}
-                    className="rounded border border-border-subtle/60 bg-surface-container-lowest p-space-8"
+                    href={n.source}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="rounded border border-border-subtle/60 bg-surface-container-lowest p-space-8 transition-colors hover:border-surface-variant"
                   >
                     <div className="mb-space-2 flex items-center justify-between font-label-mono-sm text-label-mono-sm">
-                      <span className="font-semibold text-primary">{n.source}</span>
+                      <span className="truncate font-semibold text-primary">{hostOf(n.source)}</span>
                       <span className="text-text-muted">
                         {Math.max(1, Math.round((Date.now() - new Date(n.timestamp).getTime()) / 3_600_000))}j lalu
                       </span>
