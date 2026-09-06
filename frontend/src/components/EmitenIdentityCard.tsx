@@ -46,11 +46,31 @@ function Sparkline({ bars, positive }: { bars: DailyBar[]; positive: boolean }) 
   );
 }
 
-function Metric({ label, value, tone = 'text-text-primary', hint }: { label: string; value: string; tone?: string; hint?: string }) {
+// `absent` menggantikan strip "—" ketika sebuah besaran memang tidak ada,
+// bukan gagal dimuat. Strip telanjang tidak membedakan "nol", "belum termuat",
+// dan "memang tidak ada" — tiga hal yang sangat berbeda bagi pembaca pemula.
+// Teksnya dirender lebih kecil dan meredup supaya tidak menyamar sebagai angka.
+function Metric({
+  label,
+  value,
+  tone = 'text-text-primary',
+  hint,
+  absent,
+}: {
+  label: string;
+  value: string | null;
+  tone?: string;
+  hint?: string;
+  absent?: string;
+}) {
   return (
     <div className="rounded border border-border-subtle/60 bg-surface-container-lowest p-space-8" title={hint}>
       <span className="block font-body-sm text-body-sm text-text-muted">{label}</span>
-      <span className={`font-label-mono-lg text-label-mono-lg font-bold tabular-nums ${tone}`}>{value}</span>
+      {value !== null ? (
+        <span className={`font-label-mono-lg text-label-mono-lg font-bold tabular-nums ${tone}`}>{value}</span>
+      ) : (
+        <span className="font-body-sm text-body-sm text-text-muted">{absent ?? 'Tidak tersedia'}</span>
+      )}
     </div>
   );
 }
@@ -150,21 +170,22 @@ export function EmitenIdentityCard({ symbol, peer, score, extras, bars }: Props)
 
       {/* Key multiples */}
       <div className="mt-space-16 grid grid-cols-2 gap-space-8 border-t border-border-subtle pt-space-12 sm:grid-cols-3 lg:grid-cols-5">
-        <Metric label="Kapitalisasi Pasar" value={marketCap !== null ? formatIdrCompact(marketCap) : '—'} />
+        <Metric label="Kapitalisasi Pasar" value={marketCap !== null ? formatIdrCompact(marketCap) : null} />
         <Metric
           label={`P/E Ratio${extras?.year ? ` (${extras.year})` : ''}`}
-          value={extras?.pe !== null && extras?.pe !== undefined ? `${extras.pe.toFixed(2)}x` : '—'}
+          value={extras?.pe !== null && extras?.pe !== undefined ? `${extras.pe.toFixed(2)}x` : null}
           hint="Harga saham dibanding laba bersih per saham"
+          absent="Tidak bermakna — laba negatif"
         />
         <Metric
           label="Rata-rata P/E peer"
-          value={extras?.pePeerAvg !== null && extras?.pePeerAvg !== undefined ? `${extras.pePeerAvg.toFixed(2)}x` : '—'}
+          value={extras?.pePeerAvg !== null && extras?.pePeerAvg !== undefined ? `${extras.pePeerAvg.toFixed(2)}x` : null}
           tone="text-text-secondary"
           hint="Rata-rata P/E emiten sejenis pada tahun buku yang sama"
         />
         <Metric
           label="PBV Ratio"
-          value={extras?.pb !== null && extras?.pb !== undefined ? `${extras.pb.toFixed(2)}x` : '—'}
+          value={extras?.pb !== null && extras?.pb !== undefined ? `${extras.pb.toFixed(2)}x` : null}
           hint="Harga saham dibanding nilai buku ekuitas per saham"
         />
         <Metric
@@ -172,10 +193,14 @@ export function EmitenIdentityCard({ symbol, peer, score, extras, bars }: Props)
           value={
             extras?.dividendYieldTtm !== null && extras?.dividendYieldTtm !== undefined
               ? `${(extras.dividendYieldTtm * 100).toFixed(2)}%`
-              : '—'
+              : null
           }
           tone="text-state-positive"
           hint="Dividen 12 bulan terakhir dibanding harga saham"
+          // Diperiksa pada SAFE dan BUMI: seluruh section dividend dari Sectors
+          // bernilai null, termasuk historical_dividends — jadi ini benar-benar
+          // "tidak ada riwayat", bukan satu medan yang kebetulan kosong.
+          absent="Tidak ada riwayat dividen"
         />
       </div>
     </div>
