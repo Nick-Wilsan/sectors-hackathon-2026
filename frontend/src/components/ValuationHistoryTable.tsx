@@ -51,6 +51,19 @@ export function ValuationHistoryTable({ symbol, rows }: Props) {
 
   if (comparable.length === 0) return null;
 
+  // Menjelaskan ISTILAH tidak sama dengan menjelaskan PERBANDINGAN. Tooltip
+  // sudah menerangkan apa itu P/E, tetapi pembaca pemula tetap tidak tahu apa
+  // arti berada 37% di atas rata-rata pesaing. Kalimat di bawah menutup celah
+  // itu — tetap berhenti sebagai pernyataan fakta, tanpa vonis murah/mahal
+  // yang dilarang PRD B-04.
+  const headline = comparable.find((m) => m.key === 'pe') ?? comparable[0];
+  const headlineOwn = latest[headline.key] as number | null;
+  const headlinePeer = latest[headline.peerKey] as number | null;
+  const headlineGap =
+    headlineOwn !== null && headlinePeer !== null && headlinePeer !== 0
+      ? (headlineOwn - headlinePeer) / headlinePeer
+      : null;
+
   return (
     <div className="rounded border border-border-subtle bg-surface-card p-space-16">
       <div className="flex flex-col gap-space-8 border-b border-border-subtle pb-space-12 md:flex-row md:items-end md:justify-between">
@@ -160,6 +173,25 @@ export function ValuationHistoryTable({ symbol, rows }: Props) {
           </tbody>
         </table>
       </div>
+
+      {headlineGap !== null && (
+        <div className="mt-space-12 flex items-start gap-space-8 rounded border border-border-subtle bg-background-base p-space-12">
+          <span className="material-symbols-outlined mt-[1px] shrink-0 text-[18px] text-primary">lightbulb</span>
+          <p className="font-body-md text-body-md leading-relaxed text-text-secondary">
+            <span className="font-bold text-text-primary">{headline.label.replace(/\s*\(.*\)/, '')}</span> {symbol.toUpperCase().replace(/\.JK$/, '')}{' '}
+            <span className={headlineGap >= 0 ? 'font-bold text-state-warning' : 'font-bold text-state-positive'}>
+              {Math.abs(headlineGap * 100).toFixed(0)}% lebih {headlineGap >= 0 ? 'tinggi' : 'rendah'}
+            </span>{' '}
+            dari rata-rata emiten sejenis. Artinya pasar {headlineGap >= 0 ? 'membayar lebih mahal' : 'membayar lebih murah'} untuk
+            setiap rupiah {headline.key === 'pe' ? 'laba' : headline.key === 'pb' ? 'nilai buku' : 'pendapatan'} emiten ini dibanding
+            pesaingnya.{' '}
+            <span className="text-text-muted">
+              Apakah selisih itu sepadan bergantung pada penilaianmu atas keunggulan perusahaannya &mdash; Stocket menyajikan
+              jaraknya, bukan jawabannya.
+            </span>
+          </p>
+        </div>
+      )}
 
       <p className="mt-space-8 flex items-start gap-space-4 border-t border-border-subtle pt-space-8 font-body-sm text-body-sm text-text-muted">
         <span className="material-symbols-outlined text-[16px] text-primary">info</span>

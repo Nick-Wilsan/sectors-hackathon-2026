@@ -13,6 +13,7 @@ import { getFundamentalExtras } from '../analysis/fundamentalExtras.js';
 import { getDailySeries } from '../data/transactions.js';
 import { recentRange } from '../data/dateRange.js';
 import { getCompanyProfile } from '../analysis/companyProfile.js';
+import { summarizeTopics } from '../analysis/newsIndex.js';
 
 export const emitenRouter = Router();
 
@@ -131,7 +132,11 @@ emitenRouter.get('/:symbol/berita', async (req, res) => {
   const limit = req.query.limit ? Number(req.query.limit) : 6;
 
   try {
-    res.json(await getNews({ symbols: [symbol], limit }));
+    const result = await getNews({ symbols: [symbol], limit });
+    // Sebaran topik disertakan agar antarmuka dapat menjawab "sisi perusahaan
+    // mana yang sedang banyak diberitakan" tanpa pengguna membaca semua artikel
+    // satu per satu. Ini hitungan kemunculan, bukan penilaian atas isinya.
+    res.json({ ...result, topics: summarizeTopics(result.articles) });
   } catch (err) {
     res.status(502).json({ error: err instanceof Error ? err.message : 'Unknown error' });
   }

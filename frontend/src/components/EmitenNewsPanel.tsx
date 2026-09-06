@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { getEmitenNews } from '../api/client';
-import type { NewsArticleFull } from '../api/types';
+import type { NewsArticleFull, NewsTopics } from '../api/types';
 
 // Sectors tags every article, including a directional sentiment tag. Those are
 // stripped here: printing a "Bullish" chip on our own card would read as this
@@ -76,15 +76,34 @@ function Card({ article, tone }: { article: NewsArticleFull; tone: string }) {
   );
 }
 
+// Sumbu topik milik Sectors, dialihbahasakan. "technical" dinamai "Pergerakan
+// Harga" — deskripsi isi artikel, bukan pandangan atas arah harganya.
+const DIMENSION_LABELS: Record<string, string> = {
+  financials: 'Kinerja Keuangan',
+  future: 'Rencana & Prospek',
+  ownership: 'Kepemilikan',
+  valuation: 'Valuasi',
+  management: 'Manajemen',
+  dividend: 'Dividen',
+  technical: 'Pergerakan Harga',
+  sustainability: 'Keberlanjutan',
+};
+
 export function EmitenNewsPanel({ symbol }: { symbol: string }) {
   const [articles, setArticles] = useState<NewsArticleFull[] | null>(null);
+  const [topics, setTopics] = useState<NewsTopics | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   // No synchronous reset here: the parent remounts this panel with key={symbol},
   // so state starts fresh per emiten and the effect only ever writes async.
   useEffect(() => {
-    getEmitenNews(symbol, 6)
-      .then((r) => setArticles(r.articles))
+    getEmitenNews(symbol, 12)
+      .then((r) => {
+        // Dua belas artikel diambil untuk sebaran topik yang bermakna, tetapi
+        // hanya enam yang ditampilkan sebagai kartu agar panel tidak melebar.
+        setArticles(r.articles.slice(0, 6));
+        setTopics(r.topics);
+      })
       .catch((err) => setError(err instanceof Error ? err.message : 'Gagal memuat berita emiten'));
   }, [symbol]);
 
@@ -102,6 +121,39 @@ export function EmitenNewsPanel({ symbol }: { symbol: string }) {
         </div>
         {articles && <span className="shrink-0 font-label-mono-sm text-label-mono-sm text-text-muted">{articles.length} artikel</span>}
       </div>
+
+      {/* Menjawab "sisi perusahaan mana yang sedang banyak diberitakan" tanpa
+          pengguna harus membaca semua artikel. Hitungan kemunculan, bukan
+          penilaian atas kualitas manajemen maupun prospeknya. */}
+      {topics && topics.dimensions.length > 0 && (
+        <div className="mt-space-12 rounded border border-border-subtle bg-surface-container-lowest p-space-12">
+          <div className="flex flex-wrap items-baseline justify-between gap-space-8">
+            <span className="font-table-header text-table-header uppercase text-text-muted">Fokus pemberitaan</span>
+            <span className="font-label-mono-sm text-label-mono-sm text-text-muted">dari 12 artikel terakhir</span>
+          </div>
+          <div className="mt-space-8 flex flex-col gap-space-6">
+            {topics.dimensions.slice(0, 5).map((d) => {
+              const pct = Math.round((d.count / topics.dimensions[0].count) * 100);
+              return (
+                <div key={d.key} className="flex items-center gap-space-8">
+                  <span className="w-40 shrink-0 truncate font-body-sm text-body-sm text-text-secondary">
+                    {DIMENSION_LABELS[d.key] ?? d.key}
+                  </span>
+                  <span className="h-1.5 flex-1 overflow-hidden rounded-full bg-background-base">
+                    <span className="block h-full rounded-full bg-primary-container" style={{ width: `${pct}%` }} />
+                  </span>
+                  <span className="w-16 shrink-0 text-right font-label-mono-sm text-label-mono-sm tabular-nums text-text-muted">
+                    {d.count} artikel
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+          <p className="mt-space-8 font-body-sm text-body-sm text-text-muted">
+            Menunjukkan seberapa sering tiap sisi perusahaan dibahas media, bukan menilai baik atau buruknya.
+          </p>
+        </div>
+      )}
 
       {error && (
         <p className="mt-space-12 rounded border border-state-negative/40 bg-state-negative/10 px-space-12 py-space-8 font-body-sm text-body-sm text-state-negative">

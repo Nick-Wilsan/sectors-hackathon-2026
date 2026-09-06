@@ -1,4 +1,4 @@
-import type { AnomalyResult, CandlestickResult, CompanyLite, CompositeScoreResult, DailySeries, FrameworkResult, FundamentalExtras, IndicatorResult, MarketOverview, MarketSorotan, NewsResult, PatternSimilarityResult, PeerComparisonResult, ScreenerResult, SubsectorOption, MarketAnomalyScan, NewsIndexResult, GlossaryResult, CompanyProfile } from './types';
+import type { AnomalyResult, CandlestickResult, CompanyLite, CompositeScoreResult, DailySeries, FrameworkResult, FundamentalExtras, IndicatorResult, MarketOverview, MarketSorotan, NewsResult, PatternSimilarityResult, PeerComparisonResult, ScreenerResult, SubsectorOption, MarketAnomalyScan, NewsIndexResult, GlossaryResult, CompanyProfile, EmitenNewsResult } from './types';
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:4000/api';
 
@@ -139,6 +139,6 @@ export function getMarketAnomalyScan(): Promise<MarketAnomalyScan> {
   return getJson('/market/anomali');
 }
 
-export function getEmitenNews(symbol: string, limit = 6): Promise<NewsResult> {
+export function getEmitenNews(symbol: string, limit = 6): Promise<EmitenNewsResult> {
   return getJson(`/emiten/${encodeURIComponent(symbol)}/berita?limit=${limit}`);
 }

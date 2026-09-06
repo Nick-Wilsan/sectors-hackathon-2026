@@ -13,12 +13,6 @@ import type { NewsArticle } from '../data/types.js';
 const PAGE_SIZE = 30;
 const CORPUS_PAGES = 4;
 
-// Sectors tags each article with a directional sentiment. Printing those would
-// read as this product taking a view on where a price is going, which the PRD
-// forbids outright — so they are dropped here, in the analysis layer, rather
-// than filtered in each component that happens to remember to.
-const SENTIMENT_TAGS = new Set(['bullish', 'bearish', 'neutral']);
-
 export interface Counted {
   key: string;
   count: number;
@@ -58,10 +52,6 @@ export interface NewsIndexResult {
 // pengambilan korpus, sehingga tautan /berita/:id tidak basi tiap fetch.
 function articleId(source: string): string {
   return createHash('sha1').update(source).digest('hex').slice(0, 10);
-}
-
-function stripSentiment(tags?: string[]): string[] {
-  return (tags ?? []).filter((t) => !SENTIMENT_TAGS.has(t.toLowerCase()));
 }
 
 function hostOf(url: string): string {
@@ -105,6 +95,20 @@ function buildAggregates(articles: NewsArticle[]): NewsIndexAggregates {
   };
 }
 
+/** Sebaran topik sebuah kumpulan artikel: sumbu isi milik Sectors dan tag penerbit. */
+export function summarizeTopics(articles: NewsArticle[]): { dimensions: Counted[]; tags: Counted[] } {
+  return {
+    dimensions: tally(
+      articles.flatMap((a) =>
+        Object.entries(a.dimension ?? {})
+          .filter(([, score]) => score > 0)
+          .map(([axis]) => axis),
+      ),
+    ),
+    tags: tally(articles.flatMap((a) => a.tags ?? [])),
+  };
+}
+
 /**
  * Fetches the news corpus and every facet the /berita page needs.
  * Costs CORPUS_PAGES credits on a cold cache, zero afterwards.
@@ -124,7 +128,8 @@ export async function getNewsIndex(): Promise<NewsIndexResult> {
     for (const article of page.articles) {
       if (seen.has(article.source)) continue;
       seen.add(article.source);
-      articles.push({ ...article, id: articleId(article.source), tags: stripSentiment(article.tags) });
+      // Tag sentimen sudah dibuang di lapisan data (data/news.ts).
+      articles.push({ ...article, id: articleId(article.source) });
     }
   }
 

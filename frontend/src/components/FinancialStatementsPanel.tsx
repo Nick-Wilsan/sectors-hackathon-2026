@@ -86,6 +86,36 @@ function formatIdr(value: number | null): string | null {
   return `${sign}${n(abs)}`;
 }
 
+/** Garis tren enam tahun untuk satu pos. Warnanya netral dengan sengaja:
+ *  pos beban yang naik bukan kabar baik, jadi hijau-merah di sini akan
+ *  menyiratkan penilaian yang tidak dibuat produk ini. */
+function Sparkline({ values }: { values: (number | null)[] }) {
+  const points = values.filter((v): v is number => v !== null && Number.isFinite(v));
+  if (points.length < 2) return null;
+
+  const min = Math.min(...points);
+  const max = Math.max(...points);
+  const span = max - min || Math.abs(max) || 1;
+  const w = 64;
+  const h = 18;
+  const coords = points.map((v, i) => `${(i / (points.length - 1)) * w},${h - ((v - min) / span) * h}`);
+  const naik = points[points.length - 1] >= points[0];
+
+  return (
+    <svg viewBox={`0 0 ${w} ${h}`} preserveAspectRatio="none" className="h-4 w-16" role="img" aria-label={naik ? 'tren menaik' : 'tren menurun'}>
+      <polyline points={coords.join(' ')} fill="none" stroke="#0ea5e9" strokeWidth={1.4} vectorEffect="non-scaling-stroke" />
+      <circle cx={w} cy={h - ((points[points.length - 1] - min) / span) * h} r={1.8} fill="#38bdf8" />
+    </svg>
+  );
+}
+
+/** Perubahan tahun terakhir terhadap tahun sebelumnya. */
+function yoy(values: (number | null)[]): number | null {
+  const [terbaru, sebelumnya] = values;
+  if (terbaru === null || sebelumnya === null || sebelumnya === 0) return null;
+  return (terbaru - sebelumnya) / Math.abs(sebelumnya);
+}
+
 export function FinancialStatementsPanel({ symbol, rows }: { symbol: string; rows: FinancialYear[] }) {
   const [tab, setTab] = useState<Statement>('labaRugi');
 
@@ -148,11 +178,24 @@ export function FinancialStatementsPanel({ symbol, rows }: { symbol: string; row
                   {y.year}
                 </th>
               ))}
+              <th className="py-space-6 pl-space-12 text-right font-semibold whitespace-nowrap" title="Perubahan tahun terakhir terhadap tahun sebelumnya">
+                YoY
+              </th>
+              <th className="py-space-6 pl-space-12 text-right font-semibold whitespace-nowrap">
+                Tren {years[years.length - 1].year}&ndash;{years[0].year}
+              </th>
             </tr>
           </thead>
           <tbody className="divide-y divide-border-subtle/40">
             {visibleRows.map((r) => (
-              <tr key={r.field} className="transition-colors hover:bg-surface-container-low">
+              <tr
+                key={r.field}
+                className={
+                  r.total
+                    ? 'bg-surface-container-lowest/60 transition-colors hover:bg-surface-container-low'
+                    : 'transition-colors hover:bg-surface-container-low'
+                }
+              >
                 <td className={`py-space-8 whitespace-nowrap ${r.indent ? 'pl-space-12' : ''}`}>
                   <span
                     className={
@@ -184,6 +227,31 @@ export function FinancialStatementsPanel({ symbol, rows }: { symbol: string; row
                     </td>
                   );
                 })}
+                {(() => {
+                  const seri = years.map((y) => (y[r.field] ?? null) as number | null);
+                  const perubahan = yoy(seri);
+                  return (
+                    <>
+                      <td className="py-space-8 pl-space-12 text-right whitespace-nowrap">
+                        {perubahan === null ? (
+                          <span className="font-label-mono-sm text-label-mono-sm text-text-muted">&mdash;</span>
+                        ) : (
+                          <span className="inline-flex items-center gap-space-2 font-label-mono-sm text-label-mono-sm tabular-nums text-text-secondary">
+                            <span className="material-symbols-outlined text-[13px]">{perubahan >= 0 ? 'arrow_upward' : 'arrow_downward'}</span>
+                            {Math.abs(perubahan * 100).toFixed(1)}%
+                          </span>
+                        )}
+                      </td>
+                      <td className="py-space-8 pl-space-12">
+                        <span className="flex justify-end">
+                          {/* Urutan kolom terbaru-dulu, sparkline dibaca kiri-ke-kanan
+                              dari tahun terlama, jadi serinya dibalik. */}
+                          <Sparkline values={[...seri].reverse()} />
+                        </span>
+                      </td>
+                    </>
+                  );
+                })()}
               </tr>
             ))}
           </tbody>
@@ -194,7 +262,9 @@ export function FinancialStatementsPanel({ symbol, rows }: { symbol: string; row
         <span className="material-symbols-outlined text-[16px] text-primary">info</span>
         <span>
           Angka disajikan apa adanya dari laporan emiten, tanpa penyesuaian. Struktur laporan bank berbeda dari perusahaan
-          lain, sehingga pos yang tampil menyesuaikan jenis usahanya.
+          lain, sehingga pos yang tampil menyesuaikan jenis usahanya. Garis tren dan panah YoY sengaja berwarna netral:
+          beban yang naik bukan kabar baik dan pendapatan yang naik bukan otomatis kabar baik, sehingga arah panah
+          menyatakan pergerakan angka, bukan penilaian atasnya.
         </span>
       </p>
     </div>

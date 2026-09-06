@@ -126,6 +126,16 @@ export interface NewsResult {
   totalCount: number;
 }
 
+/** Sebaran topik sekumpulan artikel — hitungan kemunculan, bukan penilaian. */
+export interface NewsTopics {
+  dimensions: Counted[];
+  tags: Counted[];
+}
+
+export interface EmitenNewsResult extends NewsResult {
+  topics: NewsTopics;
+}
+
 export interface Counted {
   key: string;
   count: number;

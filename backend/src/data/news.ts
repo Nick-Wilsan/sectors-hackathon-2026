@@ -32,6 +32,13 @@ export interface GetNewsParams {
   offset?: number;
 }
 
+// Sectors menandai tiap artikel dengan tag sentimen arah harga. Menampilkannya
+// terbaca sebagai pandangan produk ini atas ke mana harga akan bergerak, yang
+// dilarang PRD B-02. Penyaringan dilakukan DI SINI, di lapisan data, sehingga
+// tidak ada satu pun jalur — halaman berita, berita emiten, konteks AI — yang
+// bisa meloloskannya karena lupa menyaring sendiri.
+const SENTIMENT_TAGS = new Set(['bullish', 'bearish', 'neutral']);
+
 /** E-04: News Articles, IDX extension (1 credit per call). */
 export async function getNews(params: GetNewsParams = {}): Promise<NewsResult> {
   const raw = await sectorsGet<RawNewsResponse>('/v2/news/', {
@@ -56,7 +63,7 @@ export async function getNews(params: GetNewsParams = {}): Promise<NewsResult> {
     timestamp: item.timestamp,
     sector: item.sector,
     subSector: item.sub_sector,
-    tags: item.tags,
+    tags: (item.tags ?? []).filter((t) => !SENTIMENT_TAGS.has(t.toLowerCase())),
     symbols: item.symbols,
     thumbnail: item.thumbnail,
     dimension: item.dimension,
