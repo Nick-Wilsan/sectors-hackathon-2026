@@ -7,6 +7,7 @@ import {
   getDailyPrices,
   getFramework,
   getFundamentalExtras,
+  getCompanyProfile,
   getIndicators,
   getPeerComparison,
 } from '../api/client';
@@ -19,6 +20,7 @@ import type {
   FundamentalExtras,
   IndicatorResult,
   PeerComparisonResult,
+  CompanyProfile,
 } from '../api/types';
 import { ScoreBar } from '../components/ScoreBar';
 import { PriceChart, type ChartType, type DrawingTool, type ReadoutBar } from '../components/PriceChart';
@@ -30,6 +32,8 @@ import { FloatingAIChat } from '../components/FloatingAIChat';
 import { EmitenIdentityCard } from '../components/EmitenIdentityCard';
 import { SectorContextPanel } from '../components/SectorContextPanel';
 import { ValuationHistoryTable } from '../components/ValuationHistoryTable';
+import { FinancialStatementsPanel } from '../components/FinancialStatementsPanel';
+import { CompanyProfilePanel } from '../components/CompanyProfilePanel';
 import { EmitenNewsPanel } from '../components/EmitenNewsPanel';
 import { FScorePanel } from '../components/FScorePanel';
 import { PriceStatsPanel } from '../components/PriceStatsPanel';
@@ -81,6 +85,9 @@ export function EmitenDetailPage() {
   const [patterns, setPatterns] = useState<CandlestickResult | null>(null);
   const [indicators, setIndicators] = useState<IndicatorResult | null>(null);
   const [extras, setExtras] = useState<FundamentalExtras | null>(null);
+  // Profil memakai section overview yang sudah ter-cache saat skor dihitung,
+  // jadi permintaan ini tidak menambah biaya kredit.
+  const [profile, setProfile] = useState<CompanyProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -196,6 +203,14 @@ export function EmitenDetailPage() {
       })
       .catch((err) => setError(err instanceof Error ? err.message : 'Gagal memuat data emiten'))
       .finally(() => setLoading(false));
+
+    // Profil diminta terpisah dari rangkaian utama: isinya pelengkap, sehingga
+    // kegagalannya cukup menyembunyikan satu panel, bukan menjatuhkan seluruh
+    // halaman analisis.
+    setProfile(null);
+    getCompanyProfile(symbol)
+      .then(setProfile)
+      .catch(() => setProfile(null));
   }, [symbol]);
 
   if (loading) {
@@ -355,6 +370,21 @@ export function EmitenDetailPage() {
 
       {extras && extras.historicalValuation.length > 0 && (
         <ValuationHistoryTable symbol={symbol} rows={extras.historicalValuation} />
+      )}
+
+      {extras && extras.historicalFinancials.length > 0 && (
+        <FinancialStatementsPanel symbol={symbol} rows={extras.historicalFinancials} />
+      )}
+
+      {profile && extras && (
+        <CompanyProfilePanel
+          profile={profile}
+          dividendHistory={extras.dividendHistory}
+          payoutRatio={extras.payoutRatio}
+          dividendYieldAvg={extras.dividendYieldAvg}
+          dividendYieldAvgPeriod={extras.dividendYieldAvgPeriod}
+          lastExDividendDate={extras.lastExDividendDate}
+        />
       )}
 
       {(showMA || showRsi) && indicators?.status === 'ok' && (

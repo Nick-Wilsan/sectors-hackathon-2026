@@ -313,11 +313,44 @@ export interface ValuationYear {
   peg: number | null;
 }
 
+/** Satu tahun laporan keuangan. Medan yang tidak dilaporkan emiten bernilai null. */
 export interface FinancialYear {
   year: number;
-  revenue: number | null;
-  earnings: number | null;
-  ebitda: number | null;
+  [field: string]: number | null;
+}
+
+export interface DividendYear {
+  year: string;
+  totalDividend: number | null;
+  totalYield: number | null;
+  breakdown: { date: string; total: number | null; yield: number | null }[];
+}
+
+export interface PriceExtreme {
+  label: string;
+  price: number;
+  date: string;
+}
+
+export interface CompanyProfile {
+  symbol: string;
+  companyName: string;
+  listingBoard: string | null;
+  sector: string | null;
+  subSector: string | null;
+  industry: string | null;
+  subIndustry: string | null;
+  marketCap: number | null;
+  marketCapRank: number | null;
+  address: string | null;
+  employeeNum: number | null;
+  employeeNumRank: number | null;
+  listingDate: string | null;
+  website: string | null;
+  email: string | null;
+  phone: string | null;
+  priceExtremes: PriceExtreme[];
+  fetchedAt: string;
 }
 
 export interface FundamentalExtras {
@@ -331,6 +364,12 @@ export interface FundamentalExtras {
   costToIncomeRatio: number | null;
   historicalValuation: ValuationYear[];
   historicalFinancials: FinancialYear[];
+  dividendHistory: DividendYear[];
+  dividendTtm: number | null;
+  payoutRatio: number | null;
+  dividendYieldAvg: number | null;
+  dividendYieldAvgPeriod: number | null;
+  lastExDividendDate: string | null;
   lastClosePrice: number | null;
   latestCloseDate: string | null;
   dailyCloseChange: number | null;

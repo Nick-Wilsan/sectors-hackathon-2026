@@ -12,8 +12,19 @@ import { getPatternSimilarity } from '../analysis/patternSimilarityService.js';
 import { getFundamentalExtras } from '../analysis/fundamentalExtras.js';
 import { getDailySeries } from '../data/transactions.js';
 import { recentRange } from '../data/dateRange.js';
+import { getCompanyProfile } from '../analysis/companyProfile.js';
 
 export const emitenRouter = Router();
+
+// Profil perusahaan. Memakai section `overview` yang sudah diambil saat
+// menghitung skor, sehingga mengenai cache yang sama — 0 kredit.
+emitenRouter.get('/:symbol/profil', async (req, res) => {
+  try {
+    res.json(await getCompanyProfile(req.params.symbol));
+  } catch (err) {
+    res.status(502).json({ error: err instanceof Error ? err.message : 'Unknown error' });
+  }
+});
 
 emitenRouter.get('/:symbol/skor', async (req, res) => {
   const { symbol } = req.params;

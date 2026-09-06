@@ -1,4 +1,4 @@
-import type { AnomalyResult, CandlestickResult, CompanyLite, CompositeScoreResult, DailySeries, FrameworkResult, FundamentalExtras, IndicatorResult, MarketOverview, MarketSorotan, NewsResult, PatternSimilarityResult, PeerComparisonResult, ScreenerResult, SubsectorOption, MarketAnomalyScan, NewsIndexResult, GlossaryResult } from './types';
+import type { AnomalyResult, CandlestickResult, CompanyLite, CompositeScoreResult, DailySeries, FrameworkResult, FundamentalExtras, IndicatorResult, MarketOverview, MarketSorotan, NewsResult, PatternSimilarityResult, PeerComparisonResult, ScreenerResult, SubsectorOption, MarketAnomalyScan, NewsIndexResult, GlossaryResult, CompanyProfile } from './types';
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:4000/api';
 
@@ -128,6 +128,11 @@ export function screenCompanies(query: ScreenerQuery): Promise<ScreenerResult> {
     if (range.max !== undefined) params.set(`max${suffix}`, String(range.max));
   }
   return getJson(`/screener?${params.toString()}`);
+}
+
+/** Profil perusahaan. Memakai section overview yang sudah ter-cache — 0 kredit. */
+export function getCompanyProfile(symbol: string): Promise<CompanyProfile> {
+  return getJson(`/emiten/${encodeURIComponent(symbol)}/profil`);
 }
 
 export function getMarketAnomalyScan(): Promise<MarketAnomalyScan> {

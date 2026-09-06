@@ -784,3 +784,147 @@ Jika Anda membedah gaya "Checkypin" ini untuk demo produk Katulistiwa Anda sendi
 3. **Satu Warna Aksen Solid Penghubung Adegan:** Jangan gunakan terlalu banyak warna pelangi (kecuali warna *brand* Anda mengharuskan). Video ini kuat karena ia mendisiplinkan seluruh pernak-pernik (kursor panah, transisi layar, teks penting) menggunakan satu heksadesimal ungu yang persis sama. Pilih satu warna merek dominan Anda untuk menyatukan puluhan slide *Canva* tersebut.
 
 Ref 6:
+Berikut adalah bedah detail untuk video "Ref 6.mp4". Video referensi ini menampilkan antarmuka *timeline* Adobe Premiere Pro di bagian bawah, yang membuktikan bahwa ini diedit menggunakan *software* profesional, namun gaya visualnya (*flat design* dan *2D motion*) masih sangat mungkin direplikasi di Canva untuk video demo produk 3 menit Anda.
+
+### 1. RINGKASAN GAYA
+
+Gaya keseluruhan video ini adalah presentasi B2B (*Business to Business*) yang sangat dinamis, profesional, dan berorientasi pada solusi. Video ini ditujukan untuk pemilik usaha atau pengambil keputusan yang membutuhkan efisiensi operasional. Kesan premium dan terstruktur didapat dari pembagian layar (*split-screen*) yang tegas antara dua warna kontras, serta perpaduan antara ilustrasi vektor datar 2D dengan foto produk riil (makanan). Gaya visual yang memadukan antarmuka aplikasi dengan alur kerja operasional nyata ini sangat meyakinkan untuk presentasi rencana bisnis, terutama saat Anda perlu mendemonstrasikan kelayakan dan skalabilitas ide produk kepada dewan juri.
+
+### 2. DAFTAR SHOT
+
+* **00:00.0 – 00:04.0**
+* **Visual:** Latar belakang putih polos. Bentuk elips hijau membelah menjadi siluet sendok dan garpu, membentuk angka "8".
+* **Teks:** "KITCHEN" muncul dari bawah.
+* **Gerakan:** Bentuk vektor membelah dan berputar ke posisinya (*rotate & position*). Teks bergeser naik dari bawah masking (*slide up*).
+* **Kamera:** Statis.
+
+
+* **00:04.0 – 00:07.5**
+* **Visual:** Latar belakang berubah hijau pekat. Ikon garpu dan sendok putih raksasa meluncur masuk.
+* **Teks:** "Running a restaurant", "Just", lalu diganti "Just serving great food." (Warna putih, kiri layar).
+* **Gerakan:** Garpu dan sendok meluncur cepat dari kanan ke kiri (*slide in*).
+* **Kamera:** Statis.
+
+
+* **00:07.5 – 00:15.5**
+* **Visual:** Latar belakang putih. Sisi kiri menampilkan ikon fitur bertumpuk (Tangan pelayan, kompor, uang, wajah tersenyum). Sisi kanan menampilkan piring-piring foto makanan asli berputar.
+* **Teks:** "Order Management", "Kitchen Coordination", "Payment Tracking", "Customer Satisfaction" (Hitam, sisi kiri).
+* **Gerakan:** Ikon dan teks meluncur turun dari atas ke bawah secara berurutan (*staggered slide down*). Piring makanan muncul membesar seketika (*pop/scale in*).
+* **Kamera:** Statis.
+
+
+* **00:15.5 – 00:19.5**
+* **Visual:** Latar belakang hijau. Ilustrasi vektor orang memegang kepala (stres) muncul di tengah, diapit piring makanan dan ikon petir putih.
+* **Teks:** "But let's be honest." lalu "Sometimes", lalu kata raksasa "Overwhelming".
+* **Gerakan:** Teks masuk seketika (*cut*). Karakter dan petir membesar dengan cepat (*bounce in*). Piring makanan bergeser masuk.
+* **Kamera:** Statis.
+
+
+* **00:19.5 – 00:24.5**
+* **Visual:** Latar belakang hijau. Sebuah *mockup* ponsel 3D miring bergeser dari kiri ke tengah, menampilkan UI aplikasi. Logo "8 KITCHEN" muncul di kanan.
+* **Teks:** "Introducing 8Kitchen" (Putih, kanan layar).
+* **Gerakan:** Ponsel meluncur mulus dari luar layar kiri ke tengah (*slide in* dengan *ease out*).
+* **Kamera:** Statis.
+
+
+* **00:24.5 – 00:32.5**
+* **Visual:** Layar terbelah (kiri hijau, kanan putih). Kiri: vektor dua orang (pelanggan). Kanan: UI ponsel menghadap depan. Kursor tangan mengklik notifikasi pesanan.
+* **Teks:** "All in one Management" (Putih, kiri atas).
+* **Gerakan:** Kursor bergerak diagonal mengklik tombol. UI di dalam ponsel berubah halaman setelah diklik.
+* **Kamera:** Statis.
+
+
+* **00:32.5 – 00:44.0**
+* **Visual:** Transisi ke ponsel di tengah layar putih. UI berubah menampilkan struk/tagihan. Kursor kembali mengklik.
+* **Teks:** "Smart Order Flow" berganti menjadi "Bill Payments", lalu "No Delays No Confusion" (Hijau gelap, kiri/kanan ponsel).
+* **Gerakan:** Elemen UI di dalam layar ponsel bergulir (*scroll* vertikal). Kursor menekan tombol hijau.
+* **Kamera:** *Zoom in* lambat ke arah ponsel.
+
+
+* **00:44.0 – 00:53.0**
+* **Visual:** Latar putih. Tiga *mockup* ponsel menyebar dari satu titik seperti kipas. Ikon grafik batang hijau dengan tanda panah ke atas muncul.
+* **Teks:** "With powerful insights at fingertips," lalu "And focus on what matters most".
+* **Gerakan:** Ketiga ponsel menyebar ke kiri, tengah, dan kanan (*slide & rotate*). Grafik batang tumbuh memanjang ke atas.
+* **Kamera:** Statis.
+
+
+* **00:53.0 – 01:05.5**
+* **Visual:** Peta jalan kota muncul menutupi latar belakang. Vektor kurir pengantar makanan mengendarai skuter kuning dari kiri ke kanan.
+* **Teks:** "Seamless Delivery", "Grow your Revenue".
+* **Gerakan:** Kurir skuter bergerak horizontal melintasi layar (*linear pan*). Titik pin lokasi bermunculan di peta.
+* **Kamera:** Statis.
+
+
+* **01:05.5 – 01:19.0**
+* **Visual:** Latar kembali hijau pekat. Bingkai ponsel, piring makanan, garpu, dan sendok ditata secara asimetris. Logo utama muncul kembali di kanan.
+* **Teks:** "8Kitchen isn't just a software.", "It's the future of restaurant management". Terakhir: "Simple. Smart. Scalable."
+* **Gerakan:** Elemen bergeser masuk untuk merakit susunan akhir (*slide and assemble*). Teks muncul per kata.
+* **Kamera:** Statis hingga memudar di akhir.
+
+
+
+### 3. TRANSISI ANTAR SHOT
+
+* **00:04.0:** *Solid Wipe* — Latar belakang hijau menyapu dari kanan ke kiri menutupi layar putih. (Durasi: ~0.4 detik).
+* **00:07.5:** *Solid Wipe* — Sebaliknya, latar putih menyapu kembali layar hijau dari atas ke bawah. (Durasi: ~0.4 detik).
+* **00:15.5:** *Cut* Keras — Pindah instan ke adegan latar hijau. (Durasi: instan).
+* **00:24.5:** *Cut* Keras — Pindah instan ke layar terbelah (*split-screen*). (Durasi: instan).
+* **00:53.0:** *Slide Up Masking* — Peta kota meluncur dari bawah ke atas menutupi latar putih. (Durasi: ~0.5 detik).
+
+### 4. TIPOGRAFI
+
+* **Klasifikasi:** Grotesk Sans-serif membulat, mirip *Montserrat* atau *Nunito Sans*. Sangat tebal (Extrabold) untuk keterbacaan maksimal.
+* **Animasi Masuk:** Utuh per baris, sering kali meluncur dari garis tak terlihat (*Masked Slide-in*) atau muncul instan (*Cut*).
+* **Durasi Bertahan:** Berkisar 2 hingga 4 detik per pesan layar.
+* **Hierarki:** Judul utama mendominasi sekitar 30% dari lebar layar, sangat kontras dengan teks mikro yang ada di dalam *mockup* ponsel.
+
+### 5. WARNA
+
+* **Palet Dominan:** Hijau Hutan Gelap (#105935 perkiraan) dan Putih Murni (#FFFFFF). Penggunaan pembagian dua warna ekstrim (*color blocking*) ini adalah identitas utama video.
+* **Warna Aksen:** Kuning cerah (pada karakter dan skuter) serta oranye/coklat (pada elemen foto makanan) berfungsi untuk memecah kebosanan palet dua warna tersebut.
+* **Pencahayaan:** Datar (*flat shading*) pada area vektor, tanpa bayangan gelap. Terang (*high-key*) pada area foto makanan.
+
+### 6. AUDIO
+
+* **Musik:** Pop elektronik B2B (*corporate pop*) yang berenergi tinggi, ritmis, dan optimis. Perkiraan BPM sekitar 115-120.
+* **Sinkronisasi:** Transisi layar sapuan (*wipe*) di detik 00:04, 00:07, dan 00:24 selalu bertepatan dengan ketukan drum yang kuat (bass).
+* **Efek Suara (SFX):**
+* *Whoosh* / suara angin cepat setiap kali layar tersapu warna lain (00:04, 00:07).
+* Suara "Ding" notifikasi aplikasi yang jelas setiap kursor mengklik UI (00:29, 00:36, 00:39, 00:58).
+
+
+* **Narasi (VO):** Suara narator wanita berbahasa Inggris, bertempo cepat, artikulasi jelas, dengan intonasi persuasif (menjual).
+
+### 7. RITME
+
+* **Rata-rata panjang shot:** 4 hingga 6 detik. Lebih lambat dari *kinetic typography* murni karena ada narasi penjelasan (VO) dan demonstrasi fitur.
+* **Potongan per 10 detik:** Rata-rata 2 potongan besar.
+* **Dinamika Ritme:** Cukup konstan dan terkendali. Tujuannya adalah mendidik penonton tentang alur aplikasi, sehingga visual layar UI diberi waktu tayang lebih lama (00:24 - 00:44) agar bisa diserap.
+
+### 8. YANG BISA DAN TIDAK BISA DITIRU DI CANVA
+
+**(a) Bisa Dibuat di Canva:**
+
+* Pembagian latar belakang dua warna (*split screen*): Gunakan elemen "Square", beri warna hijau, lalu tarik hingga menutupi tepat separuh layar.
+* Transisi sapuan warna (*Wipe*): Gunakan transisi halaman "Wipe" atau "Slide" di antara halaman berlatar beda warna.
+* Perpaduan aset: Canva memiliki perpustakaan ekstensif untuk vektor flat (karakter, skuter, UI) dan juga *cut-out* (foto tanpa latar) untuk piring makanan.
+* Kursor dan SFX "Ding": Sangat mudah disisipkan di Canva dengan mengatur alur animasi (ikon lebah).
+
+**(b) Butuh After Effects (dan Saran Pengganti di Canva):**
+
+* **Mockup Ponsel 3D yang Menyebar seperti Kipas (00:44):** Di AE ini menggunakan kamera 3D.
+* *Saran Pengganti:* Di Canva, gunakan 3 *frame* ponsel yang datar (menghadap depan). Miringkan manual rotasinya (misal: -15 derajat, 0, dan +15 derajat), susun bertumpuk, lalu berikan animasi *Tumble* atau *Pop* secara berurutan (*show timing*).
+
+
+* **Pengguliran UI di Dalam Ponsel (00:32):**
+* *Saran Pengganti:* Masukkan gambar *screenshot* antarmuka Anda yang panjang ke dalam elemen *Frame Smartphone* Canva. Klik dua kali gambar tersebut dan berikan animasi pergerakan khusus (*Create Animation*) dari bawah ke atas dengan kecepatan lambat.
+
+
+
+### 9. TIGA HAL YANG PALING MENENTUKAN
+
+Jika Anda mereplikasi gaya presentasi produk ini di Canva, tiga elemen ini adalah nyawanya:
+
+1. **Color Blocking Kontras Tinggi (Split Screen):** Penggunaan blok warna yang berani (misal, separuh hijau pekat, separuh putih) seketika memancarkan aura *startup tech* yang matang. Ini memisahkan gaya video ini dari video amatir yang sekadar meletakkan aset di tengah kanvas kosong.
+2. **Audio "Ding" Interaksi UI:** Menyinkronkan efek suara klik atau "ding" tepat di detik simulasi kursor menekan tombol adalah kunci untuk membuat audiens merasa antarmuka yang Anda tampilkan berfungsi secara nyata (interaktif), bukan sekadar gambar mati.
+3. **Teknik Kolase (Vektor + Foto Riil):** Menggabungkan ilustrasi grafis datar (seperti ikon karakter atau skuter) dengan elemen foto beresolusi tinggi tanpa latar belakang (seperti foto piring makanan nyata) menciptakan kedalaman visual modern. Teknik kolase digital ini sangat disukai audiens saat ini dan membuat desain terlihat mahal.
