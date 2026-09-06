@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { getGlosarium } from '../api/client';
 
 // Tooltip glosarium (roadmap task 31).
@@ -64,22 +64,38 @@ export function GlossaryTerm({ term, children, className = '' }: GlossaryTermPro
   }, [term]);
 
   /** Menempatkan panel: di atas pemicu bila muat, kalau tidak di bawahnya,
-   *  lalu ditahan agar tidak keluar tepi kiri maupun kanan layar. */
-  const hitungPosisi = useCallback(() => {
+   *  lalu ditahan agar tidak keluar tepi layar mana pun.
+   *
+   *  `tinggi` diisi hasil pengukuran panel yang sudah ter-render. Versi
+   *  pertama memakai tebakan 132 piksel, padahal definisi yang panjang
+   *  menghasilkan panel setinggi 161 piksel — cukup untuk menembus tepi atas
+   *  layar ketika istilahnya berada di bagian atas halaman. */
+  const hitungPosisi = useCallback((tinggi = 132) => {
     const el = pemicuRef.current;
     if (!el) return;
     const r = el.getBoundingClientRect();
-    const perkiraanTinggi = 132;
-    const muatDiAtas = r.top > perkiraanTinggi + JARAK;
-    const top = muatDiAtas ? r.top - JARAK - perkiraanTinggi : r.bottom + JARAK;
-    const left = Math.min(Math.max(JARAK, r.left), window.innerWidth - LEBAR_PANEL - JARAK);
+    const muatDiAtas = r.top - JARAK - tinggi >= JARAK;
+    const atas = muatDiAtas ? r.top - JARAK - tinggi : r.bottom + JARAK;
+    const top = Math.min(Math.max(JARAK, atas), Math.max(JARAK, window.innerHeight - tinggi - JARAK));
+    const left = Math.min(Math.max(JARAK, r.left), Math.max(JARAK, window.innerWidth - LEBAR_PANEL - JARAK));
     setPos({ top, left });
   }, []);
+
+  const panelRef = useRef<HTMLSpanElement>(null);
 
   const buka = useCallback(() => {
     hitungPosisi();
     setOpen(true);
   }, [hitungPosisi]);
+
+  // Posisi dikoreksi sekali setelah panel ada di DOM, memakai tingginya yang
+  // sebenarnya alih-alih tebakan.
+  useLayoutEffect(() => {
+    if (!open || !panelRef.current) return;
+    hitungPosisi(panelRef.current.getBoundingClientRect().height);
+    // hitungPosisi stabil; `open` saja yang memicu pengukuran ulang.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
 
   // Panel `fixed` tidak ikut bergerak saat halaman digulir, jadi ia ditutup
   // begitu pengguna menggulir — lebih jujur daripada penjelasan yang melayang
@@ -115,6 +131,7 @@ export function GlossaryTerm({ term, children, className = '' }: GlossaryTermPro
 
       {open && pos && (
         <span
+          ref={panelRef}
           role="tooltip"
           style={{ position: 'fixed', top: pos.top, left: pos.left, width: LEBAR_PANEL }}
           className="z-50 rounded-lg border border-surface-variant bg-surface-container p-space-12 text-left normal-case shadow-[var(--shadow-popover)]"

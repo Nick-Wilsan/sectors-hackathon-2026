@@ -45,10 +45,23 @@ function yearsListed(iso: string | null): string | null {
   return years > 0 ? `${years} tahun di bursa` : null;
 }
 
-function Fact({ label, value, note }: { label: string; value: string; note?: string | null }) {
+function Fact({
+  label,
+  value,
+  note,
+  glossary,
+}: {
+  label: string;
+  value: string;
+  note?: string | null;
+  /** Kunci kamus istilah; bila diisi, label mendapat tooltip penjelasan. */
+  glossary?: string;
+}) {
   return (
     <div className="rounded border border-border-subtle/60 bg-surface-container-lowest p-space-8">
-      <span className="block font-body-sm text-body-sm text-text-muted">{label}</span>
+      <span className="block font-body-sm text-body-sm text-text-muted">
+        {glossary ? <GlossaryTerm term={glossary}>{label}</GlossaryTerm> : label}
+      </span>
       <span className="block font-body-md text-body-md font-semibold text-text-primary">{value}</span>
       {note && <span className="block font-label-mono-sm text-label-mono-sm text-text-muted">{note}</span>}
     </div>
@@ -88,6 +101,7 @@ export function CompanyProfilePanel({
           {profile.marketCap !== null && (
             <Fact
               label="Kapitalisasi pasar"
+              glossary="Kapitalisasi Pasar"
               value={formatIdrCompact(profile.marketCap)}
               note={profile.marketCapRank !== null ? `Peringkat ${profile.marketCapRank} di IDX` : null}
             />
@@ -183,11 +197,12 @@ export function CompanyProfilePanel({
           <>
             <div className="mt-space-12 grid grid-cols-2 gap-space-8 sm:grid-cols-3">
               {payoutRatio !== null && (
-                <Fact label="Payout ratio" value={`${(payoutRatio * 100).toFixed(1)}%`} note="Bagian laba yang dibagikan" />
+                <Fact label="Payout ratio" glossary="F-Score Piotroski" value={`${(payoutRatio * 100).toFixed(1)}%`} note="Bagian laba yang dibagikan" />
               )}
               {dividendYieldAvg !== null && (
                 <Fact
                   label="Rata-rata yield"
+                  glossary="Dividend Yield"
                   value={`${(dividendYieldAvg * 100).toFixed(2)}%`}
                   note={dividendYieldAvgPeriod ? `Rata-rata ${dividendYieldAvgPeriod} tahun` : null}
                 />

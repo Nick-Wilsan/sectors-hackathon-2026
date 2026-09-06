@@ -14,6 +14,7 @@ import type { AnomalyResult, CandlestickResult, CompanyLite, DailyBar, Framework
 import { PriceChart } from './PriceChart';
 import { PatternSimilarityPanel } from './PatternSimilarityPanel';
 import { ScoreBar } from './ScoreBar';
+import { GlossaryTerm } from './GlossaryTerm';
 
 // Dashboard preview of the reference mockup's "Analisis Interaktif TradingView
 // — BBCA" section. Reuses the exact same data this app already computes for
@@ -35,6 +36,17 @@ import { ScoreBar } from './ScoreBar';
 //                                   restated the same facts in prose, so it
 //                                   was dropped rather than kept as filler
 const FEATURED_SYMBOL = 'BBCA';
+
+// Kunci kamus istilah per komponen skor. Dipisah dari label tampilan karena
+// keduanya memang berbeda: label berbunyi "Profitabilitas Modal (ROE)"
+// sementara kamus berkunci "ROE (Return on Equity)".
+const GLOSARIUM_KOMPONEN: Record<string, string> = {
+  roe: 'ROE',
+  netProfitMargin: 'Margin laba',
+  der: 'DER',
+  ocfMargin: 'Margin Arus Kas Operasional',
+  roa: 'ROA',
+};
 const RANGE_OPTIONS = [
   { days: 30, label: '1 Bln' },
   { days: 90, label: '3 Bln' },
@@ -375,7 +387,9 @@ export function FeaturedStockPanel({ tickerTape = [] }: { tickerTape?: TickerTap
               <div className="grid grid-cols-2 gap-space-8 sm:grid-cols-3 lg:grid-cols-5">
                 {scoreComponent.map((c) => (
                   <div key={c.key} className="rounded border border-border-subtle/50 bg-surface-container-lowest p-space-8">
-                    <span className="block font-body-sm text-body-sm text-text-muted">{c.label}</span>
+                    <span className="block font-body-sm text-body-sm text-text-muted">
+                      <GlossaryTerm term={GLOSARIUM_KOMPONEN[c.key] ?? c.label}>{c.label}</GlossaryTerm>
+                    </span>
                     <span className={`block font-label-mono-lg text-label-mono-lg font-bold ${tierTextColor(c.percentile)}`}>
                       {/* der is already a ratio (e.g. 4.63x); every other component is a fraction
                           from the API (0.2043 = 20.43%) and needs scaling for display. */}
@@ -388,7 +402,9 @@ export function FeaturedStockPanel({ tickerTape = [] }: { tickerTape?: TickerTap
                 ))}
                 {extras?.pe !== null && extras?.pe !== undefined && (
                   <div className="rounded border border-border-subtle/50 bg-surface-container-lowest p-space-8">
-                    <span className="block font-body-sm text-body-sm text-text-muted">P/E Ratio</span>
+                    <span className="block font-body-sm text-body-sm text-text-muted">
+                      <GlossaryTerm term="P/E Ratio">P/E Ratio</GlossaryTerm>
+                    </span>
                     <span className="block font-label-mono-lg text-label-mono-lg font-bold text-text-primary">{extras.pe.toFixed(1)}x</span>
                     {extras.pePeerAvg !== null && (
                       <span className="block font-label-mono-sm text-label-mono-sm text-state-warning">Avg peer: {extras.pePeerAvg.toFixed(1)}x</span>
@@ -397,13 +413,17 @@ export function FeaturedStockPanel({ tickerTape = [] }: { tickerTape?: TickerTap
                 )}
                 {extras?.pb !== null && extras?.pb !== undefined && (
                   <div className="rounded border border-border-subtle/50 bg-surface-container-lowest p-space-8">
-                    <span className="block font-body-sm text-body-sm text-text-muted">PBV Ratio</span>
+                    <span className="block font-body-sm text-body-sm text-text-muted">
+                      <GlossaryTerm term="PBV">PBV Ratio</GlossaryTerm>
+                    </span>
                     <span className="block font-label-mono-lg text-label-mono-lg font-bold text-text-primary">{extras.pb.toFixed(1)}x</span>
                   </div>
                 )}
                 {extras?.dividendYieldTtm !== null && extras?.dividendYieldTtm !== undefined && (
                   <div className="rounded border border-border-subtle/50 bg-surface-container-lowest p-space-8">
-                    <span className="block font-body-sm text-body-sm text-text-muted">Dividend Yield (TTM)</span>
+                    <span className="block font-body-sm text-body-sm text-text-muted">
+                      <GlossaryTerm term="Dividend Yield">Dividend Yield (TTM)</GlossaryTerm>
+                    </span>
                     <span className="block font-label-mono-lg text-label-mono-lg font-bold text-state-positive">
                       {(extras.dividendYieldTtm * 100).toFixed(2)}%
                     </span>

@@ -27,10 +27,10 @@ interface Row {
 
 const ROWS: Record<Statement, Row[]> = {
   labaRugi: [
-    { field: 'revenue', label: 'Pendapatan', total: true },
+    { field: 'revenue', label: 'Pendapatan', total: true, glossary: 'Margin laba' },
     { field: 'cost_of_revenue', label: 'Beban pokok pendapatan', indent: true },
     { field: 'gross_profit', label: 'Laba kotor', total: true },
-    { field: 'interest_income', label: 'Pendapatan bunga', indent: true },
+    { field: 'interest_income', label: 'Pendapatan bunga', indent: true, glossary: 'CASA' },
     { field: 'interest_expense', label: 'Beban bunga', indent: true },
     { field: 'net_interest_income', label: 'Pendapatan bunga bersih', total: true },
     { field: 'non_interest_income', label: 'Pendapatan non-bunga', indent: true },
@@ -39,7 +39,7 @@ const ROWS: Record<Statement, Row[]> = {
     { field: 'ebitda', label: 'EBITDA', total: true },
     { field: 'earnings_before_tax', label: 'Laba sebelum pajak', total: true },
     { field: 'tax', label: 'Beban pajak', indent: true },
-    { field: 'earnings', label: 'Laba bersih', total: true },
+    { field: 'earnings', label: 'Laba bersih', total: true, glossary: 'Margin laba' },
   ],
   neraca: [
     { field: 'cash_only', label: 'Kas' },
@@ -48,15 +48,15 @@ const ROWS: Record<Statement, Row[]> = {
     { field: 'inventories', label: 'Persediaan' },
     { field: 'gross_loan', label: 'Kredit disalurkan (bruto)' },
     { field: 'net_loan', label: 'Kredit disalurkan (neto)' },
-    { field: 'total_assets', label: 'Total aset', total: true },
+    { field: 'total_assets', label: 'Total aset', total: true, glossary: 'ROA' },
     { field: 'current_liabilities', label: 'Liabilitas lancar' },
     { field: 'non_current_liabilities', label: 'Liabilitas jangka panjang' },
-    { field: 'total_deposit', label: 'Simpanan nasabah' },
-    { field: 'total_liabilities', label: 'Total liabilitas', total: true },
+    { field: 'total_deposit', label: 'Simpanan nasabah', glossary: 'DER' },
+    { field: 'total_liabilities', label: 'Total liabilitas', total: true, glossary: 'DER' },
     { field: 'total_debt', label: 'Utang berbunga' },
     { field: 'net_debt', label: 'Utang bersih' },
     { field: 'retained_earnings', label: 'Saldo laba ditahan' },
-    { field: 'total_equity', label: 'Total ekuitas', total: true },
+    { field: 'total_equity', label: 'Total ekuitas', total: true, glossary: 'PBV' },
   ],
   arusKas: [
     { field: 'operating_cash_flow', label: 'Arus kas dari operasi', total: true, glossary: 'Margin Arus Kas Operasional' },
