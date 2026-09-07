@@ -30,8 +30,12 @@ function fmt(value: number | null): string {
  * but it does return the peer-group average for the SAME year alongside each
  * multiple — so the comparison here is that, which is a real number.
  *
- * Deliberately no "murah/mahal" verdict: PRD B-04 forbids concluding whether a
- * price is cheap or expensive. The table states the gap and stops there.
+ * Deliberately no "murah/mahal" verdict. The binding rule is B-02, not B-04 as
+ * an earlier note here claimed: B-02 forbids buy/sell advice and statements of
+ * price direction, and the PRD's section 6 requires every output to be a
+ * factual statement or a classification against defined criteria. B-04 is a
+ * different rule entirely — it keeps the AI layer supporting rather than core.
+ * The table states the gap and stops there.
  */
 export function ValuationHistoryTable({ symbol, rows }: Props) {
   if (rows.length === 0) return null;
@@ -55,14 +59,18 @@ export function ValuationHistoryTable({ symbol, rows }: Props) {
   // sudah menerangkan apa itu P/E, tetapi pembaca pemula tetap tidak tahu apa
   // arti berada 37% di atas rata-rata pesaing. Kalimat di bawah menutup celah
   // itu — tetap berhenti sebagai pernyataan fakta, tanpa vonis murah/mahal
-  // yang dilarang PRD B-04.
+  // yang dilarang PRD B-02.
   const headline = comparable.find((m) => m.key === 'pe') ?? comparable[0];
   const headlineOwn = latest[headline.key] as number | null;
   const headlinePeer = latest[headline.peerKey] as number | null;
   const headlineGap =
-    headlineOwn !== null && headlinePeer !== null && headlinePeer !== 0
+    headlineOwn !== null && headlinePeer !== null && headlineOwn > 0 && headlinePeer > 0
       ? (headlineOwn - headlinePeer) / headlinePeer
       : null;
+  // Rasio negatif berarti emitennya merugi. Menyandingkannya dengan rata-rata
+  // peer yang positif menghasilkan persentase raksasa yang secara harfiah
+  // tidak bermakna, jadi alasannya dinyatakan alih-alih dibiarkan kosong.
+  const headlineRugi = headlineOwn !== null && headlineOwn <= 0;
 
   return (
     <div className="rounded border border-border-subtle bg-surface-card p-space-16">
@@ -174,6 +182,18 @@ export function ValuationHistoryTable({ symbol, rows }: Props) {
         </table>
       </div>
 
+      {headlineRugi && (
+        <div className="mt-space-12 flex items-start gap-space-8 rounded border border-state-warning/30 bg-state-warning/10 p-space-12">
+          <span className="material-symbols-outlined mt-[1px] shrink-0 text-[18px] text-state-warning">warning</span>
+          <p className="font-body-md text-body-md leading-relaxed text-text-secondary">
+            <span className="font-bold text-text-primary">{headline.label.replace(/\s*\(.*\)/, '')} bernilai negatif</span> karena
+            {' '}{symbol.toUpperCase().replace(/\.JK$/, '')} merugi pada tahun buku terakhir. Rasio harga terhadap laba tidak punya
+            arti ketika labanya negatif, sehingga tidak disandingkan dengan rata-rata pesaing di sini.{' '}
+            <span className="text-text-muted">Baris Price / Book di tabel adalah pembanding yang masih bermakna pada kondisi ini.</span>
+          </p>
+        </div>
+      )}
+
       {headlineGap !== null && (
         <div className="mt-space-12 flex items-start gap-space-8 rounded border border-border-subtle bg-background-base p-space-12">
           <span className="material-symbols-outlined mt-[1px] shrink-0 text-[18px] text-primary">lightbulb</span>
@@ -193,20 +213,35 @@ export function ValuationHistoryTable({ symbol, rows }: Props) {
         </div>
       )}
 
-      <p className="mt-space-8 flex items-start gap-space-4 border-t border-border-subtle pt-space-8 font-body-sm text-body-sm text-text-muted">
-        <span className="material-symbols-outlined text-[16px] text-primary">info</span>
-        <span>
-          &quot;Selisih&quot; adalah jarak rasio emiten ini terhadap rata-rata peer pada tahun buku terakhir. Angka positif berarti lebih tinggi
-          dari rata-rata peer, negatif berarti lebih rendah &mdash; bukan penilaian murah atau mahal.
-          {omitted.length > 0 && (
-            <>
-              {' '}
-              {omitted.map((m) => m.label.replace(/\s*\(.*\)/, '')).join(' dan ')} tidak ditampilkan di sini karena Sectors tidak
-              menyediakan rata-rata peer untuk rasio tersebut, sehingga tidak ada yang bisa disandingkan.
-            </>
-          )}
-        </span>
-      </p>
+      {/* Dulu satu paragraf abu-abu setinggi empat baris yang memuat dua
+          keterangan berbeda sekaligus. Dipecah jadi kartu berikon dengan kata
+          kuncinya ditebalkan supaya bisa dipindai, bukan hanya dibaca. */}
+      <div className="mt-space-12 grid grid-cols-1 items-start gap-space-8 border-t border-border-subtle pt-space-12 md:grid-cols-2">
+        <div className="flex items-start gap-space-8 rounded border border-border-subtle/60 bg-surface-container-lowest p-space-8">
+          <span className="material-symbols-outlined mt-[1px] shrink-0 text-[18px] text-primary">straighten</span>
+          <span>
+            <span className="block font-body-md text-body-md font-semibold text-text-primary">Arti kolom &ldquo;Selisih&rdquo;</span>
+            <span className="mt-space-2 block font-body-md text-body-md leading-relaxed text-text-muted">
+              Jarak rasio emiten ini terhadap rata-rata peer pada tahun buku terakhir. Positif berarti{' '}
+              <strong className="text-text-secondary">lebih tinggi</strong>, negatif berarti{' '}
+              <strong className="text-text-secondary">lebih rendah</strong> &mdash; bukan penilaian murah atau mahal.
+            </span>
+          </span>
+        </div>
+        {omitted.length > 0 && (
+          <div className="flex items-start gap-space-8 rounded border border-border-subtle/60 bg-surface-container-lowest p-space-8">
+            <span className="material-symbols-outlined mt-[1px] shrink-0 text-[18px] text-primary">visibility_off</span>
+            <span>
+              <span className="block font-body-md text-body-md font-semibold text-text-primary">Yang tidak ditampilkan</span>
+              <span className="mt-space-2 block font-body-md text-body-md leading-relaxed text-text-muted">
+                {omitted.map((m) => m.label.replace(/\s*\(.*\)/, '')).join(' dan ')} disembunyikan karena Sectors{' '}
+                <strong className="text-text-secondary">tidak menyediakan rata-rata peer</strong> untuk rasio itu, jadi tidak ada
+                yang bisa disandingkan.
+              </span>
+            </span>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

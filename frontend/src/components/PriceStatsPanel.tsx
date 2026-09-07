@@ -8,7 +8,7 @@ import type { DailyBar } from '../api/types';
  *
  * Strictly descriptive: it reports what the price has done, never what it is
  * expected to do. Volatility is presented as measured dispersion, not as risk
- * advice or a forecast (PRD B-02/B-04).
+ * advice or a forecast (PRD B-02).
  */
 export function PriceStatsPanel({ bars, rangeLabel }: { bars: DailyBar[]; rangeLabel: string }) {
   const stats = useMemo(() => {
@@ -98,24 +98,26 @@ export function PriceStatsPanel({ bars, rangeLabel }: { bars: DailyBar[]; rangeL
       </div>
 
       <div className="mt-space-16 grid grid-cols-2 gap-space-8 sm:grid-cols-3">
-        <div className="rounded border border-border-subtle/60 bg-surface-container-lowest p-space-8">
-          <span className="block font-body-sm text-body-sm text-text-muted">Jarak dari tertinggi</span>
-          <span className="font-label-mono-lg text-label-mono-lg font-bold tabular-nums text-state-negative">
+        {/* Judul memesan dua baris dan angkanya didorong ke dasar kartu, supaya
+            ketiga angka sebaris walau panjang judulnya berbeda-beda. */}
+        <div className="flex h-full flex-col rounded border border-border-subtle/60 bg-surface-container-lowest p-space-8">
+          <span className="block min-h-[32px] font-body-sm text-body-sm text-text-muted">Jarak dari tertinggi</span>
+          <span className="mt-auto font-label-mono-lg text-label-mono-lg font-bold tabular-nums text-state-negative">
             {(stats.fromHigh * 100).toFixed(2)}%
           </span>
         </div>
         <div
-          className="rounded border border-border-subtle/60 bg-surface-container-lowest p-space-8"
+          className="flex h-full flex-col rounded border border-border-subtle/60 bg-surface-container-lowest p-space-8"
           title="Simpangan baku perubahan harga harian pada periode ini — ukuran sebaran, bukan perkiraan risiko ke depan"
         >
-          <span className="block font-body-sm text-body-sm text-text-muted">Simpangan harian</span>
-          <span className="font-label-mono-lg text-label-mono-lg font-bold tabular-nums text-text-primary">
+          <span className="block min-h-[32px] font-body-sm text-body-sm text-text-muted">Simpangan harian</span>
+          <span className="mt-auto font-label-mono-lg text-label-mono-lg font-bold tabular-nums text-text-primary">
             {(stats.stdDev * 100).toFixed(2)}%
           </span>
         </div>
-        <div className="col-span-2 rounded border border-border-subtle/60 bg-surface-container-lowest p-space-8 sm:col-span-1">
-          <span className="block font-body-sm text-body-sm text-text-muted">Rata-rata volume harian</span>
-          <span className="font-label-mono-lg text-label-mono-lg font-bold tabular-nums text-text-primary">
+        <div className="col-span-2 flex h-full flex-col rounded border border-border-subtle/60 bg-surface-container-lowest p-space-8 sm:col-span-1">
+          <span className="block min-h-[32px] font-body-sm text-body-sm text-text-muted">Rata-rata volume harian</span>
+          <span className="mt-auto font-label-mono-lg text-label-mono-lg font-bold tabular-nums text-text-primary">
             {(stats.avgVolume / 1e6).toLocaleString('id-ID', { maximumFractionDigits: 1 })} jt
           </span>
         </div>

@@ -73,7 +73,7 @@ export function SectorContextPanel({ symbol, peer, score, extras }: Props) {
   const peGap = pe !== null && peerPe !== null && peerPe !== 0 ? (pe - peerPe) / peerPe : null;
   // Peer average sits at the midpoint of the track; the marker slides either
   // side of it. Neutral colours on purpose: position is a fact, "cheap" or
-  // "expensive" is a verdict this product does not make (PRD B-04).
+  // "expensive" is a verdict this product does not make (PRD B-02).
   const peMarkerPct = pe !== null && peerPe ? Math.max(3, Math.min(97, (pe / (peerPe * 2)) * 100)) : null;
 
   const scoreValue = score?.score ?? null;
@@ -91,18 +91,48 @@ export function SectorContextPanel({ symbol, peer, score, extras }: Props) {
             <h2 className="mt-space-4 font-headline-lg text-headline-lg tracking-tight text-text-primary">
               Sorotan Sub-Sektor: {peer.subSector}
             </h2>
-            <p className="mt-space-8 font-body-md text-body-md leading-relaxed text-text-secondary">
-              <strong className="text-primary">{ticker}</strong> diukur terhadap{' '}
-              <strong className="text-text-primary">{peer.groupSize} emiten</strong> di sub-sektor {peer.subSector}. Dari{' '}
-              <strong className="text-text-primary">{scored} emiten</strong> yang datanya cukup untuk dinilai,{' '}
-              {rank > 0 ? (
-                <>
-                  {ticker} menempati <strong className="text-state-positive">peringkat {rank}</strong> berdasarkan Skor Komposit Fundamental
-                </>
-              ) : (
-                <>{ticker} belum memiliki skor sehingga tidak masuk peringkat</>
-              )}
-              . Seluruh persentil di halaman ini dihitung terhadap kelompok yang sama, bukan terhadap seluruh bursa.
+            {/* Dulu satu paragraf empat baris yang memuat empat angka. Isinya
+                benar, tetapi tidak ada yang menonjol sehingga pembaca
+                melewatinya utuh — padahal angka terpentingnya, peringkat,
+                justru yang paling dicari. Sekarang peringkat itu digambar
+                besar dan sisanya menyusut jadi keterangan pendek. */}
+            {rank > 0 ? (
+              <div className="mt-space-12 flex flex-wrap items-end gap-space-16">
+                <div>
+                  <span className="block font-table-header text-table-header uppercase text-text-muted">
+                    Peringkat berdasarkan Skor Komposit
+                  </span>
+                  <span className="flex items-baseline gap-space-6">
+                    <span className="font-display-lg text-display-lg tracking-tight tabular-nums text-state-positive">{rank}</span>
+                    <span className="font-body-md text-body-md text-text-muted">dari {scored} emiten yang dinilai</span>
+                  </span>
+                </div>
+                {/* Pita kedudukan: menyatakan seberapa jauh peringkat itu dari
+                    ujung atas kelompoknya, yang tidak terbaca dari "3 dari 41"
+                    saja bila pembaca tidak tahu 41 itu banyak atau sedikit. */}
+                {rankPct !== null && (
+                  <div className="min-w-[180px] flex-1">
+                    <div className="h-1.5 w-full overflow-hidden rounded-full bg-surface-container">
+                      <div className="h-full rounded-full bg-state-positive" style={{ width: `${Math.max(2, rankPct)}%` }} />
+                    </div>
+                    <span className="mt-space-4 block font-label-mono-sm text-label-mono-sm text-text-muted">
+                      Di atas {rankPct.toFixed(0)}% emiten sejenis yang dinilai
+                    </span>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <p className="mt-space-12 font-body-md text-body-md text-text-muted">
+                {ticker} belum memiliki skor, sehingga tidak masuk peringkat sub-sektor ini.
+              </p>
+            )}
+
+            <p className="mt-space-12 flex items-start gap-space-4 border-t border-border-subtle pt-space-8 font-body-sm text-body-sm text-text-muted">
+              <span className="material-symbols-outlined text-[16px] text-primary">groups</span>
+              <span>
+                Seluruh persentil di halaman ini dihitung terhadap {peer.groupSize} emiten sub-sektor {peer.subSector} &mdash;
+                bukan terhadap seluruh bursa.
+              </span>
             </p>
           </div>
 

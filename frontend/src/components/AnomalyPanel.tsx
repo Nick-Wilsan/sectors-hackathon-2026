@@ -3,15 +3,19 @@ import { MarketContextBlock } from './MarketContextBlock';
 
 function Panel({ title, icon, children, action }: { title: string; icon: string; children: React.ReactNode; action?: React.ReactNode }) {
   return (
-    <div className="rounded border border-border-subtle bg-surface-card p-space-16">
-      <div className="flex items-center justify-between gap-space-8 border-b border-border-subtle pb-space-8">
+    <div className="rounded border border-border-subtle bg-surface-card px-space-16 py-space-24">
+      <div className="flex items-center justify-between gap-space-8 border-b border-border-subtle pb-space-16">
         <div className="flex items-center gap-space-8">
           <span className="material-symbols-outlined text-[18px] text-primary-container">{icon}</span>
           <h2 className="font-headline-sm text-headline-sm font-bold text-text-primary">{title}</h2>
         </div>
         {action}
       </div>
-      <div className="mt-space-12">{children}</div>
+      {/* Jarak ke garis pemisah di atas dibuat sama dengan jarak ke garis di
+          bawahnya (lihat `gap-space-16` pada isi panel), supaya kalimat
+          keadaan duduk tepat di tengah dua garis, bukan menempel ke salah
+          satunya. */}
+      <div className="mt-space-16">{children}</div>
     </div>
   );
 }
@@ -32,7 +36,7 @@ export function AnomalyPanel({ anomaly }: { anomaly: AnomalyResult }) {
         </span>
       }
     >
-      <div className="flex flex-col gap-space-8">
+      <div className="flex flex-col gap-space-16">
         {!anomaly.hasAnomaly ? (
           <p className="font-body-sm text-body-sm text-text-muted">
             Volume dan pergerakan harga terakhir masih dalam kebiasaan emiten ini selama 90 hari terakhir.

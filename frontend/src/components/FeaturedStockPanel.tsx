@@ -47,6 +47,23 @@ const GLOSARIUM_KOMPONEN: Record<string, string> = {
   ocfMargin: 'Margin Arus Kas Operasional',
   roa: 'ROA',
 };
+// Kartu metrik dalam kisi Matriks Fundamental.
+//
+// Sebelumnya tiap kartu hanya sebuah kotak biasa, sehingga angkanya jatuh di
+// baris ke berapa pun judulnya selesai: "Profitabilitas Modal (ROE)" memakan
+// dua baris dan angkanya turun ke baris ketiga, sementara "Margin Laba Bersih"
+// selesai di satu baris dan angkanya naik ke baris kedua. Hasilnya deretan
+// angka yang tidak sebaris padahal berdiri berdampingan.
+//
+// Tiga aturan yang meratakannya: kartu diregangkan setinggi baris kisinya
+// (`h-full` pada anak kisi yang memang `stretch`), judul selalu memesan ruang
+// dua baris (2 x 16px tinggi baris body-sm) entah terpakai atau tidak, dan
+// baris catatan didorong ke dasar kartu dengan `mt-auto`. Setelah itu ketiga
+// larik — judul, angka, catatan — sejajar di seluruh kisi.
+const KARTU_METRIK = 'flex h-full flex-col rounded border border-border-subtle/50 bg-surface-container-lowest p-space-8';
+const LABEL_METRIK = 'block min-h-[32px] font-body-sm text-body-sm text-text-muted';
+const CATATAN_METRIK = 'mt-auto block pt-space-2 font-label-mono-sm text-label-mono-sm';
+
 const RANGE_OPTIONS = [
   { days: 30, label: '1 Bln' },
   { days: 90, label: '3 Bln' },
@@ -402,8 +419,8 @@ export function FeaturedStockPanel({ tickerTape = [] }: { tickerTape?: TickerTap
             {scoreComponent.length > 0 ? (
               <div className="grid grid-cols-2 gap-space-8 sm:grid-cols-3 lg:grid-cols-5">
                 {scoreComponent.map((c) => (
-                  <div key={c.key} className="rounded border border-border-subtle/50 bg-surface-container-lowest p-space-8">
-                    <span className="block font-body-sm text-body-sm text-text-muted">
+                  <div key={c.key} className={KARTU_METRIK}>
+                    <span className={LABEL_METRIK}>
                       <GlossaryTerm term={GLOSARIUM_KOMPONEN[c.key] ?? c.label}>{c.label}</GlossaryTerm>
                     </span>
                     <span className={`block font-label-mono-lg text-label-mono-lg font-bold ${tierTextColor(c.percentile)}`}>
@@ -411,33 +428,31 @@ export function FeaturedStockPanel({ tickerTape = [] }: { tickerTape?: TickerTap
                           from the API (0.2043 = 20.43%) and needs scaling for display. */}
                       {c.key === 'der' ? `${c.rawValue.toFixed(2)}x` : `${(c.rawValue * 100).toFixed(2)}%`}
                     </span>
-                    <span className="block font-label-mono-sm text-label-mono-sm text-text-muted">
-                      Persentil {c.percentile.toFixed(0)}
-                    </span>
+                    <span className={`${CATATAN_METRIK} text-text-muted`}>Persentil {c.percentile.toFixed(0)}</span>
                   </div>
                 ))}
                 {extras?.pe !== null && extras?.pe !== undefined && (
-                  <div className="rounded border border-border-subtle/50 bg-surface-container-lowest p-space-8">
-                    <span className="block font-body-sm text-body-sm text-text-muted">
+                  <div className={KARTU_METRIK}>
+                    <span className={LABEL_METRIK}>
                       <GlossaryTerm term="P/E Ratio">P/E Ratio</GlossaryTerm>
                     </span>
                     <span className="block font-label-mono-lg text-label-mono-lg font-bold text-text-primary">{extras.pe.toFixed(1)}x</span>
                     {extras.pePeerAvg !== null && (
-                      <span className="block font-label-mono-sm text-label-mono-sm text-state-warning">Avg peer: {extras.pePeerAvg.toFixed(1)}x</span>
+                      <span className={`${CATATAN_METRIK} text-state-warning`}>Avg peer: {extras.pePeerAvg.toFixed(1)}x</span>
                     )}
                   </div>
                 )}
                 {extras?.pb !== null && extras?.pb !== undefined && (
-                  <div className="rounded border border-border-subtle/50 bg-surface-container-lowest p-space-8">
-                    <span className="block font-body-sm text-body-sm text-text-muted">
+                  <div className={KARTU_METRIK}>
+                    <span className={LABEL_METRIK}>
                       <GlossaryTerm term="PBV">PBV Ratio</GlossaryTerm>
                     </span>
                     <span className="block font-label-mono-lg text-label-mono-lg font-bold text-text-primary">{extras.pb.toFixed(1)}x</span>
                   </div>
                 )}
                 {extras?.dividendYieldTtm !== null && extras?.dividendYieldTtm !== undefined && (
-                  <div className="rounded border border-border-subtle/50 bg-surface-container-lowest p-space-8">
-                    <span className="block font-body-sm text-body-sm text-text-muted">
+                  <div className={KARTU_METRIK}>
+                    <span className={LABEL_METRIK}>
                       <GlossaryTerm term="Dividend Yield">Dividend Yield (TTM)</GlossaryTerm>
                     </span>
                     <span className="block font-label-mono-lg text-label-mono-lg font-bold text-state-positive">
@@ -579,8 +594,14 @@ export function FeaturedStockPanel({ tickerTape = [] }: { tickerTape?: TickerTap
               </div>
             )}
           </div>
+          {/* Klaim lamanya berbunyi "Dihasilkan oleh Gemini", padahal blok di
+              atas sama sekali tidak memanggil AI — seluruh isinya dihitung dari
+              data yang sudah ada di state (lihat catatan di atas daftarnya).
+              Menyebut sumber yang salah adalah persoalan kejujuran, dan di
+              hadapan juri justru merugikan: yang benar-benar terjadi lebih
+              kuat, yaitu angka terhitung, bukan kalimat karangan model. */}
           <p className="mt-space-8 border-t border-border-subtle pt-space-8 font-label-mono-sm text-label-mono-sm text-text-muted">
-            Dihasilkan oleh Gemini dari data fundamental &amp; harga real — bukan rekomendasi investasi.
+            Disusun langsung dari data fundamental &amp; harga Sectors, tanpa lapisan AI &mdash; bukan rekomendasi investasi.
           </p>
         </div>
       </div>

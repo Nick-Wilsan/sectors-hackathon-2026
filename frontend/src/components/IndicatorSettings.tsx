@@ -1,5 +1,6 @@
 import type { IndicatorResult } from '../api/types';
 import { GlossaryTerm } from './GlossaryTerm';
+import { DisclosurePanel } from './DisclosurePanel';
 
 // Pengaturan periode indikator (F-08).
 //
@@ -80,17 +81,20 @@ export function IndicatorSettings({
   // kosong yang terlihat seperti bug.
   const terlaluPanjang = (period: number) => period > barsAvailable;
 
+  // Ringkasan pada kepala panel menyebut keadaan yang SEDANG berlaku, supaya
+  // panel yang terlipat tetap menjawab "sekarang pakai periode berapa".
+  const ringkasan = `MA ${maPeriods.join('/')} · RSI ${rsiPeriod}`;
+
   return (
-    <div className="rounded border border-border-subtle bg-surface-card p-space-12">
-      <div className="flex items-center gap-space-8 border-b border-border-subtle pb-space-8">
-        <span className="material-symbols-outlined text-[18px] text-primary-container">tune</span>
-        <div>
-          <h3 className="font-headline-sm text-headline-sm font-bold text-text-primary">Pengaturan Indikator</h3>
-          <p className="font-body-sm text-body-sm text-text-muted">
-            Ubah jumlah hari yang dipakai tiap indikator. Tidak menambah pemakaian data.
-          </p>
-        </div>
-      </div>
+    // Terbuka sejak awal, berbeda dari dua panel lipat lainnya. Alasannya
+    // bukan selera: kolom kiri berisi grafik yang jangkung, dan dengan panel
+    // ini ikut terlipat kolomnya berhenti jauh lebih tinggi daripada rail di
+    // sebelahnya sehingga meninggalkan ruang kosong di bawah Deteksi Anomali.
+    // Isinya juga yang paling sering disentuh dari ketiganya.
+    <DisclosurePanel title="Pengaturan Indikator" icon="tune" summary={ringkasan} badge="ubah periode" defaultOpen>
+      <p className="border-b border-border-subtle pb-space-8 font-body-sm text-body-sm text-text-muted">
+        Ubah jumlah hari yang dipakai tiap indikator. Tidak menambah pemakaian data.
+      </p>
 
       <div className="mt-space-12 flex flex-col gap-space-12">
         <div className={showMA ? '' : 'opacity-60'}>
@@ -147,6 +151,6 @@ export function IndicatorSettings({
           </p>
         </div>
       </div>
-    </div>
+    </DisclosurePanel>
   );
 }

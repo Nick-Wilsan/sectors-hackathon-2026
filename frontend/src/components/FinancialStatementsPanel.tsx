@@ -25,46 +25,53 @@ interface Row {
   glossary?: string;
 }
 
+// Setiap pos memakai definisinya SENDIRI. Sebelumnya hanya tujuh dari tiga
+// puluh empat baris yang punya tooltip, dan yang punya pun meminjam definisi
+// rasio yang cuma bersinggungan — "Pendapatan" menampilkan penjelasan tentang
+// margin laba, "Pendapatan bunga" menampilkan CASA. Uji pengguna 7 September
+// 2026 menunjukkan pembaca pemula justru tersandung di nama posnya, jauh
+// sebelum sampai ke rasio, dan PRD menetapkan kelengkapan penjelasan istilah
+// sebagai metrik keberhasilan yang dinilai.
 const ROWS: Record<Statement, Row[]> = {
   labaRugi: [
-    { field: 'revenue', label: 'Pendapatan', total: true, glossary: 'Margin laba' },
-    { field: 'cost_of_revenue', label: 'Beban pokok pendapatan', indent: true },
-    { field: 'gross_profit', label: 'Laba kotor', total: true },
-    { field: 'interest_income', label: 'Pendapatan bunga', indent: true, glossary: 'CASA' },
-    { field: 'interest_expense', label: 'Beban bunga', indent: true },
-    { field: 'net_interest_income', label: 'Pendapatan bunga bersih', total: true },
-    { field: 'non_interest_income', label: 'Pendapatan non-bunga', indent: true },
-    { field: 'operating_expense', label: 'Beban usaha', indent: true },
-    { field: 'operating_pnl', label: 'Laba usaha', total: true },
-    { field: 'ebitda', label: 'EBITDA', total: true },
-    { field: 'earnings_before_tax', label: 'Laba sebelum pajak', total: true },
-    { field: 'tax', label: 'Beban pajak', indent: true },
-    { field: 'earnings', label: 'Laba bersih', total: true, glossary: 'Margin laba' },
+    { field: 'revenue', label: 'Pendapatan', total: true, glossary: 'Pendapatan' },
+    { field: 'cost_of_revenue', label: 'Beban pokok pendapatan', indent: true, glossary: 'Beban pokok pendapatan' },
+    { field: 'gross_profit', label: 'Laba kotor', total: true, glossary: 'Laba kotor' },
+    { field: 'interest_income', label: 'Pendapatan bunga', indent: true, glossary: 'Pendapatan bunga' },
+    { field: 'interest_expense', label: 'Beban bunga', indent: true, glossary: 'Beban bunga' },
+    { field: 'net_interest_income', label: 'Pendapatan bunga bersih', total: true, glossary: 'Pendapatan bunga bersih' },
+    { field: 'non_interest_income', label: 'Pendapatan non-bunga', indent: true, glossary: 'Pendapatan non-bunga' },
+    { field: 'operating_expense', label: 'Beban usaha', indent: true, glossary: 'Beban usaha' },
+    { field: 'operating_pnl', label: 'Laba usaha', total: true, glossary: 'Laba usaha' },
+    { field: 'ebitda', label: 'EBITDA', total: true, glossary: 'EBITDA' },
+    { field: 'earnings_before_tax', label: 'Laba sebelum pajak', total: true, glossary: 'Laba sebelum pajak' },
+    { field: 'tax', label: 'Beban pajak', indent: true, glossary: 'Beban pajak' },
+    { field: 'earnings', label: 'Laba bersih', total: true, glossary: 'Laba bersih' },
   ],
   neraca: [
-    { field: 'cash_only', label: 'Kas' },
-    { field: 'current_assets', label: 'Aset lancar' },
-    { field: 'fixed_assets', label: 'Aset tetap' },
-    { field: 'inventories', label: 'Persediaan' },
-    { field: 'gross_loan', label: 'Kredit disalurkan (bruto)' },
-    { field: 'net_loan', label: 'Kredit disalurkan (neto)' },
-    { field: 'total_assets', label: 'Total aset', total: true, glossary: 'ROA' },
-    { field: 'current_liabilities', label: 'Liabilitas lancar' },
-    { field: 'non_current_liabilities', label: 'Liabilitas jangka panjang' },
-    { field: 'total_deposit', label: 'Simpanan nasabah', glossary: 'DER' },
-    { field: 'total_liabilities', label: 'Total liabilitas', total: true, glossary: 'DER' },
-    { field: 'total_debt', label: 'Utang berbunga' },
-    { field: 'net_debt', label: 'Utang bersih' },
-    { field: 'retained_earnings', label: 'Saldo laba ditahan' },
-    { field: 'total_equity', label: 'Total ekuitas', total: true, glossary: 'PBV' },
+    { field: 'cash_only', label: 'Kas', glossary: 'Kas' },
+    { field: 'current_assets', label: 'Aset lancar', glossary: 'Aset lancar' },
+    { field: 'fixed_assets', label: 'Aset tetap', glossary: 'Aset tetap' },
+    { field: 'inventories', label: 'Persediaan', glossary: 'Persediaan' },
+    { field: 'gross_loan', label: 'Kredit disalurkan (bruto)', glossary: 'Kredit disalurkan' },
+    { field: 'net_loan', label: 'Kredit disalurkan (neto)', glossary: 'Kredit disalurkan' },
+    { field: 'total_assets', label: 'Total aset', total: true, glossary: 'Total aset' },
+    { field: 'current_liabilities', label: 'Liabilitas lancar', glossary: 'Liabilitas lancar' },
+    { field: 'non_current_liabilities', label: 'Liabilitas jangka panjang', glossary: 'Liabilitas jangka panjang' },
+    { field: 'total_deposit', label: 'Simpanan nasabah', glossary: 'Simpanan nasabah' },
+    { field: 'total_liabilities', label: 'Total liabilitas', total: true, glossary: 'Total liabilitas' },
+    { field: 'total_debt', label: 'Utang berbunga', glossary: 'Utang berbunga' },
+    { field: 'net_debt', label: 'Utang bersih', glossary: 'Utang bersih' },
+    { field: 'retained_earnings', label: 'Saldo laba ditahan', glossary: 'Saldo laba ditahan' },
+    { field: 'total_equity', label: 'Total ekuitas', total: true, glossary: 'Total ekuitas' },
   ],
   arusKas: [
-    { field: 'operating_cash_flow', label: 'Arus kas dari operasi', total: true, glossary: 'Margin Arus Kas Operasional' },
-    { field: 'investing_cash_flow', label: 'Arus kas dari investasi' },
-    { field: 'financing_cash_flow', label: 'Arus kas dari pendanaan' },
-    { field: 'capital_expenditure', label: 'Belanja modal', indent: true },
-    { field: 'free_cash_flow', label: 'Arus kas bebas', total: true },
-    { field: 'net_cash_flow', label: 'Kenaikan/penurunan kas bersih', total: true },
+    { field: 'operating_cash_flow', label: 'Arus kas dari operasi', total: true, glossary: 'Arus kas dari operasi' },
+    { field: 'investing_cash_flow', label: 'Arus kas dari investasi', glossary: 'Arus kas dari investasi' },
+    { field: 'financing_cash_flow', label: 'Arus kas dari pendanaan', glossary: 'Arus kas dari pendanaan' },
+    { field: 'capital_expenditure', label: 'Belanja modal', indent: true, glossary: 'Belanja modal' },
+    { field: 'free_cash_flow', label: 'Arus kas bebas', total: true, glossary: 'Arus kas bebas' },
+    { field: 'net_cash_flow', label: 'Kenaikan/penurunan kas bersih', total: true, glossary: 'Kenaikan/penurunan kas bersih' },
   ],
 };
 
@@ -178,8 +185,8 @@ export function FinancialStatementsPanel({ symbol, rows }: { symbol: string; row
                   {y.year}
                 </th>
               ))}
-              <th className="py-space-6 pl-space-12 text-right font-semibold whitespace-nowrap" title="Perubahan tahun terakhir terhadap tahun sebelumnya">
-                YoY
+              <th className="py-space-6 pl-space-12 text-right font-semibold whitespace-nowrap">
+                <GlossaryTerm term="YoY">YoY</GlossaryTerm>
               </th>
               <th className="py-space-6 pl-space-12 text-right font-semibold whitespace-nowrap">
                 Tren {years[years.length - 1].year}&ndash;{years[0].year}
@@ -258,15 +265,37 @@ export function FinancialStatementsPanel({ symbol, rows }: { symbol: string; row
         </table>
       </div>
 
-      <p className="mt-space-8 flex items-start gap-space-4 border-t border-border-subtle pt-space-8 font-body-sm text-body-sm text-text-muted">
-        <span className="material-symbols-outlined text-[16px] text-primary">info</span>
-        <span>
-          Angka disajikan apa adanya dari laporan emiten, tanpa penyesuaian. Struktur laporan bank berbeda dari perusahaan
-          lain, sehingga pos yang tampil menyesuaikan jenis usahanya. Garis tren dan panah YoY sengaja berwarna netral:
-          beban yang naik bukan kabar baik dan pendapatan yang naik bukan otomatis kabar baik, sehingga arah panah
-          menyatakan pergerakan angka, bukan penilaian atasnya.
-        </span>
-      </p>
+      {/* Dulu satu blok abu-abu berukuran kecil setinggi empat baris. Isinya
+          sebenarnya tiga keterangan berbeda, jadi sekarang ditulis sebagai
+          tiga baris berikon dengan kata kuncinya ditebalkan — bisa dipindai,
+          bukan hanya dibaca dari ujung ke ujung. */}
+      <div className="mt-space-12 grid grid-cols-1 items-start gap-space-8 border-t border-border-subtle pt-space-12 md:grid-cols-3">
+        {[
+          {
+            ikon: 'receipt_long',
+            judul: 'Apa adanya',
+            teks: <>Angka disalin dari laporan emiten <strong className="text-text-secondary">tanpa penyesuaian</strong> apa pun.</>,
+          },
+          {
+            ikon: 'account_balance',
+            judul: 'Bank berbeda',
+            teks: <>Struktur laporan bank tidak sama dengan perusahaan lain, sehingga <strong className="text-text-secondary">pos yang tampil menyesuaikan jenis usahanya</strong>.</>,
+          },
+          {
+            ikon: 'palette',
+            judul: 'Warna netral',
+            teks: <>Beban yang naik bukan kabar baik, pendapatan yang naik bukan otomatis kabar baik. Panah menyatakan <strong className="text-text-secondary">arah angka, bukan penilaian</strong>.</>,
+          },
+        ].map((k) => (
+          <div key={k.judul} className="flex items-start gap-space-8 rounded border border-border-subtle/60 bg-surface-container-lowest p-space-8">
+            <span className="material-symbols-outlined mt-[1px] shrink-0 text-[18px] text-primary">{k.ikon}</span>
+            <span>
+              <span className="block font-body-md text-body-md font-semibold text-text-primary">{k.judul}</span>
+              <span className="mt-space-2 block font-body-md text-body-md leading-relaxed text-text-muted">{k.teks}</span>
+            </span>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

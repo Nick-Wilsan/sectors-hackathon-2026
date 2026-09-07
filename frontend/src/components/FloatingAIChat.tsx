@@ -15,6 +15,11 @@ interface FloatingAIChatProps {
    *  emiten, sehingga dasbor memakainya dengan simbol BBCA yang dipatok mati
    *  dan mengumumkan subjek yang bukan isi halamannya. */
   ask: (question: string) => Promise<string>;
+  /** Dinaikkan pemanggil untuk membuka panel dari tempat lain di halaman.
+   *  Uji pengguna 7 September 2026: tidak seorang pun dari dua responden
+   *  menyadari peluncur ini ada, jadi ajakan kontekstual di dalam isi halaman
+   *  perlu bisa membukanya. */
+  openSignal?: number;
 }
 
 interface ChatEntry {
@@ -58,19 +63,52 @@ function AnswerText({ text }: { text: string }) {
 // Floating launcher docked to the bottom-right corner — the conventional spot,
 // and above the sticky disclaimer bar so the two never overlap. Kept fixed so
 // the AI stays reachable no matter how far down the dashboard you have scrolled.
-export function FloatingAIChat({ scopeLabel, scopeNote, suggestions, ask }: FloatingAIChatProps) {
+export function FloatingAIChat({ scopeLabel, scopeNote, suggestions, ask, openSignal = 0 }: FloatingAIChatProps) {
   const [open, setOpen] = useState(false);
   const [question, setQuestion] = useState('');
   const [history, setHistory] = useState<ChatEntry[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
+  const peluncurRef = useRef<HTMLButtonElement>(null);
 
   // Keep the newest answer in view; long Gemini replies otherwise land below
   // the fold of the panel and look like nothing happened.
   useEffect(() => {
     if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
   }, [history, loading]);
+
+  // Nilai awal 0 tidak boleh ikut membuka panel saat halaman baru dimuat,
+  // jadi yang dipantau kenaikannya, bukan nilainya.
+  useEffect(() => {
+    if (openSignal > 0) setOpen(true);
+  }, [openSignal]);
+
+  // Menekan di luar panel menutupnya, sama seperti dialog dan menu pada
+  // umumnya. Tanpa ini panel bertahan sampai tombol silangnya ditemukan, dan
+  // karena ia menutupi isi halaman, pembaca yang ingin kembali membaca justru
+  // terhalang oleh alat bantu yang tadi dibukanya.
+  //
+  // 'mousedown', bukan 'click': memakai click membuat penekanan yang DIMULAI
+  // di dalam panel lalu berakhir di luarnya — misalnya saat menyeret untuk
+  // menyorot teks jawaban — ikut menutup panel.
+  //
+  // Peluncurnya sengaja ikut dianggap "dalam", sebab ia sudah punya perilaku
+  // sendiri: menutupnya lewat jalur ini akan membuat penekanan berikutnya
+  // membuka lagi panel yang baru saja tertutup.
+  useEffect(() => {
+    if (!open) return;
+    const diLuar = (e: MouseEvent) => {
+      const target = e.target as Node | null;
+      if (!target) return;
+      if (panelRef.current?.contains(target)) return;
+      if (peluncurRef.current?.contains(target)) return;
+      setOpen(false);
+    };
+    document.addEventListener('mousedown', diLuar);
+    return () => document.removeEventListener('mousedown', diLuar);
+  }, [open]);
 
   // Escape closes the panel — it covers content, so it needs a keyboard exit.
   useEffect(() => {
@@ -100,17 +138,40 @@ export function FloatingAIChat({ scopeLabel, scopeNote, suggestions, ask }: Floa
   return (
     <>
       <button
+        ref={peluncurRef}
         type="button"
         onClick={() => setOpen((o) => !o)}
         aria-label={open ? 'Tutup asisten AI' : scopeLabel ? `Tanya AI tentang ${scopeLabel}` : 'Tanya AI'}
         aria-expanded={open}
-        className="fixed bottom-20 right-space-16 z-50 flex h-12 w-12 items-center justify-center rounded-full border border-primary-container bg-primary-container text-background-base shadow-[var(--shadow-popover)] transition-colors hover:bg-accent-hover active:scale-[0.96]"
+        // Dulu sebuah lingkaran 48 piksel berisi lambang tanpa teks. Uji
+        // pengguna 7 September 2026: kedua responden menggulir seluruh halaman
+        // tanpa sekali pun menyadari ada asisten di sini — lambang sendirian
+        // tidak menyatakan apa pun tentang fungsinya. Sekarang peluncurnya
+        // berlabel, dan menyusut jadi lingkaran hanya saat panel terbuka,
+        // ketika fungsinya sudah jelas dan lebarnya justru mengganggu.
+        className={
+          open
+            ? 'fixed bottom-20 right-space-16 z-50 flex h-12 w-12 items-center justify-center rounded-full border border-primary-container bg-primary-container text-background-base shadow-[var(--shadow-popover)] transition-colors hover:bg-accent-hover active:scale-[0.96]'
+            : 'fixed bottom-20 right-space-16 z-50 flex h-12 items-center gap-space-8 rounded-full border border-primary-container bg-primary-container pl-space-12 pr-space-16 font-body-md text-body-md font-bold text-background-base shadow-[var(--shadow-popover)] transition-colors hover:bg-accent-hover active:scale-[0.96]'
+        }
       >
-        {open ? <span className="material-symbols-outlined text-[22px]">close</span> : <StocketAiMark />}
+        {open ? (
+          <span className="material-symbols-outlined text-[22px]">close</span>
+        ) : (
+          <>
+            {/* Cakupannya tidak diulang di sini. Peluncur ini melayang di atas
+                isi halaman, jadi setiap huruf tambahan menutupi lebih banyak
+                teks di baliknya — dan subjeknya sudah disebut pada judul panel
+                begitu dibuka, serta pada ajakan di dalam blok jawaban. */}
+            <StocketAiMark />
+            <span className="whitespace-nowrap">Tanya AI</span>
+          </>
+        )}
       </button>
 
       {open && (
         <div
+          ref={panelRef}
           role="dialog"
           aria-label={scopeLabel ? `Tanya AI tentang ${scopeLabel}` : 'Tanya AI'}
           className="fixed bottom-36 right-space-16 z-50 flex max-h-[min(520px,calc(100vh-14rem))] w-[min(92vw,384px)] flex-col overflow-hidden rounded-xl border border-surface-variant bg-surface-card shadow-[var(--shadow-popover)]"

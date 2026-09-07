@@ -62,9 +62,169 @@ function useHashScroll(): void {
   }, [hash, pathname]);
 }
 
+/** Kunci penyimpanan posisi gulir satu halaman, dipisah per alamat. */
+const kunciGulir = (pathname: string) => `gulir:${pathname}`;
+
+/** sessionStorage melempar di sebagian konteks (mode privat tertentu, setelan
+ *  yang memblokir data situs). Posisi gulir bukan hal yang layak menjatuhkan
+ *  halaman, jadi kegagalannya ditelan dan perilakunya kembali ke "mulai dari
+ *  atas". */
+function bacaAngka(kunci: string): number | null {
+  try {
+    const v = sessionStorage.getItem(kunci);
+    if (v === null) return null;
+    const n = Number(v);
+    return Number.isFinite(n) && n > 0 ? n : null;
+  } catch {
+    return null;
+  }
+}
+
+function tulisAngka(kunci: string, nilai: number): void {
+  try {
+    sessionStorage.setItem(kunci, String(Math.round(nilai)));
+  } catch {
+    /* diabaikan dengan sengaja */
+  }
+}
+
+/** Apakah tampilan halaman ini berasal dari muat ulang, bukan dari
+ *  perpindahan halaman di dalam aplikasi. */
+function berasalDariMuatUlang(): boolean {
+  try {
+    const nav = performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming | undefined;
+    return nav?.type === 'reload';
+  } catch {
+    return false;
+  }
+}
+
+// Ditangkap sekali saat modul dimuat, SEBELUM React memasang effect apa pun.
+//
+// Penjaga "sudah pernah dipulihkan" tidak boleh berupa useRef yang diubah di
+// dalam badan effect. React StrictMode memanggil tiap effect dua kali pada mode
+// pengembangan: pemanggilan pertama menghabiskan penjaganya, lalu pemanggilan
+// kedua membaca penjaga yang sudah menyala dan mengambil cabang yang salah —
+// halaman ikut tergulir ke puncak, persis gejala yang dikira sudah selesai.
+// Keadaan di tingkat modul kebal terhadap pemanggilan ganda itu: kedua
+// pemanggilan menghitung keputusan yang sama.
+const PATH_AWAL = typeof window === 'undefined' ? '' : window.location.pathname;
+const DARI_MUAT_ULANG = typeof window === 'undefined' ? false : berasalDariMuatUlang();
+let sudahPindahHalaman = false;
+
+/** Mengingat posisi gulir tiap halaman, dan mengembalikannya saat halaman itu
+ *  dimuat ulang.
+ *
+ *  Perilaku bawaan peramban tidak bisa dipakai apa adanya di sini.
+ *  `history.scrollRestoration` bernilai 'auto', dan pemulihannya terjadi
+ *  segera setelah dokumen siap — padahal halaman emiten baru mengambil datanya
+ *  sesudah itu. Pada detik pemulihan, tinggi halaman masih setinggi rangka
+ *  pemuatan; panel-panelnya menyusul dan mendorong isi ke bawah, sehingga
+ *  pembaca mendarat di bagian yang sama sekali lain. Itulah keluhan aslinya.
+ *
+ *  Percobaan pertama menyelesaikannya dengan selalu kembali ke puncak. Itu
+ *  memang dapat diramalkan, tetapi salah: pembaca yang berhenti di bagian
+ *  berita lalu menyegarkan halaman kehilangan tempatnya. Versi ini memulihkan
+ *  posisinya, hanya saja pemulihan itu dikerjakan sendiri dan DIULANG selama
+ *  halaman masih bertambah tinggi — sampai tingginya benar-benar cukup untuk
+ *  menampung posisi yang dituju.
+ *
+ *  Tiga hal yang sengaja dibedakan:
+ *
+ *    - Muat ulang mengembalikan posisi. Perpindahan halaman di dalam aplikasi
+ *      selalu mulai dari atas, sebab membuka emiten lain lalu mendarat di
+ *      tengah halamannya adalah kejutan, bukan kemudahan.
+ *    - Alamat berhash tidak disentuh; di sana melompat memang maksudnya, dan
+ *      useHashScroll yang menanganinya.
+ *    - Guliran dari pengguna membatalkan pemulihan yang sedang berjalan.
+ *      Tanpa ini, pembaca yang langsung menggulir sendiri sesudah menyegarkan
+ *      halaman akan direbut kembali oleh percobaan pemulihan berikutnya.
+ *
+ *  Catatan: muat ulang biasa dan muat ulang paksa tidak dapat dibedakan dari
+ *  JavaScript — keduanya dilaporkan `performance` sebagai 'reload'. Yang benar-
+ *  benar memulai dari puncak adalah tab baru, sebab ingatan ini disimpan di
+ *  sessionStorage yang memang seumur tab. */
+function useScrollMemory(): void {
+  const { pathname, hash } = useLocation();
+
+  useEffect(() => {
+    if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
+  }, []);
+
+  // Perekam. Ditunda 150 ms supaya satu guliran panjang tidak menulis ratusan
+  // kali, dan ikut disimpan pada 'pagehide' agar gerakan terakhir sebelum
+  // halaman ditinggalkan tidak hilang bersama penundaan itu.
+  useEffect(() => {
+    const kunci = kunciGulir(pathname);
+    let tunda = 0;
+    const simpanSegera = () => tulisAngka(kunci, window.scrollY);
+    const simpan = () => {
+      window.clearTimeout(tunda);
+      tunda = window.setTimeout(simpanSegera, 150);
+    };
+    window.addEventListener('scroll', simpan, { passive: true });
+    window.addEventListener('pagehide', simpanSegera);
+    return () => {
+      window.clearTimeout(tunda);
+      window.removeEventListener('scroll', simpan);
+      window.removeEventListener('pagehide', simpanSegera);
+    };
+  }, [pathname]);
+
+  useEffect(() => {
+    if (hash) return;
+
+    if (pathname !== PATH_AWAL) sudahPindahHalaman = true;
+    const perluDipulihkan = DARI_MUAT_ULANG && !sudahPindahHalaman && pathname === PATH_AWAL;
+
+    // Sasaran dibaca sekali di sini. Pemulih di bawah menggulir sendiri,
+    // guliran itu memicu perekam, dan perekam menimpa nilai tersimpan dengan
+    // posisi antara — jadi nilainya harus sudah dipegang sebelum itu terjadi.
+    const tujuan = perluDipulihkan ? bacaAngka(kunciGulir(pathname)) : null;
+    if (tujuan === null) {
+      window.scrollTo(0, 0);
+      return;
+    }
+
+    let berhenti = false;
+    const hentikan = () => {
+      berhenti = true;
+    };
+    // Hanya isyarat yang benar-benar datang dari pengguna. `scrollTo` milik
+    // pemulih ini ikut memicu event 'scroll', jadi 'scroll' tidak bisa dipakai
+    // sebagai penanda campur tangan — ia akan membatalkan dirinya sendiri.
+    window.addEventListener('wheel', hentikan, { passive: true });
+    window.addEventListener('touchstart', hentikan, { passive: true });
+    window.addEventListener('keydown', hentikan);
+
+    const mulai = Date.now();
+    let waktu = 0;
+    const coba = () => {
+      if (berhenti) return;
+      const maksimum = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
+      window.scrollTo(0, Math.min(tujuan, maksimum));
+      // Selesai begitu halaman cukup tinggi untuk posisi yang dituju. Batas
+      // 5 detik menjaga agar emiten yang panelnya gagal dimuat tidak membuat
+      // percobaan ini berjalan selamanya.
+      if (maksimum >= tujuan || Date.now() - mulai > 5000) return;
+      waktu = window.setTimeout(coba, 100);
+    };
+    coba();
+
+    return () => {
+      berhenti = true;
+      window.clearTimeout(waktu);
+      window.removeEventListener('wheel', hentikan);
+      window.removeEventListener('touchstart', hentikan);
+      window.removeEventListener('keydown', hentikan);
+    };
+  }, [pathname, hash]);
+}
+
 export function App() {
   const marketStatus = useMarketStatus();
   const { theme, toggle: toggleTheme } = useTheme();
+  useScrollMemory();
   useHashScroll();
   // Which nav item is highlighted follows the actual route, rather than a
   // flag pinned to the home link (which left /berita with no active state).

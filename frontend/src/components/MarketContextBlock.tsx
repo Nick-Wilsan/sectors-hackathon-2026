@@ -31,7 +31,7 @@ export function formatSignedPercent(value: number): string {
 
 function Cell({ label, value, glossary }: { label: string; value: string; glossary?: string }) {
   return (
-    <div className="rounded border border-border-subtle/60 bg-surface-container-lowest px-space-8 py-space-6">
+    <div className="rounded border border-border-subtle/60 bg-surface-container-lowest px-space-8 py-space-12">
       <span className="block font-label-mono-sm text-label-mono-sm text-text-muted">
         {glossary ? <GlossaryTerm term={glossary}>{label}</GlossaryTerm> : label}
       </span>
@@ -42,7 +42,7 @@ function Cell({ label, value, glossary }: { label: string; value: string; glossa
 
 export function MarketContextBlock({ context, disclaimer }: { context: MarketRelativeMove; disclaimer: string | null }) {
   return (
-    <div className="border-t border-border-subtle pt-space-8">
+    <div className="border-t border-border-subtle pt-space-16">
       <div className="flex flex-wrap items-center gap-space-8">
         <span className="font-table-header text-table-header uppercase text-text-muted">Dibandingkan pasar</span>
         <span
@@ -52,7 +52,7 @@ export function MarketContextBlock({ context, disclaimer }: { context: MarketRel
         </span>
       </div>
 
-      <div className="mt-space-8 grid grid-cols-2 gap-space-6 sm:grid-cols-4">
+      <div className="mt-space-12 grid grid-cols-2 gap-space-6 sm:grid-cols-4">
         <Cell label="Emiten ini" value={formatSignedPercent(context.stockReturn)} />
         <Cell label={context.indexLabel} value={formatSignedPercent(context.marketReturn)} glossary="IHSG" />
         <Cell
@@ -69,8 +69,12 @@ export function MarketContextBlock({ context, disclaimer }: { context: MarketRel
         )}
       </div>
 
-      <p className="mt-space-6 font-body-sm text-body-sm text-text-secondary">{context.statement}</p>
-      {disclaimer && <p className="mt-space-4 font-body-sm text-body-sm text-text-muted">{disclaimer}</p>}
+      {/* Kalimatnya diberi jarak sepadan dengan deretan sel di atasnya.
+          Dengan jarak 6 piksel, teks ini menempel pada kotak-kotak angka dan
+          terbaca seolah masih bagian dari kotak terakhir, bukan keterangan
+          atas keempatnya. */}
+      <p className="mt-space-16 font-body-sm text-body-sm text-text-secondary">{context.statement}</p>
+      {disclaimer && <p className="mt-space-6 font-body-sm text-body-sm text-text-muted">{disclaimer}</p>}
     </div>
   );
 }

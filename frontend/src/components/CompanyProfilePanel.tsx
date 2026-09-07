@@ -58,12 +58,14 @@ function Fact({
   glossary?: string;
 }) {
   return (
-    <div className="rounded border border-border-subtle/60 bg-surface-container-lowest p-space-8">
-      <span className="block font-body-sm text-body-sm text-text-muted">
+    // Judul memesan dua baris dan catatan didorong ke dasar, supaya nilai dan
+    // catatan tetap sebaris di seluruh kisi meski panjang judulnya berbeda.
+    <div className="flex h-full flex-col rounded border border-border-subtle/60 bg-surface-container-lowest p-space-8">
+      <span className="block min-h-[32px] font-body-sm text-body-sm text-text-muted">
         {glossary ? <GlossaryTerm term={glossary}>{label}</GlossaryTerm> : label}
       </span>
       <span className="block font-body-md text-body-md font-semibold text-text-primary">{value}</span>
-      {note && <span className="block font-label-mono-sm text-label-mono-sm text-text-muted">{note}</span>}
+      {note && <span className="mt-auto block pt-space-2 font-label-mono-sm text-label-mono-sm text-text-muted">{note}</span>}
     </div>
   );
 }
@@ -80,9 +82,15 @@ export function CompanyProfilePanel({
   const maxDividend = Math.max(...paidYears.map((d) => d.totalDividend ?? 0), 1);
 
   return (
+    // `items-start`: tiap kartu setinggi isinya sendiri. Sempat diregangkan
+    // agar dasarnya sejajar, dan itu keliru — pada emiten tanpa riwayat
+    // dividen, kartu kanan berisi satu kalimat tetapi ikut ditarik setinggi
+    // kartu profil, menyisakan rongga ratusan piksel di dalamnya. Celah di
+    // antara dua kartu yang isinya memang berbeda panjang jauh lebih jujur
+    // daripada kartu yang digelembungkan untuk menutupinya.
     <div className="grid grid-cols-1 items-start gap-gutter-terminal xl:grid-cols-2">
       {/* ---------- profil ---------- */}
-      <section className="rounded border border-border-subtle bg-surface-card p-space-16">
+      <section className="flex flex-col rounded border border-border-subtle bg-surface-card p-space-16">
         <div className="flex items-start gap-space-8 border-b border-border-subtle pb-space-12">
           <span className="material-symbols-outlined text-[18px] text-primary-container">apartment</span>
           <div>
@@ -94,7 +102,7 @@ export function CompanyProfilePanel({
         </div>
 
         <div className="mt-space-12 grid grid-cols-2 gap-space-8 sm:grid-cols-3">
-          {profile.listingBoard && <Fact label="Papan pencatatan" value={profile.listingBoard} />}
+          {profile.listingBoard && <Fact label="Papan pencatatan" glossary="Papan pencatatan" value={profile.listingBoard} />}
           {profile.listingDate && (
             <Fact label="Tanggal pencatatan" value={formatDate(profile.listingDate) ?? profile.listingDate} note={yearsListed(profile.listingDate)} />
           )}
@@ -178,7 +186,7 @@ export function CompanyProfilePanel({
       </section>
 
       {/* ---------- dividen ---------- */}
-      <section className="rounded border border-border-subtle bg-surface-card p-space-16">
+      <section className="flex flex-col rounded border border-border-subtle bg-surface-card p-space-16">
         <div className="flex items-start gap-space-8 border-b border-border-subtle pb-space-12">
           <span className="material-symbols-outlined text-[18px] text-state-positive">payments</span>
           <div>
@@ -190,14 +198,22 @@ export function CompanyProfilePanel({
         </div>
 
         {paidYears.length === 0 ? (
-          <p className="mt-space-12 font-body-sm text-body-sm text-text-muted">
-            Emiten ini tidak memiliki riwayat pembagian dividen pada data Sectors.
-          </p>
+          <div className="mt-space-12 flex flex-col items-center gap-space-6 rounded border border-dashed border-border-subtle bg-surface-container-lowest px-space-16 py-space-20 text-center">
+            <span className="material-symbols-outlined text-[24px] text-text-muted">savings</span>
+            <p className="font-body-md text-body-md font-semibold text-text-secondary">Belum pernah membagikan dividen</p>
+            <p className="max-w-[42ch] font-body-sm text-body-sm text-text-muted">
+              Tidak ada satu pun pembagian tercatat pada data Sectors. Sebagian perusahaan memang memilih memakai seluruh
+              labanya untuk tumbuh, bukan membagikannya.
+            </p>
+          </div>
         ) : (
           <>
             <div className="mt-space-12 grid grid-cols-2 gap-space-8 sm:grid-cols-3">
               {payoutRatio !== null && (
-                <Fact label="Payout ratio" glossary="F-Score Piotroski" value={`${(payoutRatio * 100).toFixed(1)}%`} note="Bagian laba yang dibagikan" />
+                // Dulu menunjuk kunci "F-Score Piotroski", sehingga tooltipnya
+                // menjelaskan daftar periksa sembilan poin — istilah yang sama
+                // sekali tidak berhubungan dengan payout ratio.
+                <Fact label="Payout ratio" glossary="Payout ratio" value={`${(payoutRatio * 100).toFixed(1)}%`} note="Bagian laba yang dibagikan" />
               )}
               {dividendYieldAvg !== null && (
                 <Fact
@@ -207,7 +223,9 @@ export function CompanyProfilePanel({
                   note={dividendYieldAvgPeriod ? `Rata-rata ${dividendYieldAvgPeriod} tahun` : null}
                 />
               )}
-              {lastExDividendDate && <Fact label="Ex-date terakhir" value={formatDate(lastExDividendDate) ?? lastExDividendDate} />}
+              {lastExDividendDate && (
+                <Fact label="Ex-date terakhir" glossary="Ex-date" value={formatDate(lastExDividendDate) ?? lastExDividendDate} />
+              )}
             </div>
 
             <ul className="mt-space-12 flex flex-col gap-space-8">
@@ -243,6 +261,11 @@ export function CompanyProfilePanel({
           </>
         )}
 
+        {/* Catatan kaki ini berbicara tentang "angka di atas", jadi ia hanya
+            masuk akal ketika memang ada angka. Pada emiten tanpa riwayat
+            dividen ia sebelumnya tetap tampil dan merujuk sesuatu yang tidak
+            ada di layar. */}
+        {paidYears.length > 0 && (
         <p className="mt-space-12 flex items-start gap-space-4 border-t border-border-subtle pt-space-8 font-body-sm text-body-sm text-text-muted">
           <span className="material-symbols-outlined text-[16px] text-primary">info</span>
           <span>
@@ -250,6 +273,7 @@ export function CompanyProfilePanel({
             <GlossaryTerm term="Dividend Yield">Yield</GlossaryTerm> masa lalu tidak menjamin pembagian berikutnya.
           </span>
         </p>
+        )}
       </section>
     </div>
   );

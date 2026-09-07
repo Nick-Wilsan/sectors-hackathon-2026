@@ -15,6 +15,7 @@ import {
 import type {
   AnomalyResult,
   CandlestickResult,
+  ComponentScoreDetail,
   CompositeScoreResult,
   DailyBar,
   FrameworkResult,
@@ -23,9 +24,10 @@ import type {
   PeerComparisonResult,
   CompanyProfile,
 } from '../api/types';
-import { ScoreBar } from '../components/ScoreBar';
+import { GlossaryTerm } from '../components/GlossaryTerm';
 import { PriceChart, type ChartType, type DrawingTool, type ReadoutBar, type Measurement } from '../components/PriceChart';
 import { PatternPicker } from '../components/PatternPicker';
+import { DisclosurePanel } from '../components/DisclosurePanel';
 import { IndicatorSettings } from '../components/IndicatorSettings';
 import { PatternSimilarityPanel } from '../components/PatternSimilarityPanel';
 import { ChartToolbar, type RangeDays } from '../components/ChartToolbar';
@@ -33,6 +35,8 @@ import { ChartReadout } from '../components/ChartReadout';
 import { DrawingToolbar } from '../components/DrawingToolbar';
 import { FloatingAIChat } from '../components/FloatingAIChat';
 import { EmitenIdentityCard } from '../components/EmitenIdentityCard';
+import { EmitenAnswerCard } from '../components/EmitenAnswerCard';
+import { SectionNav, type SectionLink } from '../components/SectionNav';
 import { SectorContextPanel } from '../components/SectorContextPanel';
 import { ValuationHistoryTable } from '../components/ValuationHistoryTable';
 import { FinancialStatementsPanel } from '../components/FinancialStatementsPanel';
@@ -51,9 +55,22 @@ const STATUS_LABEL: Record<CompositeScoreResult['status'], string> = {
   inadequate: 'Data tidak memadai',
 };
 
-function Panel({ title, icon, children, action }: { title: string; icon: string; children: React.ReactNode; action?: React.ReactNode }) {
+function Panel({
+  title,
+  icon,
+  children,
+  action,
+  id,
+}: {
+  title: string;
+  icon: string;
+  children: React.ReactNode;
+  action?: React.ReactNode;
+  /** Dipakai sebagai sasaran lompat dari daftar isi dan blok jawaban. */
+  id?: string;
+}) {
   return (
-    <div className="rounded border border-border-subtle bg-surface-card p-space-16">
+    <div id={id} className="scroll-mt-[104px] rounded border border-border-subtle bg-surface-card p-space-16">
       <div className="flex items-center justify-between gap-space-8 border-b border-border-subtle pb-space-8">
         <div className="flex items-center gap-space-8">
           <span className="material-symbols-outlined text-[18px] text-primary-container">{icon}</span>
@@ -70,6 +87,50 @@ function Panel({ title, icon, children, action }: { title: string; icon: string;
 // hanya untuk skor gabungannya. Kunci kamus dipisah dari label tampilan karena
 // keduanya memang berbeda: label menyebut "Profitabilitas Modal (ROE)"
 // sementara kamus berkunci "ROE (Return on Equity)".
+/** Nilai mentah satu komponen skor, apa adanya dari laporan emiten.
+ *
+ *  DER adalah perbandingan (5,45x); empat komponen lain dikirim Sectors sebagai
+ *  pecahan (0,1712 = 17,12%). Pembedaan ini sudah ada di FeaturedStockPanel dan
+ *  diulang di sini karena keduanya membaca medan yang sama. */
+function nilaiAsli(key: string, rawValue: number): string {
+  if (key === 'der') return `${rawValue.toFixed(2)}x`;
+  return `${(rawValue * 100).toFixed(2)}%`;
+}
+
+/** Satu baris pada panel Komponen Skor.
+ *
+ *  Panel ini sempat menampilkan persis apa yang sudah ada di blok jawaban di
+ *  atas — label, persentil, dan bobot yang sama — sehingga pembaca yang sudah
+ *  membaca ringkasannya tidak mendapat apa pun di sini. Yang belum terjawab di
+ *  mana pun justru pertanyaan berikutnya: peringkat 95 itu angkanya berapa.
+ *  `rawValue` sudah ikut terkirim pada permintaan skor dan selama ini tidak
+ *  dipakai sama sekali di halaman ini, jadi menampilkannya tidak menambah satu
+ *  pun panggilan API. Bobot sengaja tidak diulang di sini; tempatnya sudah di
+ *  ringkasan atas bersama penjumlahannya. */
+function BarisKomponen({ komponen, glossaryTerm }: { komponen: ComponentScoreDetail; glossaryTerm?: string }) {
+  const nada = komponen.percentile >= 66 ? 'bg-state-positive' : komponen.percentile >= 33 ? 'bg-state-warning' : 'bg-state-negative';
+  return (
+    <div>
+      <div className="flex items-baseline justify-between gap-space-8">
+        <span className="min-w-0 font-body-md text-body-md text-text-secondary">
+          {glossaryTerm ? <GlossaryTerm term={glossaryTerm}>{komponen.label}</GlossaryTerm> : komponen.label}
+        </span>
+        <span className="shrink-0 font-label-mono-lg text-label-mono-lg font-bold tabular-nums text-text-primary">
+          {nilaiAsli(komponen.key, komponen.rawValue)}
+        </span>
+      </div>
+      <div className="mt-space-6 flex items-center gap-space-8">
+        <span className="h-1.5 flex-1 overflow-hidden rounded-full bg-surface-container">
+          <span className={`block h-full rounded-full ${nada}`} style={{ width: `${Math.max(2, Math.min(100, komponen.percentile))}%` }} />
+        </span>
+        <span className="shrink-0 font-label-mono-sm text-label-mono-sm tabular-nums text-text-muted">
+          persentil {komponen.percentile.toFixed(0)}
+        </span>
+      </div>
+    </div>
+  );
+}
+
 const SCORE_GLOSSARY: Record<string, string> = {
   roe: 'ROE',
   netProfitMargin: 'Margin laba',
@@ -118,6 +179,10 @@ export function EmitenDetailPage() {
   const [rsiPeriod, setRsiPeriod] = useState(14);
   const [measurement, setMeasurement] = useState<Measurement | null>(null);
   const chartWrapperRef = useRef<HTMLDivElement>(null);
+  // Dinaikkan tiap kali sesuatu di halaman meminta panel AI dibuka. Uji
+  // pengguna: peluncur melayang di pojok layar tidak disadari satu pun
+  // responden, jadi blok jawaban di atas ikut bisa membukanya.
+  const [aiOpenSignal, setAiOpenSignal] = useState(0);
 
   // Native fullscreen is preferred (it hides browser chrome too), but it is
   // blocked in some embedding contexts and rejects silently. Falling back to an
@@ -303,9 +368,34 @@ export function EmitenDetailPage() {
   const scoredComponents = score.components;
   const expanded = isFullscreen || expandedInPage;
 
+  // Daftar isi hanya menyebut bagian yang benar-benar dirender untuk emiten
+  // ini; menautkan judul ke panel yang tidak ada akan membuat jangkarnya mati.
+  const sections: SectionLink[] = [
+    { id: 'ringkasan-jawaban', label: 'Ringkasan' },
+    { id: 'grafik-harga', label: 'Grafik & Teknikal' },
+    { id: 'komponen-skor', label: 'Komponen Skor' },
+    ...(peer ? [{ id: 'konteks-sektor', label: 'Posisi di Sektor' }] : []),
+    ...(extras && extras.historicalValuation.length > 0 ? [{ id: 'historis-valuasi', label: 'Valuasi' }] : []),
+    ...(extras && extras.historicalFinancials.length > 0 ? [{ id: 'laporan-keuangan', label: 'Laporan Keuangan' }] : []),
+    ...(profile && extras ? [{ id: 'profil-dividen', label: 'Profil & Dividen' }] : []),
+    { id: 'berita-emiten', label: 'Berita' },
+  ];
+
   return (
     <div className="mx-auto flex max-w-[1440px] flex-col gap-space-8 px-space-16 py-space-16">
       <EmitenIdentityCard symbol={symbol} peer={peer} score={score} extras={extras} bars={bars} />
+
+      <SectionNav sections={sections} />
+
+      <div id="ringkasan-jawaban" className="scroll-mt-[104px]">
+        <EmitenAnswerCard
+          symbol={symbol}
+          score={score}
+          peer={peer}
+          extras={extras}
+          onAskAi={() => setAiOpenSignal((n) => n + 1)}
+        />
+      </div>
 
       {peer && <PeerDataWarning failures={peer.fetchFailures} groupSize={peer.groupSize} />}
 
@@ -321,7 +411,14 @@ export function EmitenDetailPage() {
           recommendation the PRD forbids, the second needs an order-flow feed
           Sectors does not provide. The score breakdown and the pattern list
           take that space instead — same layout, real content. */}
-      <div className="grid grid-cols-1 items-start gap-space-8 xl:grid-cols-12">
+      {/* `items-start` dipertahankan: tiap panel memakai tinggi alaminya.
+          Sempat dicoba meregangkan panel terakhir tiap kolom agar dasarnya
+          sejajar, dan hasilnya ditolak dengan alasan yang benar — tinggi kolom
+          kiri berubah-ubah mengikuti panel lipat yang dibuka pembaca, sehingga
+          Deteksi Anomali bisa terentang sampai ratusan piksel berisi udara.
+          Celah di antara dua kolom yang isinya memang berbeda panjang lebih
+          jujur daripada kartu yang digelembungkan untuk menutupinya. */}
+      <div id="grafik-harga" className="grid scroll-mt-[104px] grid-cols-1 items-start gap-space-8 xl:grid-cols-12">
         <div className="flex flex-col gap-space-8 xl:col-span-8">
         <div
           ref={chartWrapperRef}
@@ -431,6 +528,34 @@ export function EmitenDetailPage() {
           />
         )}
 
+{/* Daftar pola pindah ke kolom kiri, tepat di bawah pemilihnya.
+            Keduanya membicarakan hal yang sama — pemilih menentukan pola mana
+            yang ditandai di grafik, daftar ini menyebut kapan tiap pola muncul
+            — sehingga memisahkannya ke rail seberang memaksa mata melompat
+            bolak-balik. Perpindahan ini sekaligus menyeimbangkan tinggi kedua
+            kolom, yang sebelumnya menyisakan ruang kosong panjang di bawah
+            rail kanan. */}
+        {visiblePatterns.length > 0 && (
+          <DisclosurePanel
+            title="Pola Candlestick"
+            icon="candlestick_chart"
+            summary={`Terakhir ${[...visiblePatterns].sort((a, b) => b.date.localeCompare(a.date))[0].label}`}
+            badge={`${visiblePatterns.length} pola`}
+          >
+            <div className="flex flex-col gap-space-4">
+              {[...visiblePatterns]
+                .sort((a, b) => b.date.localeCompare(a.date))
+                .slice(0, 8)
+                .map((m, i) => (
+                  <div key={i} className="flex items-baseline justify-between gap-space-8 font-label-mono-sm text-label-mono-sm">
+                    <span className="text-text-muted">{m.date}</span>
+                    <span className="font-semibold text-text-secondary">{m.label}</span>
+                  </div>
+                ))}
+            </div>
+          </DisclosurePanel>
+        )}
+
         {indicators && indicators.status === 'ok' && (
           <IndicatorSettings
             indicators={indicators}
@@ -443,13 +568,16 @@ export function EmitenDetailPage() {
           />
         )}
 
-        <PriceStatsPanel bars={visibleBars} rangeLabel={RANGE_LABEL[rangeDays]} />
-
         {anomaly && anomaly.status === 'ok' && <AnomalyPanel anomaly={anomaly} />}
         </div>
 
         <div className="flex flex-col gap-space-8 xl:col-span-4">
+          {/* Jangkarnya menempel di panel ini, bukan di pembungkus rail:
+              pembungkusnya bermula sejajar dengan puncak grafik, sehingga
+              melompat ke sana mendaratkan pembaca di depan grafik dan bukan
+              di depan bagian yang dimaksud. */}
           <Panel
+            id="komponen-skor"
             title="Komponen Skor"
             icon="analytics"
             action={
@@ -458,17 +586,29 @@ export function EmitenDetailPage() {
           >
             {scoredComponents.length > 0 ? (
               <>
-                <p className="mb-space-8 font-body-sm text-body-sm text-text-muted">
-                  Persentil terhadap {scoredComponents[0].groupSize} emiten sub-sektor yang sama.
-                </p>
+                <div className="mb-space-12 rounded border border-border-subtle bg-surface-container-lowest p-space-8">
+                  <p className="font-body-md text-body-md leading-relaxed text-text-muted">
+                    Angka yang <strong className="text-text-primary">benar-benar dilaporkan</strong>{' '}
+                    {symbol.toUpperCase().replace(/\.JK$/, '')}, di balik tiap peringkat yang dijumlahkan pada ringkasan di
+                    atas. Batangnya menyatakan posisi terhadap{' '}
+                    <strong className="text-text-primary">{scoredComponents[0].groupSize} emiten</strong> sub-sektor yang sama.
+                  </p>
+                  <p className="mt-space-6 flex flex-wrap items-center gap-x-space-8 gap-y-space-4 border-t border-border-subtle pt-space-6 font-label-mono-sm text-label-mono-sm">
+                    <span className="text-state-negative">persentil 0 = terburuk</span>
+                    <span className="text-text-muted">&middot;</span>
+                    <span className="text-state-warning">50 = pertengahan</span>
+                    <span className="text-text-muted">&middot;</span>
+                    <span className="text-state-positive">100 = terbaik</span>
+                  </p>
+                </div>
                 {!scoredComponents[0].groupSizeAdequate && (
                   <p className="mb-space-8 rounded border border-state-warning/40 bg-state-warning/10 px-space-8 py-space-6 font-body-sm text-body-sm text-state-warning">
                     Kelompok pembanding hanya {scoredComponents[0].groupSize} emiten &mdash; terlalu sedikit untuk persentil yang bermakna.
                   </p>
                 )}
-                <div className="flex flex-col gap-space-8">
+                <div className="flex flex-col gap-space-12">
                   {scoredComponents.map((c) => (
-                    <ScoreBar key={c.key} label={c.label} value={c.percentile} glossaryTerm={SCORE_GLOSSARY[c.key]} />
+                    <BarisKomponen key={c.key} komponen={c} glossaryTerm={SCORE_GLOSSARY[c.key]} />
                   ))}
                 </div>
               </>
@@ -479,39 +619,37 @@ export function EmitenDetailPage() {
 
           {framework && <FScorePanel framework={framework} />}
 
-          {visiblePatterns.length > 0 && (
-            <Panel
-              title="Pola Candlestick"
-              icon="candlestick_chart"
-              action={<span className="font-label-mono-sm text-label-mono-sm text-text-muted">{visiblePatterns.length} pola</span>}
-            >
-              <div className="flex flex-col gap-space-4">
-                {[...visiblePatterns]
-                  .sort((a, b) => b.date.localeCompare(a.date))
-                  .slice(0, 8)
-                  .map((m, i) => (
-                    <div key={i} className="flex items-baseline justify-between gap-space-8 font-label-mono-sm text-label-mono-sm">
-                      <span className="text-text-muted">{m.date}</span>
-                      <span className="font-semibold text-text-secondary">{m.label}</span>
-                    </div>
-                  ))}
-              </div>
-            </Panel>
-          )}
+          {/* Statistik harga dipindahkan dari kolom kiri ke rail ini. Kolom
+              kiri memuat grafik setinggi 480 piksel beserta seluruh kendalinya
+              sehingga jauh lebih jangkung daripada rail, dan sisa ruang di
+              bawah daftar pola tertinggal kosong. Panel ini tetap berdampingan
+              dengan grafik yang diringkasnya — rentangnya memang mengikuti
+              rentang grafik — sekaligus mengisi ruang yang menganggur itu. */}
+          <PriceStatsPanel bars={visibleBars} rangeLabel={RANGE_LABEL[rangeDays]} />
+
         </div>
       </div>
 
-      {peer && <SectorContextPanel symbol={symbol} peer={peer} score={score} extras={extras} />}
+      {peer && (
+        <div id="konteks-sektor" className="scroll-mt-[104px]">
+          <SectorContextPanel symbol={symbol} peer={peer} score={score} extras={extras} />
+        </div>
+      )}
 
       {extras && extras.historicalValuation.length > 0 && (
-        <ValuationHistoryTable symbol={symbol} rows={extras.historicalValuation} />
+        <div id="historis-valuasi" className="scroll-mt-[104px]">
+          <ValuationHistoryTable symbol={symbol} rows={extras.historicalValuation} />
+        </div>
       )}
 
       {extras && extras.historicalFinancials.length > 0 && (
-        <FinancialStatementsPanel symbol={symbol} rows={extras.historicalFinancials} />
+        <div id="laporan-keuangan" className="scroll-mt-[104px]">
+          <FinancialStatementsPanel symbol={symbol} rows={extras.historicalFinancials} />
+        </div>
       )}
 
       {profile && extras && (
+        <div id="profil-dividen" className="scroll-mt-[104px]">
         <CompanyProfilePanel
           profile={profile}
           dividendHistory={extras.dividendHistory}
@@ -520,6 +658,7 @@ export function EmitenDetailPage() {
           dividendYieldAvgPeriod={extras.dividendYieldAvgPeriod}
           lastExDividendDate={extras.lastExDividendDate}
         />
+        </div>
       )}
 
       {(showMA || showRsi) && indicators?.status === 'ok' && (
@@ -531,7 +670,9 @@ export function EmitenDetailPage() {
         </Panel>
       )}
 
-      <EmitenNewsPanel key={symbol} symbol={symbol} />
+      <div id="berita-emiten" className="scroll-mt-[104px]">
+        <EmitenNewsPanel key={symbol} symbol={symbol} />
+      </div>
 
       <PatternSimilarityPanel symbol={symbol} variant="card" />
 
@@ -539,8 +680,12 @@ export function EmitenDetailPage() {
         scopeLabel={symbol.toUpperCase()}
         scopeNote="Hanya menjelaskan data yang sudah dihitung di halaman ini — bukan rekomendasi investasi."
         ask={(q) => askAboutEmiten(symbol, q)}
+        openSignal={aiOpenSignal}
         suggestions={[
-          'Apa arti Skor Komposit di atas?',
+          // Disusun ulang mengikuti pertanyaan yang benar-benar diucapkan
+          // responden saat uji pengguna, bukan tebakan penulisnya.
+          'Angka Skor Komposit itu dihitung dari apa saja?',
+          'Apa bedanya perusahaan bagus dan saham yang harganya murah?',
           'Kenapa DER-nya segitu?',
           'Jelaskan hasil framework investasinya',
         ]}

@@ -124,9 +124,20 @@ export function GlossaryTerm({ term, children, className = '' }: GlossaryTermPro
         onFocus={buka}
         onBlur={() => setOpen(false)}
         onClick={() => (open ? setOpen(false) : buka())}
-        className="cursor-help border-b border-dotted border-text-muted text-left decoration-dotted underline-offset-4 transition-colors hover:border-primary hover:text-primary focus:border-primary focus:text-primary focus:outline-none"
+        className="group cursor-help border-b border-dotted border-text-muted text-left decoration-dotted underline-offset-4 transition-colors hover:border-primary hover:text-primary focus:border-primary focus:text-primary focus:outline-none"
       >
         {children}
+        {/* Uji pengguna 7 September 2026: kedua responden membaca seluruh
+            halaman tanpa menyadari istilahnya bisa disorot. Garis titik-titik
+            sendirian ternyata terbaca sebagai gaya teks, bukan sebagai ajakan.
+            Tanda tanya kecil ini menyatakan maksudnya secara harfiah — dan
+            penting untuk layar sentuh, yang tidak punya hover sama sekali
+            sehingga garisnya di sana tidak pernah berubah warna.
+            aria-hidden: pembaca layar sudah mendapat maksud yang sama dari
+            aria-label tombolnya, jadi tanpa ini ia terbaca dua kali. */}
+        <sup aria-hidden className="ml-[2px] font-label-mono-sm text-[9px] font-bold text-primary transition-opacity opacity-70 group-hover:opacity-100">
+          ?
+        </sup>
       </button>
 
       {open && pos && (
