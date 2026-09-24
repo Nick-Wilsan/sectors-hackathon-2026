@@ -84,9 +84,15 @@ export async function getMarketAnomalyScan(): Promise<MarketAnomalyScan> {
     }
   });
 
-  // The index moved the same amount for every row; taking it from whichever
-  // row has it avoids restating the same number eight times in the UI.
-  const marketReturn = rows.find((r) => r.marketContext)?.marketContext?.marketReturn ?? null;
+  // Stated once in the strip header, so it must be the index move for the
+  // latest session. Taking it from whichever row came first was wrong whenever
+  // that row's series ended earlier than the others (a halted emiten, or a
+  // series cached on an earlier day): the header then quoted IHSG for 4 Sep
+  // beside rows judged on 22 Sep.
+  const latest = rows
+    .filter((r) => r.marketContext && r.date)
+    .reduce<MarketAnomalyRow | null>((best, r) => (!best || r.date! > best.date! ? r : best), null);
+  const marketReturn = latest?.marketContext?.marketReturn ?? null;
 
   return {
     scannedAt: new Date().toISOString(),

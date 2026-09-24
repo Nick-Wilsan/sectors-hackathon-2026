@@ -51,9 +51,15 @@ export const GLOSSARY: GlossaryTerm[] = [
     // memegang dua konsep abstrak sekaligus tanpa satu pun contoh angka.
     // Versi ini memberi contoh lebih dulu, lalu menutup salah paham yang
     // benar-benar muncul di uji: skor tinggi dikira berarti sahamnya murah.
+    //
+    // Dikoreksi 24 Sep 2026: versi sebelumnya menyebut skor 78 berarti "lebih
+    // baik daripada 78 dari tiap 100 pesaing". Itu definisi persentil, bukan
+    // skor komposit — skornya RATA-RATA TERTIMBANG lima persentil. BBCA skor 78
+    // tapi peringkat 2 dari 48, jadi kalimat lama bertentangan dengan angka
+    // peringkat di halaman yang sama, dan asisten AI ikut mengulanginya.
     term: 'Skor Komposit',
     definition:
-      'Nilai nol sampai seratus yang menunjukkan posisi sebuah perusahaan di antara pesaing sebidangnya. Skor 78 berarti keuangannya lebih baik daripada sekitar 78 dari tiap 100 pesaingnya. Harga sahamnya sama sekali tidak ikut dihitung, jadi skor tinggi tidak berarti sahamnya sedang murah.',
+      'Lima ukuran keuangan dirangkum menjadi satu angka nol sampai seratus. Tiap ukuran diperingkat terhadap pesaing sebidangnya, lalu kelima peringkat itu dirata-rata dengan bobot. Skor 78 berarti rata-rata peringkatnya 78 dari 100, bukan berarti lebih baik dari 78 persen pesaing; urutan persisnya ditampilkan terpisah. Harga sahamnya sama sekali tidak ikut dihitung, jadi skor tinggi tidak berarti sahamnya sedang murah.',
   },
 
   {

@@ -1,4 +1,5 @@
 import { sectorsGet } from './sectorsClient.js';
+import { DAILY_TTL_MS } from './cache.js';
 import type { NewsArticle, NewsResult } from './types.js';
 
 interface RawNewsItem {
@@ -54,6 +55,7 @@ export async function getNews(params: GetNewsParams = {}): Promise<NewsResult> {
       limit: params.limit,
       offset: params.offset,
     },
+    cacheTtlMs: DAILY_TTL_MS,
   });
 
   const articles: NewsArticle[] = raw.results.map((item) => ({

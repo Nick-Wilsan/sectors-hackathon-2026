@@ -1,4 +1,5 @@
 import { sectorsGet } from './sectorsClient.js';
+import { DAILY_TTL_MS } from './cache.js';
 import type { DailyBar, DailySeries } from './types.js';
 
 interface RawDailyItem {
@@ -24,9 +25,17 @@ export interface GetDailySeriesParams {
  * The API clamps any requested window to the most recent 90 days — pass a
  * `start` more than 90 days before `end` and you'll silently get fewer rows.
  */
-export async function getDailySeries(symbol: string, params: GetDailySeriesParams = {}): Promise<DailySeries> {
+export async function getDailySeries(
+  symbol: string,
+  params: GetDailySeriesParams = {},
+  cacheTtlMs: number = DAILY_TTL_MS,
+): Promise<DailySeries> {
   const raw = await sectorsGet<RawDailyItem[]>(`/v2/daily/${encodeURIComponent(symbol)}/`, {
     params: { start: params.start, end: params.end },
+    // Prices move daily. Under the 30-day default an emiten page kept showing
+    // Monday's close all week while the IHSG chart beside it was current.
+    // Callers that only need history (not the latest bar) may accept older data.
+    cacheTtlMs,
   });
 
   const bars: DailyBar[] = raw.map((item) => ({

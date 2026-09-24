@@ -103,7 +103,15 @@ export interface FundamentalExtras {
 }
 
 export async function getFundamentalExtras(symbol: string): Promise<FundamentalExtras> {
-  const report = await getCompanyReport(symbol, ['valuation', 'dividend', 'financials']);
+  // Two requests, not one: valuation carries the daily close and refreshes
+  // daily, while dividend and financials are annual and stay cached for weeks.
+  // One combined URL would re-buy all three sections every day. The valuation
+  // URL is also the one the dashboard's valuation panel uses, so they share cache.
+  const [valuationReport, annualReport] = await Promise.all([
+    getCompanyReport(symbol, ['valuation']),
+    getCompanyReport(symbol, ['dividend', 'financials']),
+  ]);
+  const report = { ...annualReport, valuation: valuationReport.valuation };
 
   const valuationYears = (report.valuation?.historical_valuation as RawHistoricalValuationYear[] | undefined) ?? [];
   const latestValuation = [...valuationYears].sort((a, b) => b.year - a.year)[0];

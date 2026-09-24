@@ -1,6 +1,6 @@
 import { getCompanyReport } from '../data/companyReport.js';
 import { slugify } from '../data/slug.js';
-import { getScoredCompaniesInSubSector } from './screener.js';
+import { getScoredCompaniesInSubSector, DEFAULT_GROUP_LIMIT } from './screener.js';
 import { SCORE_COMPONENTS, type CompositeScoreResult } from './score.js';
 
 export interface CompositeScoreOptions {
@@ -10,7 +10,6 @@ export interface CompositeScoreOptions {
 
 // Empirically, IDX sub-sectors top out well under 100 companies (Banks, one
 // of the largest, has 48) — 150 leaves headroom while still bounding cost.
-const DEFAULT_GROUP_LIMIT = 150;
 
 /**
  * Single source of truth for "what is this company's composite score."

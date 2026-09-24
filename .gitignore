@@ -1,58 +1,85 @@
-# Dependencies
+# =============================================================
+# Dependensi & keluaran build
+# =============================================================
 node_modules/
-
-# Environment variables (never commit real API keys)
-.env
-.env.local
-backend/.env
-
-# Build output
 dist/
 build/
 frontend/dist/
 
-# Cache (local dev only, avoids re-spending Sectors API credits)
-backend/.cache/
+# =============================================================
+# Rahasia — jangan pernah masuk repo
+# =============================================================
+.env
+.env.local
+backend/.env
 
-# Logs
+# =============================================================
+# Cache & log lokal
+# =============================================================
+# Cache respons Sectors: hanya untuk dev lokal, menghindari kredit API
+# terpakai ulang. Isinya juga data pihak ketiga yang tidak untuk diedarkan.
+# Pola berbintang juga menangkap salinan cadangan seperti .cache-backup-23sep/.
+backend/.cache/
+backend/.cache*/
 *.log
 npm-debug.log*
 
-# Editor / OS
+# =============================================================
+# Editor, OS, dan berkas kunci Office
+# =============================================================
 .vscode/
 .DS_Store
 Thumbs.db
-
-# Office lock files
 ~$*
-
-# Local design-reference screenshots of third-party sites — never publish
-# these to the public repo (copyright/redistribution risk).
-Img Referensi/
-
-# --- Berkas kerja: sengaja tidak dipublikasikan ---
-# Mockup acuan, catatan kerja internal, dan brief desain tetap di komputer
-# pengerja. docs/ TIDAK diabaikan: PRD, Technical Spec, API & Data Dictionary
-# dan Roadmap adalah jejak keputusan teknik yang menjadi bukti kedalaman
-# eksekusi, jadi dipublikasikan bersama kode.
-frontend/Mockup/
-handoffprompt.md
-design-brief.html
-
-# Video iklan pihak ketiga yang dipakai sebagai acuan gaya. Berhak cipta milik
-# pemiliknya masing-masing dan tidak boleh ikut ke repo publik.
-Referensi Ads Motion Graphic/
 
 # Konfigurasi alat bantu lokal
 .claude/
 
-# Boilerplate template Vite, bukan dokumentasi proyek
-frontend/README.md
+# =============================================================
+# Materi pihak ketiga — risiko hak cipta bila dipublikasikan
+# =============================================================
+# Tangkapan layar situs lain yang dipakai sebagai acuan desain.
+Img Referensi/
 
-
-# Bahan riset & referensi pribadi, bukan materi proyek
-Yt Summary/
+# Video iklan pihak ketiga yang dipakai sebagai acuan gaya motion graphic.
+# Hak ciptanya milik pemiliknya masing-masing.
 Referensi Ads Motion Graphic/
 
-# Roadmap: dokumen kerja internal, tidak dinilai juri
+# Transkrip YouTube yang dipakai sebagai bahan riset struktur video.
+Yt Summary/
+
+# =============================================================
+# Dokumen kerja internal
+# =============================================================
+# docs/ TIDAK diabaikan seluruhnya: PRD, Technical Spec, dan API & Data
+# Dictionary adalah jejak keputusan teknik yang menjadi bukti kedalaman
+# eksekusi, jadi dipublikasikan bersama kode. Yang dikecualikan di bawah
+# adalah dokumen kerja yang tidak dinilai juri.
+frontend/Mockup/
+handoffprompt.md
+design-brief.html
+
+# Roadmap dan salinan cadangannya: perencanaan internal, bukan bukti teknis.
 docs/Roadmap Solo Sectors Hackathon*.xlsx
+
+# Boilerplate template Vite, bukan dokumentasi proyek.
+frontend/README.md
+
+# =============================================================
+# Bahan produksi video
+# =============================================================
+# Naskah, berkas suara, dan brief editor adalah perkakas pembuatan video.
+# Yang dinilai juri adalah video jadinya, bukan perancahnya. Berkas suara
+# juga biner besar (±3 MB) yang membengkakkan riwayat git selamanya.
+#
+# Kalau nanti kamu memutuskan naskahnya justru layak dipublikasikan sebagai
+# bukti disiplin proses — tabel angka terkunci, batas kepatuhan, dan catatan
+# klaim yang sengaja dibuang — cukup hapus satu baris "Skrip Video" di bawah.
+Audio/
+docs/Skrip Video*.docx
+docs/VO Blok*.txt
+docs/Brief Editor*.docx
+docs/Daftar Adegan*.txt
+
+# Materi unggahan media sosial (sampul pengumpulan bertemplat penyelenggara).
+Post/

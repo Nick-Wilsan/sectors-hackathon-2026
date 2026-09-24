@@ -7,7 +7,8 @@ function formatCompact(value: number): string {
   const abs = Math.abs(value);
   if (abs >= 1e9) return `${(value / 1e9).toLocaleString('id-ID', { maximumFractionDigits: 2 })} mlr`;
   if (abs >= 1e6) return `${(value / 1e6).toLocaleString('id-ID', { maximumFractionDigits: 1 })} jt`;
-  return value.toLocaleString('id-ID', { maximumFractionDigits: 2 });
+  if (abs >= 1e3) return `${(value / 1e3).toLocaleString('id-ID', { maximumFractionDigits: 1 })} rb`;
+  return value.toLocaleString('id-ID', { maximumFractionDigits: 0 });
 }
 
 /** Volume metrics are share counts; the return metric is a ratio. */
@@ -74,6 +75,11 @@ function Row({ row }: { row: MarketAnomalyRow }) {
 export function MarketAnomalyStrip({ scan }: { scan: MarketAnomalyScan }) {
   const flagged = scan.rows.filter((r) => r.hasAnomaly).length;
   const tested = scan.rows.filter((r) => r.status === 'ok').length;
+  // Sectors publishes the IHSG bar for a session later than the emiten bars,
+  // so for part of the day the market comparison simply has nothing to use.
+  // Say so instead of letting the promised comparison vanish without a word.
+  const latestDate = scan.rows.reduce<string | null>((d, r) => (r.date && (!d || r.date > d) ? r.date : d), null);
+  const indexPending = latestDate !== null && scan.rows.every((r) => r.marketContext === null);
 
   return (
     <div className="rounded border border-border-subtle bg-surface-card p-space-16">
@@ -114,6 +120,7 @@ export function MarketAnomalyStrip({ scan }: { scan: MarketAnomalyScan }) {
         <span>
           Ambang: {scan.threshold}σ dari rata-rata 90 hari. Penyimpangan terukur saja &mdash; tidak menyatakan penyebab maupun
           arah lanjutan harga. {scan.marketContextDisclaimer}
+          {indexPending && ` Data IHSG untuk sesi ${latestDate} belum tersedia dari sumber data, sehingga perbandingan dengan pasar belum dapat ditampilkan.`}
         </span>
       </p>
     </div>

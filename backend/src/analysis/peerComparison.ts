@@ -1,6 +1,6 @@
 import { getCompanyReport } from '../data/companyReport.js';
 import { slugify } from '../data/slug.js';
-import { getScoredCompaniesInSubSector } from './screener.js';
+import { getScoredCompaniesInSubSector, DEFAULT_GROUP_LIMIT } from './screener.js';
 import type { ComponentScoreDetail, CompositeScoreResult } from './score.js';
 
 // F-03 Perbandingan Peer dan Sektor.
@@ -29,9 +29,6 @@ export interface PeerComparisonResult {
   /** Peers whose report failed to download and are therefore missing from the percentile group. */
   fetchFailures: number;
 }
-
-// Same rationale as scoreService.ts: covers the largest known IDX sub-sector with headroom.
-const DEFAULT_GROUP_LIMIT = 150;
 
 export async function getPeerComparison(symbol: string, options: { limit?: number } = {}): Promise<PeerComparisonResult> {
   const limit = options.limit ?? DEFAULT_GROUP_LIMIT;

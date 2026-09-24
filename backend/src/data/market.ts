@@ -1,9 +1,5 @@
 import { sectorsGet } from './sectorsClient.js';
-
-// Market widgets are the only payloads that move daily, so they get a shorter
-// TTL than the 30-day default — but one calendar day, not 6h, so a single
-// evening of work cannot pay for the same index chart more than once.
-const MARKET_TTL_MS = 24 * 60 * 60 * 1000;
+import { DAILY_TTL_MS as MARKET_TTL_MS } from './cache.js';
 
 // Market-wide overview data (landing page): IHSG index chart, total IDX
 // market cap, and today's top gainers/losers. Not tied to any single emiten.
@@ -75,7 +71,7 @@ function toMoverRow(r: RawMoverRow): MoverRow {
   return { symbol: r.symbol, companyName: r.name, priceChange: r.price_change, lastClosePrice: r.last_close_price, latestCloseDate: r.latest_close_date };
 }
 
-/** Today's (1d) top gainers/losers — 2 credits (1 per classification), cached 6h. */
+/** Today's (1d) top gainers/losers — 2 credits (1 per classification), cached 24h. */
 export async function getTopMoversToday(nStock = 8): Promise<TopMovers> {
   const raw = await sectorsGet<RawTopChangesResponse>('/v2/companies/top-changes/', {
     params: { classifications: 'top_gainers,top_losers', periods: '1d', n_stock: nStock },
@@ -109,7 +105,7 @@ interface RawMostTradedRow {
   price: number;
 }
 
-/** Most actively traded stocks by volume, most recent day — 2 credits, cached 6h. */
+/** Most actively traded stocks by volume, most recent day — 2 credits, cached 24h. */
 export async function getMostTradedToday(nStock = 8): Promise<MostTradedRow[]> {
   const raw = await sectorsGet<Record<string, RawMostTradedRow[]>>('/v2/most-traded/', {
     params: { n_stock: nStock },
@@ -138,7 +134,7 @@ export async function getMostTradedToday(nStock = 8): Promise<MostTradedRow[]> {
   });
 }
 
-/** Multiple indices in one shot — 1 credit each, cached 6h. Powers the Sectors.app-style index chip row. */
+/** Multiple indices in one shot — 1 credit each, cached 24h. Powers the Sectors.app-style index chip row. */
 export async function getMultipleIndices(codes: string[]): Promise<Record<string, IndexPoint[]>> {
   const entries = await Promise.all(
     codes.map(async (code) => {

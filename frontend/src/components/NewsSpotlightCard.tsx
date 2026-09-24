@@ -151,7 +151,8 @@ export function NewsSpotlightCard({ articles }: { articles: NewsArticleFull[] })
           <span className="h-1.5 w-1.5 rounded-full bg-state-positive" />
           Disaring otomatis oleh Stocket dari data Sectors
         </span>
-        <span className="font-label-mono-sm text-label-mono-sm text-text-secondary">Pembaruan: Tiap 10 Menit</span>
+        {/* Sesuai DAILY_TTL_MS di backend/src/data/cache.ts, bukan klaim mockup. */}
+        <span className="font-label-mono-sm text-label-mono-sm text-text-secondary">Pembaruan: Harian</span>
       </div>
     </div>
   );

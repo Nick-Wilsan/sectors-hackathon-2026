@@ -3,6 +3,7 @@ import { getCompositeScoreForSymbol } from '../analysis/scoreService.js';
 import { getPeerComparison } from '../analysis/peerComparison.js';
 import { evaluatePiotroskiAdapted } from '../analysis/framework.js';
 import { getAnomalyWithContext } from '../analysis/anomalyService.js';
+import { getFundamentalExtras } from '../analysis/fundamentalExtras.js';
 import { glossaryAsContext } from './glossary.js';
 
 // Assembles the ONLY thing the AI layer is allowed to see: structured output
@@ -43,16 +44,31 @@ export interface EmitenAiContext {
     } | null;
     catatan: string;
   };
+  valuasi: {
+    hargaPenutupanTerakhir: number | null;
+    tanggalHarga: string | null;
+    tahunBuku: number | null;
+    pe: number | null;
+    rataRataPePeer: number | null;
+    pbv: number | null;
+    rentangPeHistoris: { tahunAwal: number; tahunAkhir: number; terendah: number; tertinggi: number } | null;
+    catatan: string;
+  };
   kamusIstilah: Record<string, string>;
 }
 
 export async function buildEmitenAiContext(symbol: string): Promise<EmitenAiContext> {
-  const [score, peer, report, anomaly] = await Promise.all([
+  // Valuation is the second question the page answers ("harganya sedang di
+  // mana?"). Without it the assistant told readers there was no P/E data while
+  // the page's largest number was the P/E. Same cached payload as the page.
+  const [score, peer, report, anomaly, extras] = await Promise.all([
     getCompositeScoreForSymbol(symbol),
     getPeerComparison(symbol),
     getCompanyReport(symbol, ['financials']),
     getAnomalyWithContext(symbol),
+    getFundamentalExtras(symbol),
   ]);
+  const peHistory = extras.historicalValuation.filter((v): v is typeof v & { pe: number } => v.pe !== null && v.pe > 0);
   const framework = evaluatePiotroskiAdapted(symbol, report.financials);
 
   return {
@@ -102,6 +118,26 @@ export async function buildEmitenAiContext(symbol: string): Promise<EmitenAiCont
       catatan:
         'Anomali adalah pernyataan statistik semata (penyimpangan terhadap sebaran historis), bukan penyebab maupun perkiraan kelanjutan pergerakan harga. ' +
         'konteksPasar hanya memisahkan bagian pergerakan yang juga terjadi pada IHSG dari yang tidak; dilarang menyebutkannya sebagai sebab, peristiwa, atau alasan.',
+    },
+    valuasi: {
+      hargaPenutupanTerakhir: extras.lastClosePrice,
+      tanggalHarga: extras.latestCloseDate,
+      tahunBuku: extras.year,
+      pe: extras.pe,
+      rataRataPePeer: extras.pePeerAvg,
+      pbv: extras.pb,
+      rentangPeHistoris:
+        peHistory.length > 0
+          ? {
+              tahunAwal: peHistory[0].year,
+              tahunAkhir: peHistory[peHistory.length - 1].year,
+              terendah: Math.min(...peHistory.map((v) => v.pe)),
+              tertinggi: Math.max(...peHistory.map((v) => v.pe)),
+            }
+          : null,
+      catatan:
+        'Valuasi hanya boleh dinyatakan sebagai posisi relatif terhadap pembanding (di atas/di bawah rata-rata peer, di bagian atas/bawah rentang historisnya sendiri). ' +
+        'Dilarang menyimpulkan saham ini murah, mahal, layak, atau terlalu tinggi harganya. P/E dengan laba negatif tidak bermakna dan tidak boleh ditafsirkan.',
     },
     kamusIstilah: glossaryAsContext(),
   };

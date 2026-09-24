@@ -32,7 +32,7 @@ export async function sectorsGet<T>(path: string, options: SectorsRequestOptions
   }
 
   const cacheKey = url.toString();
-  const cached = getCached<T>(cacheKey);
+  const cached = getCached<T>(cacheKey, options.cacheTtlMs);
   if (cached) return cached;
 
   const pending = inFlight.get(cacheKey);

@@ -11,6 +11,16 @@ import { computeCompositeScore, extractRatios, SCORE_COMPONENTS, type ComponentK
 // sub-sector — every filter/sort/rank on score or ratio values below is our
 // own code, computed from data this app already fetched for F-01.
 
+/**
+ * How many companies of a sub-sector are fetched as its percentile group.
+ * The ONE value every score surface must share — screener, detail page, peer
+ * table, dashboard cards. Percentiles depend on who is in the group, so two
+ * surfaces with different limits show the same emiten two different scores:
+ * food-beverage has 102 members, and a limit of 100 used to drop two of them
+ * from the screener while the detail page ranked against all 102.
+ */
+export const DEFAULT_GROUP_LIMIT = 150;
+
 export interface ScoredCompany extends CompositeScoreResult {
   companyName: string;
 }
@@ -27,7 +37,7 @@ export async function getScoredCompaniesInSubSector(
 ): Promise<{ companies: ScoredCompany[]; groupSize: number; fetchFailures: number }> {
   const listing = await searchCompanies({
     where: `sub_sector = '${subSectorSlug}'`,
-    limit: options.limit ?? 100,
+    limit: options.limit ?? DEFAULT_GROUP_LIMIT,
   });
 
   // A null `ratios` used to mean two different things — the company genuinely

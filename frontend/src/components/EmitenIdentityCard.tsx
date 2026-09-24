@@ -186,7 +186,7 @@ export function EmitenIdentityCard({ symbol, peer, score, extras, bars }: Props)
               <p className="mt-space-4 font-body-sm text-body-sm text-text-muted">Data tidak memadai untuk diberi skor.</p>
             )}
             <span className="mt-space-2 block font-label-mono-sm text-label-mono-sm text-text-muted">
-              <GlossaryTerm term="Persentil">Persentil</GlossaryTerm> terhadap emiten satu{' '}
+              Rata-rata <GlossaryTerm term="Persentil">persentil</GlossaryTerm> terhadap emiten satu{' '}
               <GlossaryTerm term="Sub-sektor">sub-sektor</GlossaryTerm>
             </span>
           </div>

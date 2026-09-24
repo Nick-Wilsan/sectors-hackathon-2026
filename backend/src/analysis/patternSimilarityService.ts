@@ -5,6 +5,7 @@ import { getPeerComparison } from './peerComparison.js';
 import { computePatternSimilarity, type CandidateSeries, type PatternSimilarityResult } from './patternSimilarity.js';
 
 const DEFAULT_CANDIDATE_LIMIT = 15;
+const PEER_HISTORY_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 
 export interface PatternSimilarityOptions {
   /** Bounds how many peer companies' price history get fetched (credit cost). */
@@ -34,7 +35,10 @@ export async function getPatternSimilarity(
 
   const candidates = await mapWithConcurrency(candidatePeers, 5, async (p): Promise<CandidateSeries | null> => {
     try {
-      const series = await getDailySeries(p.symbol, recentRange(90));
+      // Peers are searched for HISTORICAL look-alike windows, so a series a few
+      // days old serves as well as today's. A daily TTL here would re-buy up to
+      // 15 peer series per emiten every day for no visible difference.
+      const series = await getDailySeries(p.symbol, recentRange(90), PEER_HISTORY_TTL_MS);
       return { symbol: p.symbol, companyName: p.companyName, bars: series.bars };
     } catch {
       return null;

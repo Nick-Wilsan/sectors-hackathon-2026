@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { getScoredCompaniesInSubSector, screenCompanies, type ComponentRange, type ScreenerParams } from '../analysis/screener.js';
+import { getScoredCompaniesInSubSector, screenCompanies, DEFAULT_GROUP_LIMIT, type ComponentRange, type ScreenerParams } from '../analysis/screener.js';
 import { SCORE_COMPONENTS, type ComponentKey } from '../analysis/score.js';
 
 export const screenerRouter = Router();
@@ -36,7 +36,7 @@ screenerRouter.get('/', async (req, res) => {
 
   try {
     const { companies, groupSize, fetchFailures } = await getScoredCompaniesInSubSector(subSector, {
-      limit: parseNumber(req.query.limit) ?? 100,
+      limit: parseNumber(req.query.limit) ?? DEFAULT_GROUP_LIMIT,
     });
 
     const result = screenCompanies(companies, {

@@ -1,4 +1,4 @@
-import { getScoredCompaniesInSubSector } from './screener.js';
+import { getScoredCompaniesInSubSector, DEFAULT_GROUP_LIMIT } from './screener.js';
 
 // Dashboard "sorotan sub-sektor" cards. Not a PRD feature on its own — it
 // reuses F-01's already-locked composite score formula (see score.ts) across
@@ -7,9 +7,12 @@ import { getScoredCompaniesInSubSector } from './screener.js';
 // design mockup (which assumed data — foreign flow, "Skor Sektor 86/100" for
 // arbitrary sectors — the Sectors API does not expose).
 //
-// Companies-per-subsector is capped low (12) to bound credit cost: 6 cards *
-// 12 companies = at most 72 report+financials calls, all cached 24h after
-// the first dashboard load.
+// Each card scores the WHOLE sub-sector, with the same group limit as the
+// screener and detail page. It used to stop at the first 12 companies to save
+// credits, which made every percentile on the card relative to an arbitrary
+// dozen: the "top leader" of banks was the best of 12 out of 48, with a score
+// that did not match the one on its own page. Reports are cached 30 days and
+// shared with the screener, so the full group costs little after first load.
 const CURATED_SUBSECTORS = [
   { sector: 'financials', subsector: 'banks', label: 'Perbankan' },
   { sector: 'energy', subsector: 'oil-gas-coal', label: 'Energi & Tambang' },
@@ -43,7 +46,7 @@ export interface SectorSpotlightCard {
 export async function getSectorSpotlight(): Promise<SectorSpotlightCard[]> {
   return Promise.all(
     CURATED_SUBSECTORS.map(async (c): Promise<SectorSpotlightCard> => {
-      const { companies, groupSize } = await getScoredCompaniesInSubSector(c.subsector, { limit: 12 });
+      const { companies, groupSize } = await getScoredCompaniesInSubSector(c.subsector, { limit: DEFAULT_GROUP_LIMIT });
 
       const ranked = companies
         .filter((co): co is typeof co & { score: number } => co.status !== 'inadequate' && co.score !== null)

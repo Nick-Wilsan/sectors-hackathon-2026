@@ -65,8 +65,16 @@ export function AnomalyPanel({ anomaly }: { anomaly: AnomalyResult }) {
 
         {/* Shown on quiet days too: "the whole bourse moved today" is context a
             reader needs before the number above means anything. */}
-        {anomaly.marketContext && (
+        {anomaly.marketContext ? (
           <MarketContextBlock context={anomaly.marketContext} disclaimer={anomaly.marketContextDisclaimer} />
+        ) : (
+          anomaly.status === 'ok' &&
+          anomaly.date && (
+            <p className="font-body-sm text-body-sm text-text-muted">
+              Data IHSG untuk sesi {anomaly.date} belum tersedia dari sumber data, sehingga perbandingan dengan pasar belum
+              dapat ditampilkan.
+            </p>
+          )
         )}
 
         {anomaly.relatedNews.length > 0 && (
